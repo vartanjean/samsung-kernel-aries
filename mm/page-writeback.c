@@ -248,6 +248,49 @@ static void bdi_writeout_fraction(struct backing_dev_info *bdi,
 {
 	prop_fraction_percpu(&vm_completions, &bdi->completions,
 				numerator, denominator);
+/*
+<<<<<<< HEAD
+=======
+}
+
+static inline void task_dirties_fraction(struct task_struct *tsk,
+		long *numerator, long *denominator)
+{
+	prop_fraction_single(&vm_dirties, &tsk->dirties,
+				numerator, denominator);
+}
+
+/*
+ * task_dirty_limit - scale down dirty throttling threshold for one task
+ *
+ * task specific dirty limit:
+ *
+ *   dirty -= (dirty/8) * p_{t}
+ *
+ * To protect light/slow dirtying tasks from heavier/fast ones, we start
+ * throttling individual tasks before reaching the bdi dirty limit.
+ * Relatively low thresholds will be allocated to heavy dirtiers. So when
+ * dirty pages grow large, heavy dirtiers will be throttled first, which will
+ * effectively curb the growth of dirty pages. Light dirtiers with high enough
+ * dirty threshold may never get throttled.
+ */
+/*
+static unsigned long task_dirty_limit(struct task_struct *tsk,
+				       unsigned long bdi_dirty)
+{
+	long numerator, denominator;
+	unsigned long dirty = bdi_dirty;
+	u64 inv = dirty >> 3;
+
+	task_dirties_fraction(tsk, &numerator, &denominator);
+	inv *= numerator;
+	do_div(inv, denominator);
+
+	dirty -= inv;
+
+	return max(dirty, bdi_dirty/2);
+>>>>>>> 1298d95... writeback: skip balance_dirty_pages() for in-memory fs
+*/
 }
 
 /*
@@ -1019,6 +1062,9 @@ static void balance_dirty_pages(struct address_space *mapping,
 	unsigned long pos_ratio;
 	struct backing_dev_info *bdi = mapping->backing_dev_info;
 	unsigned long start_time = jiffies;
+
+	if (!bdi_cap_account_dirty(bdi))
+		return;
 
 	for (;;) {
 		/*
