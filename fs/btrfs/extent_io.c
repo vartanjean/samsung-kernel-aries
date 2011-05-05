@@ -2535,7 +2535,6 @@ int extent_write_locked_range(struct extent_io_tree *tree, struct inode *inode,
 	};
 	struct writeback_control wbc_writepages = {
 		.sync_mode	= mode,
-		.older_than_this = NULL,
 		.nr_to_write	= nr_pages * 2,
 		.range_start	= start,
 		.range_end	= end + 1,
