@@ -1063,9 +1063,6 @@ static void balance_dirty_pages(struct address_space *mapping,
 	struct backing_dev_info *bdi = mapping->backing_dev_info;
 	unsigned long start_time = jiffies;
 
-	if (!bdi_cap_account_dirty(bdi))
-		return;
-
 	for (;;) {
 		/*
 		 * Unstable writes are a feature of certain networked
