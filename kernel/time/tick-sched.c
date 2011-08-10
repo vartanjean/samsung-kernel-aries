@@ -823,6 +823,9 @@ static bool can_stop_adaptive_tick(void)
 
 static void tick_nohz_cpuset_stop_tick(int user)
 {
+	if (idle_cpu(smp_processor_id()))
+		return;
+
 	if (!cpuset_adaptive_nohz() || tick_nohz_adaptive_mode())
 		return;
 
@@ -860,6 +863,19 @@ void cpuset_update_nohz(void)
 		return;
 
 	if (!can_stop_adaptive_tick())
+		cpuset_nohz_restart_tick();
+}
+
+void tick_nohz_post_schedule(void)
+{
+	int cpu = smp_processor_id();
+
+	/*
+	 * No need to disable irqs here. The worst that can happen
+	 * is an irq that comes and restart the tick before us.
+	 * tick_nohz_restart_sched_tick() is irq safe.
+	 */
+	if (tick_nohz_adaptive_mode() && current == idle_task(cpu))
 		cpuset_nohz_restart_tick();
 }
 

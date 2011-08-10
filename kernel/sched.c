@@ -3350,6 +3350,7 @@ context_switch(struct rq *rq, struct task_struct *prev,
 	 * frame will be invalid.
 	 */
 	finish_task_switch(this_rq(), prev);
+	tick_nohz_post_schedule();
 }
 
 /*
