@@ -829,8 +829,11 @@ static void tick_nohz_cpuset_stop_tick(int user)
 	if (!cpuset_adaptive_nohz() || tick_nohz_adaptive_mode())
 		return;
 
-	if (can_stop_adaptive_tick())
+	if (can_stop_adaptive_tick()) {
 		__get_cpu_var(task_nohz_mode) = 1;
+		/* Nohz mode must be visible to wake_up_nohz_cpu() */
+		smp_wmb();
+	}
 }
 
 /*
