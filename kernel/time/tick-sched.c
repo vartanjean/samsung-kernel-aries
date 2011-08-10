@@ -21,6 +21,7 @@
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/cpuset.h>
+#include <linux/posix-timers.h>
 
 #include <asm/irq_regs.h>
 
@@ -812,6 +813,9 @@ int tick_nohz_adaptive_mode(void)
 static bool can_stop_adaptive_tick(void)
 {
 	if (!sched_can_stop_tick())
+		return false;
+
+	if (posix_cpu_timers_running(current))
 		return false;
 
 	/* Is there a grace period to complete ? */
