@@ -809,12 +809,24 @@ int tick_nohz_adaptive_mode(void)
 	return __get_cpu_var(task_nohz_mode);
 }
 
+static bool can_stop_adaptive_tick(void)
+{
+	if (!sched_can_stop_tick())
+		return false;
+
+	/* Is there a grace period to complete ? */
+	if (rcu_pending(smp_processor_id()))
+		return false;
+
+	return true;
+}
+
 static void tick_nohz_cpuset_stop_tick(int user)
 {
 	if (!cpuset_adaptive_nohz() || tick_nohz_adaptive_mode())
 		return;
 
-	if (sched_can_stop_tick())
+	if (can_stop_adaptive_tick())
 		__get_cpu_var(task_nohz_mode) = 1;
 }
 
@@ -847,7 +859,7 @@ void cpuset_update_nohz(void)
 	if (!tick_nohz_adaptive_mode())
 		return;
 
-	if (!sched_can_stop_tick())
+	if (!can_stop_adaptive_tick())
 		cpuset_nohz_restart_tick();
 }
 
