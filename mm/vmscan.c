@@ -878,6 +878,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 				 */
 				inc_zone_page_state(page, NR_VMSCAN_IMMEDIATE);
 				SetPageReclaim(page);
+
 				goto keep_locked;
 			}
 
