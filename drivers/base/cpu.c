@@ -23,6 +23,7 @@ struct sysdev_class cpu_sysdev_class = {
 EXPORT_SYMBOL(cpu_sysdev_class);
 
 static DEFINE_PER_CPU(struct sys_device *, cpu_sys_devices);
+static DEFINE_PER_CPU(bool, is_hotpluggable);
 
 #ifdef CONFIG_HOTPLUG_CPU
 static ssize_t show_online(struct sys_device *dev, struct sysdev_attribute *attr,
@@ -76,6 +77,7 @@ void unregister_cpu(struct cpu *cpu)
 
 	sysdev_unregister(&cpu->sysdev);
 	per_cpu(cpu_sys_devices, logical_cpu) = NULL;
+	per_cpu(is_hotpluggable, logical_cpu) = 0;
 	return;
 }
 
@@ -224,8 +226,10 @@ int __cpuinit register_cpu(struct cpu *cpu, int num)
 
 	error = sysdev_register(&cpu->sysdev);
 
-	if (!error && cpu->hotpluggable)
+	if (!error && cpu->hotpluggable) {
 		register_cpu_control(cpu);
+		per_cpu(is_hotpluggable, num) = 1;
+	}
 	if (!error)
 		per_cpu(cpu_sys_devices, num) = &cpu->sysdev;
 	if (!error)
@@ -237,6 +241,12 @@ int __cpuinit register_cpu(struct cpu *cpu, int num)
 #endif
 	return error;
 }
+
+bool cpu_is_hotpluggable(int num)
+{
+	return per_cpu(is_hotpluggable, num);
+}
+EXPORT_SYMBOL_GPL(cpu_is_hotpluggable);
 
 struct sys_device *get_cpu_sysdev(unsigned cpu)
 {
