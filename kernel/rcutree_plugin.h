@@ -401,8 +401,11 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 
 #ifdef CONFIG_RCU_BOOST
 		/* Unboost if we were boosted. */
-		if (rbmp)
+		if (rbmp) {
+			local_irq_save(flags);
 			rt_mutex_unlock(rbmp);
+			local_irq_restore(flags);
+		}
 #endif /* #ifdef CONFIG_RCU_BOOST */
 
 		/*
@@ -1233,9 +1236,10 @@ static int rcu_boost(struct rcu_node *rnp)
 	lockdep_set_class_and_name(&mtx.wait_lock, &rcu_boost_class,
 				   "rcu_boost_mutex");
 	t->rcu_boost_mutex = &mtx;
-	raw_spin_unlock_irqrestore(&rnp->lock, flags);
+	raw_spin_unlock(&rnp->lock); /* rrupts remain disabled. */
 	rt_mutex_lock(&mtx);  /* Side effect: boosts task t's priority. */
 	rt_mutex_unlock(&mtx);  /* Keep lockdep happy. */
+	local_irq_restore(flags);
 
 	return rnp->exp_tasks != NULL || rnp->boost_tasks != NULL;
 }
