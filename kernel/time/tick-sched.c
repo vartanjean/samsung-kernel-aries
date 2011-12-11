@@ -373,6 +373,7 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 		if (!ts->tick_stopped) {
 			ts->last_tick = hrtimer_get_expires(&ts->sched_timer);
 			ts->tick_stopped = 1;
+			trace_printk("Stop tick\n");
 		}
 
 		/*
@@ -573,6 +574,7 @@ static void __tick_nohz_restart_sched_tick(struct tick_sched *ts, ktime_t now)
 	ts->idle_exittime = now;
 
 	tick_nohz_restart(ts, now);
+	trace_printk("Restart sched tick\n");
 }
 
 /**
