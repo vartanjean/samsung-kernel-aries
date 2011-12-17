@@ -32,7 +32,6 @@ void __iomem *mfc_sfr_base_vaddr;
 unsigned int mfc_port0_base_paddr, mfc_port1_base_paddr;
 unsigned char *mfc_port0_base_vaddr, *mfc_port1_base_vaddr;
 unsigned int  mfc_port0_memsize, mfc_port1_memsize;
-unsigned int mfc_port1_alloc_base;
 
 unsigned int mfc_get_fw_buff_paddr(void)
 {
@@ -61,10 +60,6 @@ unsigned char *mfc_get_port1_buff_vaddr(void)
 
 unsigned int mfc_get_port1_buff_paddr(void)
 {
-	return mfc_port1_alloc_base;
+	return mfc_port1_base_paddr;
 }
 
-void mfc_set_port1_buff_paddr(unsigned int addr)
-{
-	mfc_port1_alloc_base = addr;
-}
