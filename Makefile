@@ -1,7 +1,8 @@
 VERSION = 3
-PATCHLEVEL = 0
-SUBLEVEL = 14
-EXTRAVERSION = -Devil_14
+PATCHLEVEL = 1
+SUBLEVEL = 6
+EXTRAVERSION =
+NAME = "Divemaster Edition"
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
