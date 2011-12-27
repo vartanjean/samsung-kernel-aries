@@ -1,8 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 0
-SUBLEVEL = 11
+SUBLEVEL = 12
 EXTRAVERSION = -Devil_14
-
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
