@@ -1,7 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 0
 SUBLEVEL = 8
-EXTRAVERSION = -platypus-Neo-3.0
+EXTRAVERSION = -Devil_3.0.8-1
 NAME = Sneaky Weasel
 
 # *DOCUMENTATION*
