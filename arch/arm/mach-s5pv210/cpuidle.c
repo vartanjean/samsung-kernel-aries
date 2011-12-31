@@ -26,8 +26,6 @@
 #include <plat/pm.h>
 #include <plat/devs.h>
 
-#define S5PC110_MAX_STATES	1
-
 #ifdef CONFIG_CPU_DIDLE
 #include <linux/dma-mapping.h>
 #include <linux/deep_idle.h>
@@ -415,7 +413,7 @@ static int s5p_enter_idle_state(struct cpuidle_device *dev,
 	struct timeval before, after;
 	int idle_time;
 #ifdef CONFIG_CPU_DIDLE
-	int idle_state = 0;
+	int idle_state = 1;
 #endif
 
 	local_irq_disable();
