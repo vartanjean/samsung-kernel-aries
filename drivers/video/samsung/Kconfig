@@ -13,8 +13,8 @@ config FB_S3C
 	---help---
 	  This enables support for Samsung Display Controller (FIMD)
 
-config CONFIG_FB_S3C_UNLOCKED_REFRESH
-        bool "Unlocked screen refresh rate to 68Hz"
+config FB_S3C_INCREASED_HZ
+        bool "Increase display frequency to 72Hz"
         depends on FB_S3C
   default n
 
