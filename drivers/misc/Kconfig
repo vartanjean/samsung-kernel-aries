@@ -617,7 +617,7 @@ config CUSTOM_VOLTAGE
 
 config LIVE_OC
        bool "Support for Live OC"
-       default y
+       default n
        help
          Say Y here to enable Live OC
 
