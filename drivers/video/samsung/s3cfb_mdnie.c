@@ -1260,3 +1260,4 @@ int s3c_mdnie_stop(void)
 MODULE_AUTHOR("lsi");
 MODULE_DESCRIPTION("S3C MDNIE Device Driver");
 MODULE_LICENSE("GPL");
+
