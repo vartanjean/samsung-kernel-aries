@@ -40,6 +40,13 @@ config CFQ_GROUP_IOSCHED
 	bool "CFQ Group Scheduling support"
 	depends on IOSCHED_CFQ && BLK_CGROUP
 	default n
+
+	---help---
+	  Enable group IO scheduling in CFQ.
+
+config IOSCHED_SIO
+	tristate "Simple I/O scheduler"
+	default y
 	---help---
 	  Enable group IO scheduling in CFQ.
 
