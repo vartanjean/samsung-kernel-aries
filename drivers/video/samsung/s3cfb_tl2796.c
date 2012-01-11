@@ -1242,9 +1242,18 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	}
 
 	lcd->bl_dev->props.max_brightness = 255;
+/*
 #ifndef CONFIG_FB_VOODOO
 	lcd->bl_dev->props.brightness = 255;
 #endif
+
+video: s3cfb_nt35580: initialize brightness.
+blank/unblank would leave the brightness set to 0.
+
+Also let tl2796 initialize using the actual lcd->bl default
+*/
+	lcd->bl_dev->props.brightness = lcd->bl;
+
 
 	tl2796_ldi_enable(lcd);
 #ifdef CONFIG_HAS_EARLYSUSPEND
