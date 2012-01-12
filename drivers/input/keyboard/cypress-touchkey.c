@@ -404,40 +404,85 @@ static struct miscdevice bl_led_device = {
 };
 
 #ifdef CONFIG_GENERIC_BLN
-static int cypress_enable_touchkey_backlights(int led_mask)
-{
-return i2c_touchkey_write_byte(bln_devdata, bln_devdata->backlight_on);
-}
-static int cypress_disable_touchkey_backlights(int led_mask)
-{
-return i2c_touchkey_write_byte(bln_devdata, bln_devdata->backlight_off);
-}
-static int cypress_power_on_touchkey_controller(void)
-{
-  if(bln_devdata->is_powering_on) {
-    bln_devdata->pdata->touchkey_onoff(TOUCHKEY_ON);
-    return 0;
-  } else {
-    return -EBUSY;
-  }
+static void enable_touchkey_backlights(void){
+
+       i2c_touchkey_write_byte(bln_devdata, bln_devdata->backlight_on);
 }
 
-static int cypress_power_off_touchkey_controller(void)
-{
-  if(bln_devdata->is_powering_on) {
-    bln_devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
-    return 0;
-  } else {
-    return -EBUSY;
-  }
+static void disable_touchkey_backlights(void){
+
+       i2c_touchkey_write_byte(bln_devdata, bln_devdata->backlight_off);
+}
+
+static void cypress_touchkey_enable_led_notification(void){
+	/* is_powering_on signals whether touchkey lights are used for touchmode */
+	if (bln_devdata->is_powering_on){
+		/* reconfigure gpio for sleep mode */
+		bln_devdata->pdata->touchkey_sleep_onoff(TOUCHKEY_ON);
+
+		/*
+		 * power on the touchkey controller
+		 * This is actually not needed, but it is intentionally
+		 * left for the case that the early_resume() function
+		 * did not power on the touchkey controller for some reasons
+		 */
+		bln_devdata->pdata->touchkey_onoff(TOUCHKEY_ON);
+
+		/* write to i2cbus, enable backlights */
+		enable_touchkey_backlights();
+	}
+	else
+#ifdef CONFIG_TOUCH_WAKE
+	    {
+
+
+
+
+
+		enable_touchkey_backlights();
+	    }
+#else
+	    pr_info("%s: cannot set notification led, touchkeys are enabled\n",__FUNCTION__);
+#endif
+}
+
+static void cypress_touchkey_disable_led_notification(void){
+	/*
+	 * reconfigure gpio for sleep mode, this has to be done
+	 * independently from the power status
+	 */
+	bln_devdata->pdata->touchkey_sleep_onoff(TOUCHKEY_OFF);
+
+	/* if touchkeys lights are not used for touchmode */
+	if (bln_devdata->is_powering_on){
+		disable_touchkey_backlights();
+
+		#if 0
+		/*
+		 * power off the touchkey controller
+		 * This is actually not needed, the early_suspend function
+		 * should take care of powering off the touchkey controller
+		 */
+		bln_devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
+		#endif
+	}
+#ifdef CONFIG_TOUCH_WAKE
+	else
+	    {
+
+
+
+
+
+		disable_touchkey_backlights();
+	    }
+#endif	
 }
 
 static struct bln_implementation cypress_touchkey_bln = {
-  .enable = cypress_enable_touchkey_backlights,
-  .disable = cypress_disable_touchkey_backlights,
-//.power_on = cypress_power_on_touchkey_controller,
-//.power_off = cypress_power_off_touchkey_controller,
-//  .led_count = 1
+  .enable = cypress_touchkey_enable_led_notification,
+  .disable = cypress_touchkey_disable_led_notification,
+
 };
 #endif
 
