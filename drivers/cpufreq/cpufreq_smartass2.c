@@ -836,9 +836,9 @@ static int __init cpufreq_smartass2_init(void)
 	}
 
 	// Scale up is high priority
-	up_wq = create_workqueue("ksmartass2_up");
+	up_wq = create_singlethread_workqueue("ksmartass2_up");
 	down_wq = create_workqueue("ksmartass2_down");
-	if (!up_wq || !down_wq)
+ 	if (!up_wq || !down_wq)
 		return -ENOMEM;
 
 	INIT_WORK(&freq_scale_work, cpufreq_smartass2_freq_change_time_work);
