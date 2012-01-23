@@ -115,7 +115,6 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 static struct notifier_block cpufreq_limit_notifier = {
 	.notifier_call = limit_adjust_cpufreq_notifier,
 };
-#endif
 
 static PVRSRV_ERROR EnableSGXClocks(void)
 {
