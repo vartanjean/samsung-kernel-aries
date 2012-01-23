@@ -1,5 +1,4 @@
-/* linux/drivers/serial/samsuing.c
- *
+/*
  * Driver core for Samsung SoC onboard UARTs.
  *
  * Ben Dooks, Copyright (c) 2003-2008 Simtec Electronics
@@ -64,7 +63,7 @@
 #define tx_enabled(port) ((port)->unused[0])
 #define rx_enabled(port) ((port)->unused[1])
 
-/* flag to ignore all characters comming in */
+/* flag to ignore all characters coming in */
 #define RXSTAT_DUMMY_READ (0x10000000)
 
 static inline struct s3c24xx_uart_port *to_ourport(struct uart_port *port)
@@ -293,7 +292,7 @@ static irqreturn_t s3c24xx_serial_tx_chars(int irq, void *id)
 		goto out;
 	}
 
-	/* if there isnt anything more to transmit, or the uart is now
+	/* if there isn't anything more to transmit, or the uart is now
 	 * stopped, disable the uart and exit
 	 */
 
@@ -449,16 +448,6 @@ static int s3c24xx_serial_startup(struct uart_port *port)
 
 /* power power management control */
 
-#ifdef CONFIG_CPU_DIDLE
-static bool gps_running = false;
-
-bool gps_is_running(void)
-{
-    return gps_running;
-}
-EXPORT_SYMBOL(gps_is_running);
-#endif
-
 static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 			      unsigned int old)
 {
@@ -473,10 +462,6 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 
 		if (!IS_ERR(ourport->baudclk) && ourport->baudclk != NULL)
 			clk_disable(ourport->baudclk);
-#ifdef CONFIG_CPU_DIDLE
-		if (ourport->port.irq == IRQ_S3CUART_RX1) 
-		    gps_running = false;
-#endif
 		clk_disable(ourport->clk);
 
 		break;
@@ -484,10 +469,7 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 	case 0:
 
 		clk_enable(ourport->clk);
-#ifdef CONFIG_CPU_DIDLE
-		if (ourport->port.irq == IRQ_S3CUART_RX1)
-		    gps_running = true;
-#endif
+
 		if (!IS_ERR(ourport->baudclk) && ourport->baudclk != NULL)
 			clk_enable(ourport->baudclk);
 
@@ -738,8 +720,13 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 	if (ourport->info->has_divslot) {
 		unsigned int div = ourport->baudclk_rate / baud;
 
-		udivslot = udivslot_table[div & 15];
-		dbg("udivslot = %04x (div %d)\n", udivslot, div & 15);
+		if (cfg->has_fracval) {
+			udivslot = (div & 15);
+			dbg("fracval = %04x\n", udivslot);
+		} else {
+			udivslot = udivslot_table[div & 15];
+			dbg("udivslot = %04x (div %d)\n", udivslot, div & 15);
+		}
 	}
 
 	switch (termios->c_cflag & CSIZE) {
@@ -921,10 +908,10 @@ static struct uart_ops s3c24xx_serial_ops = {
 
 static struct uart_driver s3c24xx_uart_drv = {
 	.owner		= THIS_MODULE,
-	.dev_name	= "s3c2410_serial",
+	.driver_name	= "s3c2410_serial",
 	.nr		= CONFIG_SERIAL_SAMSUNG_UARTS,
 	.cons		= S3C24XX_SERIAL_CONSOLE,
-	.driver_name	= S3C24XX_SERIAL_NAME,
+	.dev_name	= "s3c2410_serial",
 	.major		= S3C24XX_SERIAL_MAJOR,
 	.minor		= S3C24XX_SERIAL_MINOR,
 };
@@ -1144,7 +1131,7 @@ static int s3c24xx_serial_init_port(struct s3c24xx_uart_port *ourport,
 	dbg("resource %p (%lx..%lx)\n", res, res->start, res->end);
 
 	port->mapbase = res->start;
-	port->membase = S3C_VA_UART + res->start - (S3C_PA_UART & 0xfff00000);
+	port->membase = S3C_VA_UART + (res->start & 0xfffff);
 	ret = platform_get_irq(platdev, 0);
 	if (ret < 0)
 		port->irq = 0;
@@ -1286,9 +1273,9 @@ static int s3c24xx_serial_resume(struct platform_device *dev)
 	if (port) {
 		clk_enable(ourport->clk);
 		s3c24xx_serial_resetport(port, s3c24xx_port_to_cfg(port));
-		clk_disable(ourport->clk);
 		s3c_pm_do_restore(uart_save + port->line * SAVE_UART_PORT,
 				SAVE_UART_PORT);
+		clk_disable(ourport->clk);
 		uart_resume_port(&s3c24xx_uart_drv, port);
 	}
 
