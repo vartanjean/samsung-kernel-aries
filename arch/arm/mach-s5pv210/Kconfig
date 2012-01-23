@@ -26,6 +26,13 @@ help
     Aggressively restrict the memory set aside on
     boot for FIMC, MFC and JPEG.
 
+config CPU_DIDLE
+        bool "Enable DEEP IDLE support for S5PV210 CPU"
+        depends on CPU_IDLE
+        default n
+        help
+          Enable DEEP IDLE support for S5PV210 CPU.
+
 config S5PV210_SETUP_I2C1
 	bool
 	default	y
@@ -363,9 +370,11 @@ config DVFS_LIMIT
 	default n
 
 config CPU_DIDLE
-	bool "DEEP Idle"
-	depends on CPU_IDLE
-	default n
+        bool "Enable DEEP IDLE support for S5PV210 CPU"
+        depends on CPU_IDLE
+        default n
+        help
+          Enable DEEP IDLE support for S5PV210 CPU.
 
 config WIFI_CONTROL_FUNC
        bool "Enable WiFi control function abstraction"

@@ -742,7 +742,7 @@ EXPORT_SYMBOL(liveoc_update);
 
 unsigned long get_gpuminfreq(void)
 {
-    return s5pv210_freq_table[L3].frequency;
+    return s5pv210_freq_table[L6].frequency;
 }
 EXPORT_SYMBOL(get_gpuminfreq);
 #endif
