@@ -617,12 +617,6 @@ config CUSTOM_VOLTAGE
          Say Y here to enable Custom Voltage
 
 
-config BLD
-       bool "Support for Backlight Dimmer"
-       default y
-       help
-         Say Y here to enable Backlight Dimmer
-
 config LIVE_OC
        bool "Support for Live OC"
        default y
