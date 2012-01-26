@@ -33,21 +33,6 @@
 
 #define S5PV210_MAX_STATES	1
 
-static int s5p_enter_idle_normal(struct cpuidle_device *dev,
-			struct cpuidle_driver *drv,
-			      int index);
-
-static struct cpuidle_state sp5_cpuidle_set[] = {
-	[0] = {
-		.enter			= s5p_enter_idle_normal,
-		.exit_latency		= 1,
-		.target_residency	= 100000,
-		.flags			= CPUIDLE_FLAG_TIME_VALID,
-		.name			= "IDLE",
-		.desc			= "ARM clock gating(WFI)",
-	},
-};
-
 static void s5p_enter_idle(void)
 {
 	unsigned long tmp;
@@ -66,8 +51,7 @@ static void s5p_enter_idle(void)
 
 /* Actual code that puts the SoC in different idle states */
 static int s5p_enter_idle_normal(struct cpuidle_device *dev,
-				struct cpuidle_state *state,
-			      int index)
+				struct cpuidle_state *state)
 {
 	struct timeval before, after;
 	int idle_time;
@@ -81,9 +65,7 @@ static int s5p_enter_idle_normal(struct cpuidle_device *dev,
 	local_irq_enable();
 	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +
 			(after.tv_usec - before.tv_usec);
-
-	dev->last_residency = idle_time;
-	return index;
+	return idle_time;
 }
 
 static DEFINE_PER_CPU(struct cpuidle_device, s5p_cpuidle_device);
@@ -520,7 +502,6 @@ EXPORT_SYMBOL(s5p_setup_lowpower);
 /* Initialize CPU idle by registering the idle states */
 static int s5p_init_cpuidle(void)
 {
-	int i, max_cpuidle_state, cpu_id;
 	struct cpuidle_device *device;
 
 #ifdef CONFIG_CPU_DIDLE
@@ -529,28 +510,22 @@ static int s5p_init_cpuidle(void)
 	int i = 0;
 #endif /* CONFIG_CPU_DIDLE */
 
-	struct cpuidle_driver *drv = &s5p_idle_driver;
-
-	/* Setup cpuidle driver */
-	drv->state_count = (sizeof(sp5_cpuidle_set) /
-				       sizeof(struct cpuidle_state));
-	max_cpuidle_state = drv->state_count;
-	for (i = 0; i < max_cpuidle_state; i++) {
-		memcpy(&drv->states[i], &sp5_cpuidle_set[i],
-				sizeof(struct cpuidle_state));
-	}
 	cpuidle_register_driver(&s5p_idle_driver);
 
-	for_each_cpu(cpu_id, cpu_online_mask) {
-		device = &per_cpu(s5p_cpuidle_device, cpu_id);
-		device->cpu = cpu_id;
+	device = &per_cpu(s5p_cpuidle_device, smp_processor_id());
+	device->state_count = 1;
 
-		device->state_count = drv->state_count;
+	/* Wait for interrupt state */
+	device->states[0].enter = s5p_enter_idle_normal;
+	device->states[0].exit_latency = 1;	/* uS */
+	device->states[0].target_residency = 10000;
+	device->states[0].flags = CPUIDLE_FLAG_TIME_VALID;
+	strcpy(device->states[0].name, "IDLE");
+	strcpy(device->states[0].desc, "ARM clock gating - WFI");
 
-		if (cpuidle_register_device(device)) {
-			printk(KERN_ERR "s5p_init_cpuidle: Failed registering\n");
-			return -EIO;
-		}
+	if (cpuidle_register_device(device)) {
+		printk(KERN_ERR "s5p_init_cpuidle: Failed registering\n");
+		return -EIO;
 	}
 #ifdef CONFIG_CPU_DIDLE
 	regs_save = dma_alloc_coherent(NULL, 4096, &phy_regs_save, GFP_KERNEL);
