@@ -19,6 +19,7 @@
  *   http://marc.info/?l=linux-mm&m=127811271605009
  */
 
+#include <linux/module.h>
 #include <linux/cpu.h>
 #include <linux/highmem.h>
 #include <linux/list.h>
@@ -27,6 +28,7 @@
 #include <linux/spinlock.h>
 #include <linux/types.h>
 #include <linux/atomic.h>
+#include <linux/math64.h>
 #include "tmem.h"
 
 #include "../zram/xvmalloc.h" /* if built in drivers/staging */
@@ -53,6 +55,9 @@
 
 #define MAX_CLIENTS 16
 #define LOCAL_CLIENT ((uint16_t)-1)
+
+MODULE_LICENSE("GPL");
+
 struct zcache_client {
 	struct tmem_pool *tmem_pools[MAX_POOLS_PER_CLIENT];
 	struct xv_pool *xvpool;
@@ -65,6 +70,7 @@ static struct zcache_client zcache_clients[MAX_CLIENTS];
 
 static inline uint16_t get_client_id_from_client(struct zcache_client *cli)
 {
+	BUG_ON(cli == NULL);
 	if (cli == &zcache_host)
 		return LOCAL_CLIENT;
 	return cli - &zcache_clients[0];
@@ -147,6 +153,7 @@ static unsigned long zcache_zbud_curr_zbytes;
 static unsigned long zcache_zbud_cumul_zpages;
 static unsigned long zcache_zbud_cumul_zbytes;
 static unsigned long zcache_compress_poor;
+static unsigned long zcache_mean_compress_poor;
 
 /* forward references */
 static void *zcache_get_free_page(void);
@@ -584,9 +591,8 @@ static int zbud_show_unbuddied_list_counts(char *buf)
 	int i;
 	char *p = buf;
 
-	for (i = 0; i < NCHUNKS - 1; i++)
+	for (i = 0; i < NCHUNKS; i++)
 		p += sprintf(p, "%u ", zbud_unbuddied[i].count);
-	p += sprintf(p, "%d\n", zbud_unbuddied[i].count);
 	return p - buf;
 }
 
@@ -634,7 +640,23 @@ struct zv_hdr {
 	DECL_SENTINEL
 };
 
-static const int zv_max_page_size = (PAGE_SIZE / 8) * 7;
+/* rudimentary policy limits */
+/* total number of persistent pages may not exceed this percentage */
+static unsigned int zv_page_count_policy_percent = 75;
+/*
+ * byte count defining poor compression; pages with greater zsize will be
+ * rejected
+ */
+static unsigned int zv_max_zsize = (PAGE_SIZE / 8) * 7;
+/*
+ * byte count defining poor *mean* compression; pages with greater zsize
+ * will be rejected until sufficient better-compressed pages are accepted
+ * driving the man below this threshold
+ */
+static unsigned int zv_max_mean_zsize = (PAGE_SIZE / 8) * 5;
+
+static unsigned long zv_curr_dist_counts[NCHUNKS];
+static unsigned long zv_cumul_dist_counts[NCHUNKS];
 
 static struct zv_hdr *zv_create(struct xv_pool *xvpool, uint32_t pool_id,
 				struct tmem_oid *oid, uint32_t index,
@@ -643,13 +665,18 @@ static struct zv_hdr *zv_create(struct xv_pool *xvpool, uint32_t pool_id,
 	struct page *page;
 	struct zv_hdr *zv = NULL;
 	uint32_t offset;
+	int alloc_size = clen + sizeof(struct zv_hdr);
+	int chunks = (alloc_size + (CHUNK_SIZE - 1)) >> CHUNK_SHIFT;
 	int ret;
 
 	BUG_ON(!irqs_disabled());
-	ret = xv_malloc(xvpool, clen + sizeof(struct zv_hdr),
+	BUG_ON(chunks >= NCHUNKS);
+	ret = xv_malloc(xvpool, alloc_size,
 			&page, &offset, ZCACHE_GFP_MASK);
 	if (unlikely(ret))
 		goto out;
+	zv_curr_dist_counts[chunks]++;
+	zv_cumul_dist_counts[chunks]++;
 	zv = kmap_atomic(page, KM_USER0) + offset;
 	zv->index = index;
 	zv->oid = *oid;
@@ -666,11 +693,14 @@ static void zv_free(struct xv_pool *xvpool, struct zv_hdr *zv)
 	unsigned long flags;
 	struct page *page;
 	uint32_t offset;
-	uint16_t size;
+	uint16_t size = xv_get_object_size(zv);
+	int chunks = (size + (CHUNK_SIZE - 1)) >> CHUNK_SHIFT;
 
 	ASSERT_SENTINEL(zv, ZVH);
-	size = xv_get_object_size(zv) - sizeof(*zv);
-	BUG_ON(size == 0 || size > zv_max_page_size);
+	BUG_ON(chunks >= NCHUNKS);
+	zv_curr_dist_counts[chunks]--;
+	size -= sizeof(*zv);
+	BUG_ON(size == 0);
 	INVERT_SENTINEL(zv, ZVH);
 	page = virt_to_page(zv);
 	offset = (unsigned long)zv & ~PAGE_MASK;
@@ -688,7 +718,7 @@ static void zv_decompress(struct page *page, struct zv_hdr *zv)
 
 	ASSERT_SENTINEL(zv, ZVH);
 	size = xv_get_object_size(zv) - sizeof(*zv);
-	BUG_ON(size == 0 || size > zv_max_page_size);
+	BUG_ON(size == 0);
 	to_va = kmap_atomic(page, KM_USER0);
 	ret = lzo1x_decompress_safe((char *)zv + sizeof(*zv),
 					size, to_va, &clen);
@@ -696,6 +726,159 @@ static void zv_decompress(struct page *page, struct zv_hdr *zv)
 	BUG_ON(ret != LZO_E_OK);
 	BUG_ON(clen != PAGE_SIZE);
 }
+
+#ifdef CONFIG_SYSFS
+/*
+ * show a distribution of compression stats for zv pages.
+ */
+
+static int zv_curr_dist_counts_show(char *buf)
+{
+	unsigned long i, n, chunks = 0, sum_total_chunks = 0;
+	char *p = buf;
+
+	for (i = 0; i < NCHUNKS; i++) {
+		n = zv_curr_dist_counts[i];
+		p += sprintf(p, "%lu ", n);
+		chunks += n;
+		sum_total_chunks += i * n;
+	}
+	p += sprintf(p, "mean:%lu\n",
+		chunks == 0 ? 0 : sum_total_chunks / chunks);
+	return p - buf;
+}
+
+static int zv_cumul_dist_counts_show(char *buf)
+{
+	unsigned long i, n, chunks = 0, sum_total_chunks = 0;
+	char *p = buf;
+
+	for (i = 0; i < NCHUNKS; i++) {
+		n = zv_cumul_dist_counts[i];
+		p += sprintf(p, "%lu ", n);
+		chunks += n;
+		sum_total_chunks += i * n;
+	}
+	p += sprintf(p, "mean:%lu\n",
+		chunks == 0 ? 0 : sum_total_chunks / chunks);
+	return p - buf;
+}
+
+/*
+ * setting zv_max_zsize via sysfs causes all persistent (e.g. swap)
+ * pages that don't compress to less than this value (including metadata
+ * overhead) to be rejected.  We don't allow the value to get too close
+ * to PAGE_SIZE.
+ */
+static ssize_t zv_max_zsize_show(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    char *buf)
+{
+	return sprintf(buf, "%u\n", zv_max_zsize);
+}
+
+static ssize_t zv_max_zsize_store(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    const char *buf, size_t count)
+{
+	unsigned long val;
+	int err;
+
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+
+	err = strict_strtoul(buf, 10, &val);
+	if (err || (val == 0) || (val > (PAGE_SIZE / 8) * 7))
+		return -EINVAL;
+	zv_max_zsize = val;
+	return count;
+}
+
+/*
+ * setting zv_max_mean_zsize via sysfs causes all persistent (e.g. swap)
+ * pages that don't compress to less than this value (including metadata
+ * overhead) to be rejected UNLESS the mean compression is also smaller
+ * than this value.  In other words, we are load-balancing-by-zsize the
+ * accepted pages.  Again, we don't allow the value to get too close
+ * to PAGE_SIZE.
+ */
+static ssize_t zv_max_mean_zsize_show(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    char *buf)
+{
+	return sprintf(buf, "%u\n", zv_max_mean_zsize);
+}
+
+static ssize_t zv_max_mean_zsize_store(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    const char *buf, size_t count)
+{
+	unsigned long val;
+	int err;
+
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+
+	err = strict_strtoul(buf, 10, &val);
+	if (err || (val == 0) || (val > (PAGE_SIZE / 8) * 7))
+		return -EINVAL;
+	zv_max_mean_zsize = val;
+	return count;
+}
+
+/*
+ * setting zv_page_count_policy_percent via sysfs sets an upper bound of
+ * persistent (e.g. swap) pages that will be retained according to:
+ *     (zv_page_count_policy_percent * totalram_pages) / 100)
+ * when that limit is reached, further puts will be rejected (until
+ * some pages have been flushed).  Note that, due to compression,
+ * this number may exceed 100; it defaults to 75 and we set an
+ * arbitary limit of 150.  A poor choice will almost certainly result
+ * in OOM's, so this value should only be changed prudently.
+ */
+static ssize_t zv_page_count_policy_percent_show(struct kobject *kobj,
+						 struct kobj_attribute *attr,
+						 char *buf)
+{
+	return sprintf(buf, "%u\n", zv_page_count_policy_percent);
+}
+
+static ssize_t zv_page_count_policy_percent_store(struct kobject *kobj,
+						  struct kobj_attribute *attr,
+						  const char *buf, size_t count)
+{
+	unsigned long val;
+	int err;
+
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+
+	err = strict_strtoul(buf, 10, &val);
+	if (err || (val == 0) || (val > 150))
+		return -EINVAL;
+	zv_page_count_policy_percent = val;
+	return count;
+}
+
+static struct kobj_attribute zcache_zv_max_zsize_attr = {
+		.attr = { .name = "zv_max_zsize", .mode = 0644 },
+		.show = zv_max_zsize_show,
+		.store = zv_max_zsize_store,
+};
+
+static struct kobj_attribute zcache_zv_max_mean_zsize_attr = {
+		.attr = { .name = "zv_max_mean_zsize", .mode = 0644 },
+		.show = zv_max_mean_zsize_show,
+		.store = zv_max_mean_zsize_store,
+};
+
+static struct kobj_attribute zcache_zv_page_count_policy_percent_attr = {
+		.attr = { .name = "zv_page_count_policy_percent",
+			  .mode = 0644 },
+		.show = zv_page_count_policy_percent_show,
+		.store = zv_page_count_policy_percent_store,
+};
+#endif
 
 /*
  * zcache core code starts here
@@ -975,9 +1158,12 @@ static void *zcache_pampd_create(char *data, size_t size, bool raw, int eph,
 	size_t clen;
 	int ret;
 	unsigned long count;
-	struct page *page = virt_to_page(data);
+	struct page *page = (struct page *)(data);
 	struct zcache_client *cli = pool->client;
 	uint16_t client_id = get_client_id_from_client(cli);
+	unsigned long zv_mean_zsize;
+	unsigned long curr_pers_pampd_count;
+	u64 total_zsize;
 
 	if (eph) {
 		ret = zcache_compress(page, &cdata, &clen);
@@ -995,20 +1181,28 @@ static void *zcache_pampd_create(char *data, size_t size, bool raw, int eph,
 				zcache_curr_eph_pampd_count_max = count;
 		}
 	} else {
-		/*
-		 * FIXME: This is all the "policy" there is for now.
-		 * 3/4 totpages should allow ~37% of RAM to be filled with
-		 * compressed frontswap pages
-		 */
-		if (atomic_read(&zcache_curr_pers_pampd_count) >
-							3 * totalram_pages / 4)
+		curr_pers_pampd_count =
+			atomic_read(&zcache_curr_pers_pampd_count);
+		if (curr_pers_pampd_count >
+		    (zv_page_count_policy_percent * totalram_pages) / 100)
 			goto out;
 		ret = zcache_compress(page, &cdata, &clen);
 		if (ret == 0)
 			goto out;
-		if (clen > zv_max_page_size) {
+		/* reject if compression is too poor */
+		if (clen > zv_max_zsize) {
 			zcache_compress_poor++;
 			goto out;
+		}
+		/* reject if mean compression is too poor */
+		if ((clen > zv_max_mean_zsize) && (curr_pers_pampd_count > 0)) {
+			total_zsize = xv_get_total_size_bytes(cli->xvpool);
+			zv_mean_zsize = div_u64(total_zsize,
+						curr_pers_pampd_count);
+			if (zv_mean_zsize > zv_max_mean_zsize) {
+				zcache_mean_compress_poor++;
+				goto out;
+			}
 		}
 		pampd = (void *)zv_create(cli->xvpool, pool->pool_id,
 						oid, index, cdata, clen);
@@ -1033,7 +1227,7 @@ static int zcache_pampd_get_data(char *data, size_t *bufsize, bool raw,
 	int ret = 0;
 
 	BUG_ON(is_ephemeral(pool));
-	zv_decompress(virt_to_page(data), pampd);
+	zv_decompress((struct page *)(data), pampd);
 	return ret;
 }
 
@@ -1048,7 +1242,7 @@ static int zcache_pampd_get_data_and_free(char *data, size_t *bufsize, bool raw,
 	int ret = 0;
 
 	BUG_ON(!is_ephemeral(pool));
-	zbud_decompress(virt_to_page(data), pampd);
+	zbud_decompress((struct page *)(data), pampd);
 	zbud_free_and_delist((struct zbud_hdr *)pampd);
 	atomic_dec(&zcache_curr_eph_pampd_count);
 	return ret;
@@ -1232,6 +1426,7 @@ ZCACHE_SYSFS_RO(put_to_flush);
 ZCACHE_SYSFS_RO(aborted_preload);
 ZCACHE_SYSFS_RO(aborted_shrink);
 ZCACHE_SYSFS_RO(compress_poor);
+ZCACHE_SYSFS_RO(mean_compress_poor);
 ZCACHE_SYSFS_RO_ATOMIC(zbud_curr_raw_pages);
 ZCACHE_SYSFS_RO_ATOMIC(zbud_curr_zpages);
 ZCACHE_SYSFS_RO_ATOMIC(curr_obj_count);
@@ -1240,6 +1435,10 @@ ZCACHE_SYSFS_RO_CUSTOM(zbud_unbuddied_list_counts,
 			zbud_show_unbuddied_list_counts);
 ZCACHE_SYSFS_RO_CUSTOM(zbud_cumul_chunk_counts,
 			zbud_show_cumul_chunk_counts);
+ZCACHE_SYSFS_RO_CUSTOM(zv_curr_dist_counts,
+			zv_curr_dist_counts_show);
+ZCACHE_SYSFS_RO_CUSTOM(zv_cumul_dist_counts,
+			zv_cumul_dist_counts_show);
 
 static struct attribute *zcache_attrs[] = {
 	&zcache_curr_obj_count_attr.attr,
@@ -1253,6 +1452,7 @@ static struct attribute *zcache_attrs[] = {
 	&zcache_failed_eph_puts_attr.attr,
 	&zcache_failed_pers_puts_attr.attr,
 	&zcache_compress_poor_attr.attr,
+	&zcache_mean_compress_poor_attr.attr,
 	&zcache_zbud_curr_raw_pages_attr.attr,
 	&zcache_zbud_curr_zpages_attr.attr,
 	&zcache_zbud_curr_zbytes_attr.attr,
@@ -1270,6 +1470,11 @@ static struct attribute *zcache_attrs[] = {
 	&zcache_aborted_shrink_attr.attr,
 	&zcache_zbud_unbuddied_list_counts_attr.attr,
 	&zcache_zbud_cumul_chunk_counts_attr.attr,
+	&zcache_zv_curr_dist_counts_attr.attr,
+	&zcache_zv_cumul_dist_counts_attr.attr,
+	&zcache_zv_max_zsize_attr.attr,
+	&zcache_zv_max_mean_zsize_attr.attr,
+	&zcache_zv_page_count_policy_percent_attr.attr,
 	NULL,
 };
 
@@ -1334,7 +1539,7 @@ static int zcache_put_page(int cli_id, int pool_id, struct tmem_oid *oidp,
 		goto out;
 	if (!zcache_freeze && zcache_do_preload(pool) == 0) {
 		/* preload does preempt_disable on success */
-		ret = tmem_put(pool, oidp, index, page_address(page),
+		ret = tmem_put(pool, oidp, index, (char *)(page),
 				PAGE_SIZE, 0, is_ephemeral(pool));
 		if (ret < 0) {
 			if (is_ephemeral(pool))
@@ -1367,7 +1572,7 @@ static int zcache_get_page(int cli_id, int pool_id, struct tmem_oid *oidp,
 	pool = zcache_get_pool_by_id(cli_id, pool_id);
 	if (likely(pool != NULL)) {
 		if (atomic_read(&pool->obj_count) > 0)
-			ret = tmem_get(pool, oidp, index, page_address(page),
+			ret = tmem_get(pool, oidp, index, (char *)(page),
 					&size, 0, is_ephemeral(pool));
 		zcache_put_pool(pool);
 	}
@@ -1731,9 +1936,9 @@ __setup("nofrontswap", no_frontswap);
 
 static int __init zcache_init(void)
 {
-#ifdef CONFIG_SYSFS
 	int ret = 0;
 
+#ifdef CONFIG_SYSFS
 	ret = sysfs_create_group(mm_kobj, &zcache_attr_group);
 	if (ret) {
 		pr_err("zcache: can't create sysfs\n");
