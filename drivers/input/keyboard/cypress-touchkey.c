@@ -346,6 +346,8 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 
 	devdata->pdata->touchkey_onoff(TOUCHKEY_ON);
 
+
+
 	if (i2c_touchkey_write_byte(devdata, devdata->backlight_on)) {
 		devdata->is_dead = true;
 		devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
@@ -361,7 +363,14 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 
 	up(&enable_sem);
 
-	bl_set_timeout();
+#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_BLN
+	/*
+	 * Disallow powering off the touchkey controller
+	 * while a led notification is ongoing
+	 */
+	if(!bln_notification_ongoing)
+		bl_set_timeout();
+#endif
 }
 #endif
 
