@@ -82,9 +82,10 @@ static struct cpufreq_frequency_table s5pv210_freq_table[] = {
 	{L2, 1200*1000},
 	{L3, 1000*1000},
 	{L4, 800*1000},
-	{L5, 400*1000},
-	{L6, 200*1000},
-	{L7, 100*1000},
+	{L5, 600*1000},
+	{L6, 400*1000},
+	{L7, 200*1000},
+	{L8, 100*1000},
 	{0, CPUFREQ_TABLE_END},
 };
 
@@ -98,7 +99,7 @@ struct s5pv210_dvs_conf {
 
 #ifdef CONFIG_DVFS_LIMIT
 static unsigned int g_dvfs_high_lock_token = 0;
-static unsigned int g_dvfs_high_lock_limit = 8;
+static unsigned int g_dvfs_high_lock_limit = 8; // still right?
 static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 //static DEFINE_MUTEX(dvfs_high_lock);
 #endif
@@ -132,7 +133,8 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 		.arm_volt   = DVSARM5,
 		.int_volt   = DVSINT5,
 	},
-	[L5] = {
+//600
+	[L5] = { 
 		.arm_volt   = DVSARM6,
 		.int_volt   = DVSINT5,
 	},
@@ -142,11 +144,15 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 	[L7] = {
 		.arm_volt   = DVSARM8,
+		.int_volt   = DVSINT5,
+	},
+	[L8] = {
+		.arm_volt   = DVSARM8,
 		.int_volt   = DVSINT6,
 	},
 };
 
-static u32 clkdiv_val[8][11] = {
+static u32 clkdiv_val[9][11] = {
 	/*
 	 * Clock divider value for following
 	 * { APLL, A2M, HCLK_MSYS, PCLK_MSYS,
@@ -162,12 +168,14 @@ static u32 clkdiv_val[8][11] = {
 	/* L3 : [1000/200/200/100][166/83][133/66][200/200] */
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L4 : [800/200/200/100][166/83][133/66][200/200] */
-	{0, 3, 3, 1, 3, 1, 4, 1, 3, 0, 0}, 
-	/* L5: [400/200/200/100][166/83][133/66][200/200] */
+	{0, 3, 3, 1, 3, 1, 4, 1, 3, 0, 0},
+	/* L5 : [600/200/200/100][166/83][133/66][200/200] */
+ 	{1, 3, 2, 1, 3, 1, 4, 1, 3, 0, 0},
+	/* L6: [400/200/200/100][166/83][133/66][200/200] */
 	{1, 3, 1, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* L6 : [200/200/200/100][166/83][133/66][200/200] */
+	/* L7 : [200/200/200/100][166/83][133/66][200/200] */
 	{3, 3, 0, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* L7 : [100/100/100/100][83/83][66/66][100/100] */
+	/* L8 : [100/100/100/100][83/83][66/66][100/100] */
 	{7, 7, 0, 0, 7, 0, 9, 0, 7, 0, 0},
 };
 
@@ -179,7 +187,7 @@ static bool pllbus_changing = false;
 static int oc_value = 100;
 
 static unsigned long sleep_freq;
-static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1000000, 800000, 800000, 800000, 800000};
+static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1000000, 800000, 800000, 800000, 800000, 800000};
 
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
 #endif
