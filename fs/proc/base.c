@@ -201,7 +201,6 @@ static int proc_root_link(struct inode *inode, struct path *path)
 	return result;
 }
 
-
 struct mm_struct *mm_for_maps(struct task_struct *task)
 {
 	return mm_access(task, PTRACE_MODE_READ);
