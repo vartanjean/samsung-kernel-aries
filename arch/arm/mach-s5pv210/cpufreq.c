@@ -743,6 +743,11 @@ void liveoc_update(unsigned int oc_value)
 }
 EXPORT_SYMBOL(liveoc_update);
 
+unsigned long get_gpuminfreq(void)
+{
+    return s5pv210_freq_table[L6].frequency;
+}
+EXPORT_SYMBOL(get_gpuminfreq);
 #endif
 
 #ifdef CONFIG_CUSTOM_VOLTAGE
@@ -824,13 +829,6 @@ void customvoltage_freqvolt(unsigned long * freqs, unsigned long * arm_voltages,
     return;
 }
 EXPORT_SYMBOL(customvoltage_freqvolt);
-
-unsigned long get_gpuminfreq(void)
-{
-    return s5pv210_freq_table[L6].frequency;
-}
-EXPORT_SYMBOL(get_gpuminfreq);
-
 #endif
 
 static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
