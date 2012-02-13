@@ -620,7 +620,7 @@ config CUSTOM_VOLTAGE
 
 config BLD
        bool "Support for Backlight Dimmer"
-       default y
+       default n
        help
          Say Y here to enable Backlight Dimmer
 
