@@ -10,11 +10,13 @@ build="Devil_1.1"
 	rm "drivers/input/keyboard/cypress-touchkey.c"
 	cp "drivers/input/keyboard/cypress-touchkey.led" "drivers/input/keyboard/cypress-touchkey.c"
 
-	sed -i 's/^.*BLD.*$//' arch/arm/configs/aries_galaxysmtd_defconfig;
-	echo 'CONFIG_BLD=y' >> arch/arm/configs/aries_galaxysmtd_defconfig;
+	sed -i 's/^.*BLD.*$//' arch/arm/configs/aries_galaxysmtd_defconfig
+	echo 'CONFIG_BLD=y' >> arch/arm/configs/aries_galaxysmtd_defconfig
 
-	sed -i 's/^.*KEYPAD_CYPRESS_TOUCH_BLN.*$//' arch/arm/configs/aries_galaxysmtd_defconfig;
-	echo '# CONFIG_KEYPAD_CYPRESS_TOUCH_BLN is not set' >> arch/arm/configs/aries_galaxysmtd_defconfig;
+	sed -i 's/^.*KEYPAD_CYPRESS_TOUCH_BLN.*$//' arch/arm/configs/aries_galaxysmtd_defconfig
+	echo '# CONFIG_KEYPAD_CYPRESS_TOUCH_BLN is not set' >> arch/arm/configs/aries_galaxysmtd_defconfig
+
+	sed -e "/^ *$/d" arch/arm/configs/aries_galaxysmtd_defconfig
 
 
 ########################## BFS kernel ##########################################
@@ -35,7 +37,7 @@ sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+#make -j4
 
 echo "creating boot.img"
 if [ ! -d "release/$light/BFS/voodoo" ];
@@ -64,7 +66,7 @@ sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+#make -j4
 
 echo "creating boot.img"
 if [ ! -d "release/$light/BFS/no_voodoo" ];
@@ -98,7 +100,7 @@ sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+#make -j4
 
 echo "creating boot.img"
 if [ ! -d "release/$light/CFS/voodoo" ];
@@ -131,7 +133,7 @@ sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+#make -j4
 
 echo "creating boot.img"
 if [ ! -d "release/$light/CFS/no_voodoo" ];
@@ -159,6 +161,8 @@ echo "boot.img ready"
 
 	sed -i 's/^.*KEYPAD_CYPRESS_TOUCH_BLN.*$//' arch/arm/configs/aries_galaxysmtd_defconfig
 	echo 'CONFIG_KEYPAD_CYPRESS_TOUCH_BLN=y' >> arch/arm/configs/aries_galaxysmtd_defconfig
+
+	sed -e "/^ *$/d" arch/arm/configs/aries_galaxysmtd_defconfig
 
 ############### BFS kernel #########################
 scheduler="BFS"

@@ -214,3 +214,4 @@ ENTRY(s5pv210_didle_resume)
         nop					@ second-to-last before mmu
 
 	mov	pc, r2				@ go back to virtual address
+

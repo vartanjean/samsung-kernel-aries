@@ -89,13 +89,18 @@ IMG_UINT32   PVRSRV_BridgeDispatchKM( IMG_UINT32  Ioctl,
  * In arch/arm/mach-s5pv210/cpufreq.c, the bus speed is only lowered when the
  * CPU freq is below 200MHz.
  */
+
+
+
 #define MIN_CPU_KHZ_FREQ 200000
+#define CPU_LOW_SPEED 100000
 
 static struct clk *g3d_clock;
 static struct regulator *g3d_pd_regulator;
-
+ 
 #ifdef CONFIG_LIVE_OC
 extern unsigned long get_gpuminfreq(void);
+extern unsigned long lowest_step(void);
 #endif
 
 static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
@@ -108,6 +113,7 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 
 	/* This is our indicator of GPU activity */
 	if (regulator_is_enabled(g3d_pd_regulator))
+
 #ifdef CONFIG_LIVE_OC
     cpufreq_verify_within_limits(policy, get_gpuminfreq(),
                policy->cpuinfo.max_freq);
@@ -116,8 +122,23 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 					     policy->cpuinfo.max_freq);
 #endif
 
+else 
+
+#ifdef CONFIG_LIVE_OC
+	cpufreq_verify_within_limits(policy, lowest_step(),
+               policy->cpuinfo.max_freq);
+#else
+	cpufreq_verify_within_limits(policy, CPU_LOW_SPEED,
+					     policy->cpuinfo.max_freq);
+#endif
+
+
 	return 0;
 }
+
+
+
+
 
 static struct notifier_block cpufreq_limit_notifier = {
 	.notifier_call = limit_adjust_cpufreq_notifier,
@@ -141,7 +162,10 @@ static PVRSRV_ERROR DisableSGXClocks(void)
 	return PVRSRV_OK;
 }
 
+
+
 #endif /* defined(SUPPORT_ACTIVE_POWER_MANAGEMENT) */
+
 
 /*!
 ******************************************************************************

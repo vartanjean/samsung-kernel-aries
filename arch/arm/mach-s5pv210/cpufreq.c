@@ -21,11 +21,14 @@
 #include <linux/regulator/consumer.h>
 #include <linux/cpufreq.h>
 #include <linux/platform_device.h>
+#include <linux/device.h>
 
 #include <mach/map.h>
 #include <mach/regs-clock.h>
 #include <mach/cpu-freq-v210.h>
 #include <mach/voltages.h>
+
+//static int disable_min_freq = 0;
 
 static struct clk *cpu_clk;
 static struct clk *dmc0_clk;
@@ -748,7 +751,16 @@ unsigned long get_gpuminfreq(void)
     return s5pv210_freq_table[L6].frequency;
 }
 EXPORT_SYMBOL(get_gpuminfreq);
+
+unsigned long lowest_step(void)
+{
+    return s5pv210_freq_table[L7].frequency;
+}
+EXPORT_SYMBOL(lowest_step);
+
 #endif
+
+
 
 #ifdef CONFIG_CUSTOM_VOLTAGE
 static const int num_freqs = sizeof(dvs_conf) / sizeof(struct s5pv210_dvs_conf);
