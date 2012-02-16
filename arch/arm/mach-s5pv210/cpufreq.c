@@ -28,7 +28,6 @@
 #include <mach/cpu-freq-v210.h>
 #include <mach/voltages.h>
 
-//static int disable_min_freq = 0;
 
 static struct clk *cpu_clk;
 static struct clk *dmc0_clk;
