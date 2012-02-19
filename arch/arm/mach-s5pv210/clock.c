@@ -432,6 +432,16 @@ static struct clk init_clocks_off[] = {
 		.enable		= s5pv210_clk_ip2_ctrl,
 		.ctrlbit	= (1<<18),
 	}, {
+#ifdef CONFIG_SAMSUNG_GALAXYSB
+		.name		= "tsi",
+		.id		= -1,
+		.parent		= &clk_pclk_psys.clk,
+		.enable		= s5pv210_clk_ip2_ctrl,
+		.ctrlbit	= S5P_CLKGATE_IP2_TSI,
+	
+	}, {
+#endif
+
 		.name		= "hsmmc",
 		.id		= 3,
 		.parent		= &clk_hclk_psys.clk,

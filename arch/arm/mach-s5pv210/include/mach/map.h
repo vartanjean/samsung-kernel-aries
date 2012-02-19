@@ -89,6 +89,13 @@
 
 #define S5PV210_PA_AUDSS		(0xEEE10000)
 
+/* s3c-tsi */
+
+#define S5PV210_PA_TSI		(0xEB400000)
+#define	S5P_PA_TSI		S5PV210_PA_TSI
+#define S5P_SZ_TSI		SZ_256
+
+
 #define S5PV210_PA_IIS0			0xEEE30000
 #define S5PV210_PA_IIS1			0xE2100000
 #define S5PV210_PA_IIS2			0xE2A00000
@@ -155,10 +162,19 @@
 #define S5P_PA_ROTATOR		S5PV210_PA_ROTATOR
 #define S5P_SZ_ROTATOR		SZ_1M
 
+
+#ifdef CONFIG_SAMSUNG_GALAXYSB
+/* fimg2d onecosmic fix */
+#define S5PV210_PA_G2D	(0xFA000000)
+#define S5P_PA_G2D		S5PV210_PA_G2D
+#define S5P_SZ_G2D		SZ_1M
+#else
+
 /* fimg2d */
 #define S5PV210_PA_FIMG2D	(0xFA000000)
 #define S5P_PA_FIMG2D		S5PV210_PA_FIMG2D
 #define S5P_SZ_FIMG2D		SZ_1M
+#endif
 
 /* Compatibiltiy Defines */
 
