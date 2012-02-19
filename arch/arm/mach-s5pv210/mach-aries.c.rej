@@ -1,0 +1,28 @@
+--- arch/arm/mach-s5pv210/mach-aries.c	2011-10-07 21:33:34.000000000 -0300
++++ arch/arm/mach-s5pv210/mach-aries.c	2011-10-07 21:45:55.116258160 -0300
+@@ -1885,6 +1993,17 @@
+ 	ce147_ldo_en(FALSE);
+ 
+ 	mdelay(1);
++
++
++    		/*	 isdbt init onecosmic fix */
++	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
++	udelay(50);
++	printk(KERN_ERR "contenido de err: %d \n", (err));
++	gpio_direction_output(GPIO_ISDBT_PWR_EN,1);
++	printk(KERN_ERR "set to output and low\n");
++	mdelay(1);
++	gpio_free(GPIO_ISDBT_PWR_EN);
++
+ 	
+ 	gpio_free(GPIO_CAM_MEGA_EN);
+ 	gpio_free(GPIO_CAM_MEGA_nRST);
+@@ -5171,6 +5361,7 @@
+ 	&sec_device_btsleep,
+ 	&ram_console_device,
+ 	&sec_device_wifi,
++	&s3c_device_tsi,
+ 
+ };
+ 

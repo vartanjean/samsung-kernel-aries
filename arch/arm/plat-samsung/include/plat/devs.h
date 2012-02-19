@@ -58,6 +58,8 @@ extern struct platform_device s3c64xx_device_ac97;
 
 extern struct platform_device s3c_device_ts;
 
+extern struct platform_device s3c_device_tsi;
+
 extern struct platform_device s3c_device_fb;
 
 extern struct platform_device s3c_device_fimc0;
@@ -177,6 +179,8 @@ extern struct platform_device exynos4_device_sysmmu;
 extern struct platform_device s5p_device_rtc;
 
 extern struct platform_device s3c_device_adc;
+
+extern struct platform_device s3c_device_tsi; //oc
 /* s3c2440 specific devices */
 
 extern struct platform_device s5pv210_device_pdma0;

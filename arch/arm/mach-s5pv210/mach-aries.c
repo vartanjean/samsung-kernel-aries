@@ -1624,6 +1624,11 @@ static void ce147_init(void)
 	/* CAM_MEGA_EN - GPJ0(6) */
 	if (gpio_request(GPIO_CAM_MEGA_EN, "GPJ0") < 0)
 		pr_err("failed gpio_request(GPJ0) for camera control\n");
+//	/* isdbt */	
+//	if (gpio_request(GPIO_ISDBT_PWR_EN, "ISDBT_ON") < 0)
+//		pr_err("failed gpio_request(GPJ3) for ISDBT ce147 init control\n");
+//		printk(KERN_ERR "failed gpio_request(GPJ3) for ISDBT ce147 init control\n");
+		
 }
 
 static int ce147_ldo_en(bool en)
@@ -1758,10 +1763,113 @@ off:
 	return result;
 }
 
+static int ce147_cam_en(bool onoff)
+{
+//DerekJi: Change the CAMERA GPIO PIN by changed LATIN H/W:2010.08.02
+#if defined(CONFIG_LATIN_ARIES_TV)              // camera switch implementation onecosmic
+	int err;
+	/* CAM_MEGA_EN - GPJ0(6) */
+	err = gpio_request(S5PV210_GPJ0(7), "GPJ0");
+        if (err) {
+                printk(KERN_ERR "failed to request GPJ0 for camera control\n");
+                return err;
+        }
+
+	gpio_direction_output(S5PV210_GPJ0(7), 0);
+	msleep(1);
+	gpio_direction_output(S5PV210_GPJ0(7), 1);
+	msleep(1);
+
+	if(onoff){
+	gpio_set_value(S5PV210_GPJ0(7), 1);
+	} else {
+		gpio_set_value(S5PV210_GPJ0(7), 0); 
+	}
+	msleep(1);
+
+	gpio_free(S5PV210_GPJ0(7));
+
+	return 0;
+#else
+	int err;
+	/* CAM_MEGA_EN - GPJ0(6) */
+	err = gpio_request(S5PV210_GPJ0(6), "GPJ0");
+        if (err) {
+                printk(KERN_ERR "failed to request GPJ0 for camera control\n");
+                return err;
+        }
+
+	gpio_direction_output(S5PV210_GPJ0(6), 0);
+	msleep(1);
+	gpio_direction_output(S5PV210_GPJ0(6), 1);
+	msleep(1);
+
+	if(onoff){
+	gpio_set_value(S5PV210_GPJ0(6), 1);
+	} else {
+		gpio_set_value(S5PV210_GPJ0(6), 0); 
+	}
+	msleep(1);
+
+	gpio_free(S5PV210_GPJ0(6));
+
+	return 0;
+#endif
+}
+
+static int ce147_cam_nrst(bool onoff)
+{
+	int err;
+
+	/* CAM_MEGA_nRST - GPJ1(5)*/
+	err = gpio_request(S5PV210_GPJ1(5), "GPJ1");
+        if (err) {
+                printk(KERN_ERR "failed to request GPJ1 for camera control\n");
+                return err;
+        }
+
+	gpio_direction_output(S5PV210_GPJ1(5), 0);
+	msleep(1);
+	gpio_direction_output(S5PV210_GPJ1(5), 1);
+	msleep(1);
+
+	gpio_set_value(S5PV210_GPJ1(5), 0);
+	msleep(1);
+
+	if(onoff){
+	gpio_set_value(S5PV210_GPJ1(5), 1);
+		msleep(1);
+	}
+	gpio_free(S5PV210_GPJ1(5));
+
+	return 0;
+}
+
+
+#if defined(CONFIG_ARIES_NTT)
+int bCamera_start = 0;
+EXPORT_SYMBOL(bCamera_start);
+#endif
+
+
 static int ce147_power_on(void)
 {	
 	int err;
 	bool TRUE = true;
+        printk(KERN_ERR "intializing ce147 power\n");
+
+	 
+	/*	 isdbt init onecosmic fix */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	printk(KERN_ERR "contenido de err: %d \n", (err));
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,0);
+	printk(KERN_ERR "set to output and low\n");
+	mdelay(1);
+	gpio_free(GPIO_ISDBT_PWR_EN);
+
+
+
 
 	if (ce147_regulator_init()) {
 			pr_err("Failed to initialize camera regulators\n");
@@ -1789,8 +1897,6 @@ static int ce147_power_on(void)
 	}
 
 	ce147_ldo_en(TRUE);
-
-	mdelay(1);
 
 	// CAM_VGA_nSTBY  HIGH		
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 0);
@@ -1829,6 +1935,16 @@ static int ce147_power_on(void)
 	gpio_direction_output(GPIO_CAM_MEGA_nRST, 0);
 
 	gpio_set_value(GPIO_CAM_MEGA_nRST, 1);
+#ifdef CONFIG_SAMSUNG_GALAXYSB
+    		/*	 isdbt init onecosmic fix */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	printk(KERN_ERR "contenido de err: %d \n", (err));
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,1);
+	printk(KERN_ERR "set to output and low\n");
+	mdelay(1);
+	gpio_free(GPIO_ISDBT_PWR_EN);
+#endif
 
 	gpio_free(GPIO_CAM_MEGA_EN);
 	gpio_free(GPIO_CAM_MEGA_nRST);
@@ -1846,6 +1962,7 @@ static int ce147_power_off(void)
 {
 	int err;
 	bool FALSE = false;
+        printk(KERN_ERR "Deinitializing ce147\n");
 
 	/* CAM_IO_EN - GPB(7) */
 	err = gpio_request(GPIO_GPB7, "GPB7");
@@ -1890,6 +2007,7 @@ static int ce147_power_off(void)
 
 		return err;
 	}
+
 
 	// CAM_VGA_nSTBY  LOW	
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 1);
@@ -1942,13 +2060,16 @@ static int ce147_power_en(int onoff)
 {
 /*	int bd_level; // unused variable */
 	int err = 0;
+	printk(KERN_ERR "ce147 power encendido\n"); //debug functions onecosmic
 #if 0
 	if(onoff){
+		printk(KERN_ERR "entro en bucle if onoff\n");
 		ce147_ldo_en(true);
 		s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
 		ce147_cam_en(true);
 		ce147_cam_nrst(true);
 	} else {
+		printk(KERN_ERR "entro en bucle if onoff en el else\n");
 		ce147_cam_en(false);
 		ce147_cam_nrst(false);
 		s3c_gpio_cfgpin(S5PV210_GPE1(3), 0);
@@ -1959,14 +2080,19 @@ static int ce147_power_en(int onoff)
 #endif
 
 	if (onoff != ce147_powered_on) {
-		if (onoff)
-			err = ce147_power_on();
+		if (onoff) {
+		err = ce147_power_on();
+		printk(KERN_ERR "entro en el onoff != poweron\n");
+		}
 		else {
+		printk(KERN_ERR "entro en el onoff != en el else, poweroff\n");
 			err = ce147_power_off();
 			s3c_i2c0_force_stop();
 		}
-		if (!err)
+		if (!err) {
 			ce147_powered_on = onoff;
+		printk(KERN_ERR "entro en el if !err\n");
+		}
 	}
 
 	return 0;
@@ -2160,6 +2286,18 @@ static int s5ka3dfx_power_on(void)
 	int err = 0;
 	int result;
 
+
+	/*	 isdbt init onecosmic fix */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	printk(KERN_ERR "contenido de err: %d \n", (err));
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,0);
+	printk(KERN_ERR "set to output and low\n");
+	mdelay(1);
+	gpio_free(GPIO_ISDBT_PWR_EN);
+
+	printk(KERN_ERR "s5ka3dfx power on\n");
+
 	if (s5ka3dfx_power_init()) {
 		pr_err("Failed to get all regulator\n");
 		return -EINVAL;
@@ -2250,6 +2388,8 @@ static int s5ka3dfx_power_off(void)
 {
 	int err;
 
+	printk(KERN_ERR "s5ka3dfx power off\n");
+	
 	if (/*!s5ka3dfx_vga_avdd ||*/ !s5ka3dfx_vga_vddio ||
 		!s5ka3dfx_cam_isp_host || !s5ka3dfx_vga_dvdd) {
 		pr_err("Faild to get all regulator\n");
@@ -2293,6 +2433,17 @@ static int s5ka3dfx_power_off(void)
 
 	udelay(1);
 
+    	
+    		/*	 isdbt init onecosmic fix */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	printk(KERN_ERR "contenido de err: %d \n", (err));
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,1);
+	printk(KERN_ERR "set to output and low\n");
+	mdelay(1);
+	gpio_free(GPIO_ISDBT_PWR_EN);
+
+
 	/* Turn VGA_AVDD_2.8V off */
 	/*err = regulator_disable(s5ka3dfx_vga_avdd);
 	if (err) {
@@ -2303,7 +2454,6 @@ static int s5ka3dfx_power_off(void)
 	gpio_free(GPIO_GPB7);
 	gpio_free(GPIO_CAM_VGA_nRST);
 	gpio_free(GPIO_CAM_VGA_nSTBY);
-
 	return err;
 }
 
@@ -2311,6 +2461,8 @@ static int s5ka3dfx_power_en(int onoff)
 {
 	int err = 0;
 	mutex_lock(&s5ka3dfx_lock);
+	
+	printk(KERN_ERR "s5ka3dfx power en??\n");
 	/* we can be asked to turn off even if we never were turned
 	 * on if something odd happens and we are closed
 	 * by camera framework before we even completely opened.
@@ -2708,6 +2860,12 @@ static struct i2c_board_info i2c_devs13[] __initdata = {
   	},
 };
 #endif
+
+static struct i2c_board_info i2c_devs13[]  __initdata = {
+	{
+		I2C_BOARD_INFO("fc8100", 0x77),
+	},
+};
 
 static struct resource ram_console_resource[] = {
 	{
@@ -4227,7 +4385,20 @@ static void aries_power_off(void)
 		pr_info("%s: PowerButton is not released.\n", __func__);
 		mdelay(1000);
 	}
+
 }
+static unsigned int ISDB_ON_sleep_gpio_table[][3] = {                                     //isdb implementation onecosmic
+    {GPIO_ISDBT_RST, S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_UP},                                //
+    {GPIO_ISDBT_PWR_EN, S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},                           //
+    {GPIO_I2C_SW, S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},                                 //
+};                                                                                        //
+                                                                                          //
+static unsigned int ISDB_OFF_sleep_gpio_table[][3] = {                                    //
+    {GPIO_ISDBT_RST, S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_UP},                                //
+    {GPIO_ISDBT_PWR_EN, S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},                           //
+    {GPIO_I2C_SW, S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},                                 //
+};
+
 
 /* this table only for B4 board */
 static unsigned int aries_sleep_gpio_table[][3] = {
@@ -4741,6 +4912,23 @@ void s3c_config_sleep_gpio_table(int array_size, unsigned int (*gpio_table)[3])
 
 void s3c_config_sleep_gpio(void)
 {
+
+	//u32 i, gpio;
+    
+	int ISDB_ON = gpio_get_value(GPIO_ISDBT_PWR_EN);   //isdb imlpementation onecosmic
+	printk(KERN_ERR "ISDBT_PWR_EN : %s\n", ISDB_ON? "High":"Low");
+	
+	if(ISDB_ON)
+	{
+		s3c_config_sleep_gpio_table(ARRAY_SIZE(ISDB_ON_sleep_gpio_table),
+						ISDB_ON_sleep_gpio_table);
+	}
+	else
+	{
+		s3c_config_sleep_gpio_table(ARRAY_SIZE(ISDB_OFF_sleep_gpio_table),
+						ISDB_OFF_sleep_gpio_table);
+	}
+	
 	/* setting the alive mode registers */
 	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
 #if defined(CONFIG_SAMSUNG_FASCINATE)
@@ -5104,6 +5292,7 @@ static struct platform_device watchdog_device = {
 
 static struct platform_device *aries_devices[] __initdata = {
 	&watchdog_device,
+//	&s3c_device_tsi,
 #ifdef CONFIG_FIQ_DEBUGGER
 	&s5pv210_device_fiqdbg_uart2,
 #endif
@@ -5237,6 +5426,9 @@ static struct platform_device *aries_devices[] __initdata = {
 	&ram_console_device,
 	&sec_device_wifi,
 	&samsung_asoc_dma,
+#ifdef CONFIG_SAMSUNG_GALAXYSB
+	&s3c_device_tsi,
+#endif
 };
 
 static void __init aries_map_io(void)
@@ -5532,6 +5724,10 @@ static void __init aries_machine_init(void)
 
 #if defined (CONFIG_SAMSUNG_CAPTIVATE)
   	i2c_register_board_info(13, i2c_devs13, ARRAY_SIZE(i2c_devs13)); /* audience A1026 */
+#endif
+
+#if defined (CONFIG_SAMSUNG_GALAXYSB)
+	i2c_register_board_info(0, i2c_devs13, ARRAY_SIZE(i2c_devs13));
 #endif
 
 	/* panel */

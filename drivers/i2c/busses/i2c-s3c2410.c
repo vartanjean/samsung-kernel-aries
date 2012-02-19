@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 
@@ -33,10 +33,9 @@
 #include <linux/platform_device.h>
 #include <linux/clk.h>
 #include <linux/cpufreq.h>
-#include <linux/slab.h>
-#include <linux/io.h>
 
 #include <asm/irq.h>
+#include <asm/io.h>
 
 #include <plat/regs-iic.h>
 #include <plat/iic.h>
@@ -470,7 +469,7 @@ static int s3c24xx_i2c_set_master(struct s3c24xx_i2c *i2c)
 	}
 
 	writel(iicstat & ~S3C2410_IICSTAT_TXRXEN, i2c->regs + S3C2410_IICSTAT);
-	if (!(readl(i2c->regs + S3C2410_IICSTAT) & S3C2410_IICSTAT_BUSBUSY))
+	if(!(readl(i2c->regs + S3C2410_IICSTAT) & S3C2410_IICSTAT_BUSBUSY))
 		return 0;
 
 	return -ETIMEDOUT;
@@ -486,6 +485,7 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 {
 	unsigned long timeout;
 	int ret;
+	struct s3c2410_platform_i2c *pdata = i2c->dev->platform_data;
 
 	if (i2c->suspended)
 		return -EIO;
@@ -523,11 +523,75 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 
 	/* ensure the stop has been through the bus */
 
+#ifdef CONFIG_VIDEO_ISX005
+	if(pdata->bus_num  == 0) {
+		udelay(20);
+	}
+#endif
 	udelay(10);
 
  out:
 	return ret;
 }
+
+#include <mach/gpio.h>
+#include <mach/gpio-aries.h>
+#if defined(CONFIG_LATIN_ARIES_B) 
+//&& defined(CONFIG_LATIN_REV_06) i2c switching implementation onecosmic
+static inline int is_tv(struct i2c_msg *msgs)
+{
+	return ((u16)0x77 == msgs->addr);
+}
+
+static inline int is_camera(struct i2c_msg *msgs)
+{
+	return ( ((u16)0x3c == msgs->addr)		//primary cam
+			|| ((u16)0x62 == msgs->addr) );	//secondary cam
+}
+
+static inline int is_device_changed(struct i2c_msg *msgs)
+{
+	static u16 old_addr = 0x0;
+
+	if (old_addr != msgs->addr) {
+		old_addr = msgs->addr;
+		return 1;
+	}
+	else
+		return 0;
+}
+
+static inline void set_i2c_switch(struct i2c_adapter *adap,
+			struct i2c_msg *msgs)
+{
+	struct s3c24xx_i2c *i2c = (struct s3c24xx_i2c *)adap->algo_data;
+	int err;
+
+	 
+	
+	if (!is_tv(msgs) && !is_camera(msgs))
+		return;
+
+	if (is_device_changed(msgs)) {
+		err = gpio_request(GPIO_I2C_SW, "I2C_SW");
+		if (err)
+			dev_err(i2c->dev, "%s, %s : gpio_request() failed\n",
+					__FILE__, __FUNCTION__);
+
+		if (is_camera(msgs)) {
+			printk("%s : camera\n", __FUNCTION__);
+			gpio_direction_output(GPIO_I2C_SW, 0);	//set to output and low
+		}
+		else if (is_tv(msgs)) {
+			printk("%s : tv\n", __FUNCTION__);
+			gpio_direction_output(GPIO_I2C_SW, 1);	//set to output and high
+		}
+
+		gpio_free(GPIO_I2C_SW);
+	}
+
+}
+#endif	//defined(CONFIG_LATIN_ARIES_B) && defined(CONFIG_LATIN_REV_06)
 
 /* s3c24xx_i2c_xfer
  *
@@ -544,6 +608,15 @@ static int s3c24xx_i2c_xfer(struct i2c_adapter *adap,
 
 	clk_enable(i2c->clk);
 
+#if defined(CONFIG_LATIN_ARIES_B) 
+//&& defined(CONFIG_LATIN_REV_06) i2c switch mode implementation onecosmic
+	/* latin_cam:namkh 2010.06.18,
+	 * i2c switching setting for camera and TV */
+
+	set_i2c_switch(adap, msgs);
+//	printk("i2c switch message: \n", __FUNCTION__);
+#endif
+
 	for (retry = 0; retry < adap->retries; retry++) {
 
 		ret = s3c24xx_i2c_doxfer(i2c, msgs, num);
@@ -552,7 +625,8 @@ static int s3c24xx_i2c_xfer(struct i2c_adapter *adap,
 			clk_disable(i2c->clk);
 			return ret;
 		}
-
+////// Onecosmic patch is different here ///////
+////////////////////////////////////////////////
 		dev_dbg(i2c->dev, "Retrying transmission (%d)\n", retry);
 
 		udelay(100);
@@ -667,7 +741,7 @@ static int s3c24xx_i2c_cpufreq_transition(struct notifier_block *nb,
 	int ret;
 
 	clk_enable(i2c->clk);
-
+	
 	delta_f = clk_get_rate(i2c->clk) - i2c->clkrate;
 
 	/* if we're post-change and the input clock has slowed down
@@ -686,7 +760,7 @@ static int s3c24xx_i2c_cpufreq_transition(struct notifier_block *nb,
 		else
 			dev_info(i2c->dev, "setting freq %d\n", got);
 	}
-
+    
 	clk_disable(i2c->clk);
 
 	return 0;
@@ -752,7 +826,6 @@ static int s3c24xx_i2c_init(struct s3c24xx_i2c *i2c)
 		dev_err(i2c->dev, "cannot meet bus frequency required\n");
 		return -EINVAL;
 	}
-
 	/* todo - check that the i2c lines aren't being dragged anywhere */
 
 	dev_dbg(i2c->dev, "bus frequency set to %d KHz\n", freq);
@@ -781,7 +854,7 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "no platform data\n");
 		return -EINVAL;
 	}
-
+    
 	i2c = kzalloc(sizeof(struct s3c24xx_i2c), GFP_KERNEL);
 	if (!i2c) {
 		dev_err(&pdev->dev, "no memory for state\n");
@@ -814,14 +887,12 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	clk_enable(i2c->clk);
 
 	/* map the registers */
-
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (res == NULL) {
 		dev_err(&pdev->dev, "cannot find IO resource\n");
 		ret = -ENOENT;
 		goto err_clk;
 	}
-
 	i2c->ioarea = request_mem_region(res->start, resource_size(res),
 					 pdev->name);
 
@@ -848,11 +919,9 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	i2c->adap.dev.parent = &pdev->dev;
 
 	/* initialise the i2c controller */
-
 	ret = s3c24xx_i2c_init(i2c);
 	if (ret != 0)
 		goto err_iomap;
-
 	/* find the IRQ for this unit (note, this relies on the init call to
 	 * ensure no current IRQs pending
 	 */
@@ -884,7 +953,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	 */
 
 	i2c->adap.nr = pdata->bus_num;
-
 	ret = i2c_add_numbered_adapter(&i2c->adap);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to add bus to i2c core\n");
