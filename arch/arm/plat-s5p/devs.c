@@ -533,13 +533,11 @@ static struct resource s5p_tvout_resources[] = {
 		.end    = IRQ_TVENC,
 		.flags  = IORESOURCE_IRQ,
 	},
-#ifdef CONFIG_SAMSUNG_GALAXYSB
 	[8] = {
 		.start	= IRQ_EINT5,
 		.end	= IRQ_EINT5,
 		.flags	= IORESOURCE_IRQ,
 	},
-#endif
 
 };
 
@@ -550,7 +548,6 @@ struct platform_device s5p_device_tvout = {
 	.resource       = s5p_tvout_resources,
 };
 
-#ifdef CONFIG_SAMSUNG_GALAXYSB
 /* FIMG-2D controller Onecosmic fix*/
 static struct resource s5p_g2d_resource[] = {
 
@@ -574,7 +571,6 @@ struct platform_device s5p_device_g2d = {
 };
 
 EXPORT_SYMBOL(s5p_device_g2d);
-#endif
 
 /* CEC */
 static struct resource s5p_cec_resources[] = {
@@ -683,7 +679,6 @@ struct platform_device s3c_device_usbgadget = {
 	.resource	= s3c_usbgadget_resource,
 };
 #endif
-#ifdef CONFIG_SAMSUNG_GALAXYSB
 /* TSI Interface */
 static u64 tsi_dma_mask = 0xffffffffUL;
 
@@ -714,7 +709,6 @@ struct platform_device s3c_device_tsi = {
 };
 
 EXPORT_SYMBOL(s3c_device_tsi);
-#endif
 
 #if defined CONFIG_USB_S3C_OTG_HOST
 /* USB Device (OTG hcd)*/
