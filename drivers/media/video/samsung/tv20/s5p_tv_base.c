@@ -470,7 +470,7 @@ static int s5p_tv_vid_release(struct file *file)
  */
 static int s5p_tv_v_open(struct file *file)
 {
-	int ret = 0, err;
+	int ret = 0;
 
 	printk(KERN_INFO "%s", __func__);
 	mutex_lock(mutex_for_fo);
@@ -500,14 +500,6 @@ static int s5p_tv_v_open(struct file *file)
 		(s5ptv_status.tvout_param.out_mode == TVOUT_OUTPUT_HDMI_RGB))
 */
 //				tv_phy_power(true);
-#if !defined(CONFIG_LATIN_ARIES_B)
-
-	err = gpio_request(S5PV210_GPJ4(4), "TV_EN");
-	udelay(50);
-	gpio_set_value(S5PV210_GPJ4(4),1);
-	udelay(50);
-#endif
-
 #ifdef CONFIG_PM
 	} else
 		BASEPRINTK("tv is off\n");

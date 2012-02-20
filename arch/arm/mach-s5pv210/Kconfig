@@ -329,16 +329,6 @@ config SAMSUNG_EPIC
 endchoice
 endif
 
-config LATIN_ARIES_TV
-	bool "aries TV"
-	depends on MACH_ARIES
-	default y
-
-config LATIN_ARIES_B
-	bool "Latin aries b"
-	depends on MACH_ARIES
-	default y
-
 config S5PV210_SETUP_FB
 	bool
 	depends on FB_S3C

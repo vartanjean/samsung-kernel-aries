@@ -533,12 +533,6 @@ static struct resource s5p_tvout_resources[] = {
 		.end    = IRQ_TVENC,
 		.flags  = IORESOURCE_IRQ,
 	},
-	[8] = {
-		.start	= IRQ_EINT5,
-		.end	= IRQ_EINT5,
-		.flags	= IORESOURCE_IRQ,
-	},
-
 };
 
 struct platform_device s5p_device_tvout = {
@@ -547,30 +541,6 @@ struct platform_device s5p_device_tvout = {
 	.num_resources  = ARRAY_SIZE(s5p_tvout_resources),
 	.resource       = s5p_tvout_resources,
 };
-
-/* FIMG-2D controller Onecosmic fix*/
-static struct resource s5p_g2d_resource[] = {
-
-    [0] = {
-	.start	= S5P_PA_G2D,
-	.end	= S5P_PA_G2D + S5P_SZ_G2D - 1,
-        .flags	= IORESOURCE_MEM,
-    },
-    [1] = {
-	.start	= IRQ_2D,
-	.end	= IRQ_2D,
-	.flags	= IORESOURCE_IRQ,
-    }
-};
-
-struct platform_device s5p_device_g2d = {
-	.name		= "s5p-g2d",
-	.id		= -1,
-	.num_resources	= ARRAY_SIZE(s5p_g2d_resource),
-	.resource	= s5p_g2d_resource
-};
-
-EXPORT_SYMBOL(s5p_device_g2d);
 
 /* CEC */
 static struct resource s5p_cec_resources[] = {
@@ -679,36 +649,6 @@ struct platform_device s3c_device_usbgadget = {
 	.resource	= s3c_usbgadget_resource,
 };
 #endif
-/* TSI Interface */
-static u64 tsi_dma_mask = 0xffffffffUL;
-
-static struct resource s3c_tsi_resource[] = {
-	[0] = {
-		.start = S5P_PA_TSI,
-		.end   = S5P_PA_TSI + S5P_SZ_TSI -1,
-		.flags = IORESOURCE_MEM,
-	},
-	[1] = {
-		.start = IRQ_TSI,
-		.end   = IRQ_TSI,
-		.flags = IORESOURCE_IRQ,
-	}
-
-};
-
-struct platform_device s3c_device_tsi = {
-	.name		= "s3c-tsi",
-	.id		= -1,
-	.num_resources	= ARRAY_SIZE(s3c_tsi_resource),
-	.resource	= s3c_tsi_resource,
-	.dev		= {
-		.dma_mask		= &tsi_dma_mask,
-		.coherent_dma_mask	= 0xffffffffUL
-	}
-	
-};
-
-EXPORT_SYMBOL(s3c_device_tsi);
 
 #if defined CONFIG_USB_S3C_OTG_HOST
 /* USB Device (OTG hcd)*/
