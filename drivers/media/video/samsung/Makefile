@@ -5,9 +5,6 @@ obj-$(CONFIG_VIDEO_JPEG_V2)	+= jpeg_v2/
 obj-$(CONFIG_VIDEO_TV20)        += tv20/
 #obj-$(CONFIG_VIDEO_G2D)		+= g2d/
 #obj-$(CONFIG_VIDEO_TSI)		+= tsi/
-if CONFIG_SAMSUNG_GALAXYSB
-obj-$(CONFIG_ISDBT_FC8100)	+= fc8100/
-obj-$(CONFIG_VIDEO_TSI)		+= tsi/
-endif
+
 EXTRA_CFLAGS += -Idrivers/media/video
 

@@ -6,7 +6,7 @@ build="Devil_1.1"
 
 	rm "arch/arm/mach-s5pv210/aries-touchkey-led.c"
 	cp "arch/arm/mach-s5pv210/aries-touchkey-led.led" "arch/arm/mach-s5pv210/aries-touchkey-led.c"
-	
+
 	rm "drivers/input/keyboard/cypress-touchkey.c"
 	cp "drivers/input/keyboard/cypress-touchkey.led" "drivers/input/keyboard/cypress-touchkey.c"
 
@@ -206,7 +206,7 @@ echo "boot.img ready"
 
 	rm "arch/arm/mach-s5pv210/aries-touchkey-led.c"
 	cp "arch/arm/mach-s5pv210/aries-touchkey-led.bln" "arch/arm/mach-s5pv210/aries-touchkey-led.c"
-	
+
 	rm "drivers/input/keyboard/cypress-touchkey.c"
 	cp "drivers/input/keyboard/cypress-touchkey.bln" "drivers/input/keyboard/cypress-touchkey.c"
 
