@@ -108,33 +108,30 @@ extern unsigned long lowest_step(void);
 #endif
 
 // sysfs for disableling min freq //
-//unsigned int disable_minfreq;
+unsigned int disable_minfreq;
 
 static int disable_min_freq = 0;
  
-
-static ssize_t disable_min_freq_store(struct kobject *kobj, struct kobj_attribute *attr,
-                         const char *buf, size_t count)
-{
-//	unsigned int input;
-//	int ret;
-
-//	ret = sscanf(buf, "%u", &input);
-
-//	if (input > 1)
-//		input = 1;
-
-//	disable_minfreq = input;
-
-        sscanf(buf, "%du", &disable_min_freq);
-        return count;
-}
-
 static ssize_t disable_min_freq_show(struct kobject *kobj, struct kobj_attribute *attr,
                         char *buf)
 {
        return sprintf(buf, "%d\n", disable_min_freq);
 }
+
+static ssize_t disable_min_freq_store(struct kobject *kobj, struct kobj_attribute *attr,
+                         const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+
+	ret = sscanf(buf, "%u", &input);
+
+	disable_minfreq = input;
+
+   //     sscanf(buf, "%du", &disable_min_freq);
+        return count;
+}
+
 
 static struct kobj_attribute disable_min_freq_attribute =
         __ATTR(disable_min_freq, 0666, disable_min_freq_show, disable_min_freq_store);
@@ -178,9 +175,10 @@ static void example_exit(void)
 //}
 //EXPORT_SYMBOL(disable_minfreq);
 
-static unsigned long disable_minfreq(void){
-return disable_min_freq;
-}
+
+//static unsigned long disable_minfreq(void){
+//return disable_min_freq;
+//}
 
 
 
@@ -205,7 +203,7 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 
 else 
 
-	if (disable_minfreq() == 0){ 
+	if (disable_minfreq == 0) 
 #ifdef CONFIG_LIVE_OC
 	cpufreq_verify_within_limits(policy, lowest_step(),
                policy->cpuinfo.max_freq);
@@ -214,7 +212,7 @@ else
 					     policy->cpuinfo.max_freq);
 #endif
 
-	}
+	
 
 	return 0;
 }

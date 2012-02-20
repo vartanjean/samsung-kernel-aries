@@ -67,9 +67,18 @@ cd release && {
 #	cp 91logger system/etc/init.d/ || exit 1
 #	cp S98system_tweak system/etc/init.d/ || exit 1
 #	cp 98crunchengine system/etc/init.d/ || exit 1
-	cp S70zipalign system/etc/init.d/ || exit 1
-#	cp lights.aries.so system/lib/hw/ || exit 1
-#        cp lights.aries.so.BLN system/lib/hw/lights.aries.so || exit 1
+#	cp S70zipalign system/etc/init.d/ || exit 1
+
+if [ "$light" = "BLN" ] 
+then
+        cp lights.aries.so.BLN system/lib/hw/lights.aries.so || exit 1
+	cp updater-script.BLN META-INF/com/google/android/updater-script || exit 1
+else
+	cp lights.aries.so system/lib/hw/|| exit 1
+	cp lights.goldfish.so system/lib/hw/|| exit 1
+	cp updater-script.LED META-INF/com/google/android/updater-script || exit 1
+fi
+
 	mkdir -p system/bin
 #	cp bin/rild_old system/bin/rild
 #	cp libril.so_old system/lib/libril.so
@@ -83,8 +92,8 @@ cd release && {
 #	mv ${REL}* ${TYPE} || exit 1
 } || exit 1
 
-mv *.zip $light/$scheduler/$color/${REL}.zip
-mv *.sha256sum $light/$scheduler/$color/${REL}.sha256sum
+#mv *.zip $light/$scheduler/$color/${REL}.zip
+#mv *.sha256sum $light/$scheduler/$color/${REL}.sha256sum
 
 echo ${REL}
 rm system/lib/modules/*
