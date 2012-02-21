@@ -99,7 +99,7 @@ struct s5pv210_dvs_conf {
 
 #ifdef CONFIG_DVFS_LIMIT
 static unsigned int g_dvfs_high_lock_token = 0;
-static unsigned int g_dvfs_high_lock_limit = 8; // still right?
+static unsigned int g_dvfs_high_lock_limit = 9; // right?
 static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 //static DEFINE_MUTEX(dvfs_high_lock);
 #endif
@@ -147,7 +147,7 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 		.int_volt   = DVSINT5,
 	},
 	[L8] = {
-		.arm_volt   = DVSARM8,
+		.arm_volt   = DVSARM9,
 		.int_volt   = DVSINT6,
 	},
 };
@@ -376,7 +376,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
-	if ((index == L7) || (freqs.old == s5pv210_freq_table[L7].frequency))
+	if ((index == L8) || (freqs.old == s5pv210_freq_table[L7].frequency))
 		bus_speed_changing = 1;
 
 #ifdef CONFIG_LIVE_OC
@@ -438,7 +438,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & ((1 << 7) | (1 << 3)));
 
 		/*
-		 * 3. DMC1 refresh count for 133Mhz if (index == L7) is
+		 * 3. DMC1 refresh count for 133Mhz if (index == L8) is
 		 * true refresh counter is already programed in upper
 		 * code. 0x287@83Mhz
 		 */
@@ -483,7 +483,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	/* ARM MCS value changed */
 	reg = __raw_readl(S5P_ARM_MCS_CON);
 	reg &= ~0x3;
-	if (index >= L6)
+	if (index >= L7)
 		reg |= 0x3;
 	else
 		reg |= 0x1;
@@ -566,7 +566,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 		/*
 		 * 10. DMC1 refresh counter
-		 * L7 : DMC1 = 100Mhz 7.8us/(1/100) = 0x30c
+		 * L8 : DMC1 = 100Mhz 7.8us/(1/100) = 0x30c
 		 * Others : DMC1 = 200Mhz 7.8us/(1/200) = 0x618
 		 */
 		if (!bus_speed_changing)
@@ -574,7 +574,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	}
 
 	/*
-	 * L7 level need to change memory bus speed, hence onedram clock divier
+	 * L8 level need to change memory bus speed, hence onedram clock divier
 	 * and memory refresh parameter should be changed
 	 */
 	if (bus_speed_changing) {
@@ -588,7 +588,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & (1 << 15));
 
 		/* Reconfigure DRAM refresh counter value */
-		if (index != L7) {
+		if (index != L8) {
 			/*
 			 * DMC0 : 166Mhz
 			 * DMC1 : 200Mhz
@@ -747,6 +747,18 @@ void liveoc_update(unsigned int oc_value)
     return;
 }
 EXPORT_SYMBOL(liveoc_update);
+
+unsigned long get_gpuminfreq(void)
+{
+    return s5pv210_freq_table[L7].frequency;
+}
+EXPORT_SYMBOL(get_gpuminfreq);
+
+unsigned long lowest_step(void)
+{
+    return s5pv210_freq_table[L8].frequency;
+}
+EXPORT_SYMBOL(lowest_step);
 
 #endif
 
