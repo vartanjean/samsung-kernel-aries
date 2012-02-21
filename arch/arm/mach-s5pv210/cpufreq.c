@@ -381,7 +381,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
-	if ((index == L8) || (freqs.old == s5pv210_freq_table[L7].frequency))
+	if ((index == L8) || (freqs.old == s5pv210_freq_table[L8].frequency))
 		bus_speed_changing = 1;
 
 #ifdef CONFIG_LIVE_OC
