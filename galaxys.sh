@@ -22,7 +22,7 @@ build="Devil_1.1"
 
 
 ########################## BFS kernel ##########################################
-scheduler="BFS"
+scheduler="CFS"
 echo "building for galaxy s"
 make aries_galaxysmtd_defconfig
 
