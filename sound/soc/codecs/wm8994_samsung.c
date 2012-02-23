@@ -135,7 +135,7 @@ select_route universal_wm8994_voicecall_paths[] = {
 	wm8994_set_voicecall_speaker, wm8994_set_voicecall_headset,
 	wm8994_set_voicecall_headphone, wm8994_set_voicecall_bluetooth,
 	wm8994_set_voicecall_tty_vco, wm8994_set_voicecall_tty_hco,
-	wm8994_set_voicecall_tty_full,
+	wm8994_set_voicecall_tty_full, wm8994_set_voicecall_dock_speaker,
 };
 
 select_mic_route universal_wm8994_mic_paths[] = {
@@ -296,7 +296,7 @@ static const char *playback_path[] = {
 };
 static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP",
 					"HP_NO_MIC", "BT", "TTY_VCO",
-					"TTY_HCO", "TTY_FULL"};
+					"TTY_HCO", "TTY_FULL", "DOCK_SPEAKER"};
 static const char *fmradio_path[] = {
 	"FMR_OFF", "FMR_SPK", "FMR_HP", "FMR_DUAL_MIX"
 };
@@ -627,6 +627,9 @@ static int wm8994_set_voice_path(struct snd_kcontrol *kcontrol,
 		return -ENODEV;
 	}
 
+	if(_dockredir && path_num == CALL_HP_NO_MIC)
+		path_num = CALL_DOCK_SPEAKER;
+
 	switch (path_num) {
 	case CALL_OFF:
 		DEBUG_LOG("Switching off output path\n");
@@ -639,6 +642,7 @@ static int wm8994_set_voice_path(struct snd_kcontrol *kcontrol,
 	case CALL_TTY_VCO:
 	case CALL_TTY_HCO:
 	case CALL_TTY_FULL:
+        case CALL_DOCK_SPEAKER:
 		DEBUG_LOG("routing  voice path to %s\n", mc->texts[path_num]);
 		break;
 	default:
@@ -841,11 +845,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 		case 8000:
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x2F00);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x3126);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0100);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0105);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
@@ -855,11 +859,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x1F00);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x86C2);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00E0);
-#else
-			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00E5);
-#endif
+#else*/
+			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00e5);
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -868,11 +872,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x1F00);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x3126);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0100);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0105);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -881,11 +885,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x1900);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0xE23E);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0100);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0105);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -894,11 +898,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x0F00);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x86C2);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00E0);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00E5);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -907,11 +911,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x0F00);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x3126);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0100);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0105);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -920,11 +924,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x0C00);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0xE23E);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0100);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0105);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -933,11 +937,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x0700);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x86C2);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00E0);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x00E5);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
@@ -946,11 +950,11 @@ static int configure_clock(struct snd_soc_codec *codec)
 			wm8994_write(codec, WM8994_FLL1_CONTROL_2, 0x0700);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_3, 0x3126);
 			wm8994_write(codec, WM8994_FLL1_CONTROL_5, 0x0C88);
-#ifdef CONFIG_PHONE_ARIES_CDMA
+/*#ifdef CONFIG_PHONE_ARIES_CDMA
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0100);
-#else
+#else*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_4, 0x0105);
-#endif
+/*#endif*/
 			wm8994_write(codec, WM8994_FLL1_CONTROL_1,
 				WM8994_FLL1_FRACN_ENA | WM8994_FLL1_ENA);
 			break;
