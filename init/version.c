@@ -44,9 +44,5 @@ const char linux_banner[] =
 
 const char linux_proc_banner[] =
 	"%s version %s"
-<<<<<<< HEAD
 	" (Devil_14.2_BLN)"
-=======
- "(Devil_1.1_CFS_BLN_CMC )"
->>>>>>> 84193a7... auto building. thx to zacharias.maladroid
 	" (" LINUX_COMPILER ") %s\n";
