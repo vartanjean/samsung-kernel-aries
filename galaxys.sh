@@ -42,10 +42,7 @@ echo "building "$scheduler" Kernel with "$light" and "$color""
 make -j4
 
 echo "creating boot.img"
-if [ ! -d "release/$light/$scheduler/$color" ];
-then
-	mkdir -p release/$light/$scheduler/$color
-fi
+
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
@@ -55,9 +52,9 @@ echo "launching packaging script"
 . ./packaging.inc
 release "${version}"
 
-exit 0
+rm boot.img
 
-
+########################################################################################################################
 
 echo "building for galaxy s"
 make aries_galaxysmtd_defconfig
@@ -70,7 +67,7 @@ echo 'CONFIG_FB_VOODOO=n
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="CMC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
@@ -85,6 +82,10 @@ release/build-scripts/mkshbootimg.py release/$light/BFS/no_voodoo/boot.img arch/
 echo "..."
 echo "boot.img ready"
 
+echo "launching packaging script"
+
+. ./packaging.inc
+release "${version}"
 
 ########################## CFS kernel ###########################
 scheduler="CFS"
@@ -104,11 +105,11 @@ echo 'CONFIG_FB_VOODOO=y
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="VC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-#make -j4
+make -j4
 
 echo "creating boot.img"
 if [ ! -d "release/$light/CFS/voodoo" ];
@@ -119,7 +120,11 @@ release/build-scripts/mkshbootimg.py release/$light/CFS/voodoo/boot.img arch/arm
 echo "..."
 echo "boot.img ready"
 
+echo "launching packaging script"
 
+. ./packaging.inc
+release "${version}"
+#######################################################################################################################
 echo "building for galaxy s"
 make aries_galaxysmtd_defconfig
 echo "building CFS kernel without voodoo color"
@@ -137,11 +142,11 @@ echo 'CONFIG_FB_VOODOO=n
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="CMC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-#make -j4
+make -j4
 
 echo "creating boot.img"
 if [ ! -d "release/$light/CFS/no_voodoo" ];
@@ -152,6 +157,10 @@ release/build-scripts/mkshbootimg.py release/$light/CFS/no_voodoo/boot.img arch/
 echo "..."
 echo "boot.img ready"
 
+echo "launching packaging script"
+
+. ./packaging.inc
+release "${version}"
 
 
 ######## Building BLN Kernel ##########################################################
@@ -185,7 +194,7 @@ echo 'CONFIG_FB_VOODOO=y
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="VC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
@@ -200,8 +209,11 @@ release/build-scripts/mkshbootimg.py release/$light/BFS/voodoo/boot.img arch/arm
 echo "..."
 echo "boot.img ready"
 
-#echo "launching packaging script"
-#./release/doit.sh
+echo "launching packaging script"
+
+. ./packaging.inc
+release "${version}"
+#######################################################################################################################
 
 echo "building for galaxy s"
 make aries_galaxysmtd_defconfig
@@ -214,7 +226,7 @@ echo 'CONFIG_FB_VOODOO=n
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="CMC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
@@ -229,6 +241,10 @@ release/build-scripts/mkshbootimg.py release/$light/BFS/no_voodoo/boot.img arch/
 echo "..."
 echo "boot.img ready"
 
+echo "launching packaging script"
+
+. ./packaging.inc
+release "${version}"
 
 ########################### CFS kernel #############################################
 scheduler="CFS"
@@ -248,7 +264,7 @@ echo 'CONFIG_FB_VOODOO=y
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="VC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
@@ -263,6 +279,12 @@ release/build-scripts/mkshbootimg.py release/$light/CFS/voodoo/boot.img arch/arm
 echo "..."
 echo "boot.img ready"
 
+echo "launching packaging script"
+
+. ./packaging.inc
+release "${version}"
+
+#######################################################################################################################
 
 echo "building for galaxy s"
 make aries_galaxysmtd_defconfig
@@ -295,5 +317,10 @@ fi
 release/build-scripts/mkshbootimg.py release/$light/CFS/no_voodoo/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
+
+echo "launching packaging script"
+
+. ./packaging.inc
+release "${version}"
 
 echo "all done!"

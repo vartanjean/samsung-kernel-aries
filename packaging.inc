@@ -29,9 +29,10 @@ fi
 } || exit 1
 
 echo ${REL}
-rm system/lib/modules/*
-rm system/lib/hw/*
-rm system/etc/init.d/*
+rm system/lib/modules/* 
+rm system/lib/hw/* 
+rm system/etc/init.d/* 
 rm system/bin/*
+cd ..
 return 0
 }
