@@ -4,17 +4,17 @@ build="Devil_1.1"
 
 	light="BLN"
 
-	rm "arch/arm/mach-s5pv210/aries-touchkey-led.c"
-	cp "arch/arm/mach-s5pv210/aries-touchkey-led.bln" "arch/arm/mach-s5pv210/aries-touchkey-led.c"
+#	rm "arch/arm/mach-s5pv210/aries-touchkey-led.c"
+#	cp "arch/arm/mach-s5pv210/aries-touchkey-led.bln" "arch/arm/mach-s5pv210/aries-touchkey-led.c"
 
-	rm "drivers/input/keyboard/cypress-touchkey.c"
-	cp "drivers/input/keyboard/cypress-touchkey.bln" "drivers/input/keyboard/cypress-touchkey.c"
+#	rm "drivers/input/keyboard/cypress-touchkey.c"
+#	cp "drivers/input/keyboard/cypress-touchkey.bln" "drivers/input/keyboard/cypress-touchkey.c"
 
 	sed -i 's/^.*BLD.*$//' arch/arm/configs/aries_galaxysmtd_defconfig
 	echo '# CONFIG_BLD is not set' >> arch/arm/configs/aries_galaxysmtd_defconfig
 
-	sed -i 's/^.*KEYPAD_CYPRESS_TOUCH_BLN.*$//' arch/arm/configs/aries_galaxysmtd_defconfig
-	echo 'CONFIG_KEYPAD_CYPRESS_TOUCH_BLN=y' >> arch/arm/configs/aries_galaxysmtd_defconfig
+#	sed -i 's/^.*KEYPAD_CYPRESS_TOUCH_BLN.*$//' arch/arm/configs/aries_galaxysmtd_defconfig
+#	echo 'CONFIG_KEYPAD_CYPRESS_TOUCH_BLN=y' >> arch/arm/configs/aries_galaxysmtd_defconfig
 
 	sed -e "/^ *$/d" arch/arm/configs/aries_galaxysmtd_defconfig > arch/arm/configs/aries_galaxysmtd_neu
 	mv arch/arm/configs/aries_galaxysmtd_neu arch/arm/configs/aries_galaxysmtd_defconfig
