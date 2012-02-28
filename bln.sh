@@ -1,5 +1,5 @@
 #!/bin/sh
-build="Devil_1.1"
+build="Devil_1.1.5"
 ######## Building BLN Kernel ##########################################################
 
 	light="BLN"
@@ -52,7 +52,6 @@ release "${version}"
 
 rm /release/boot.img
 
-exit 0
 ########################### CFS kernel #############################################
 scheduler="CFS"
 echo "building for galaxy s"
