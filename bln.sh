@@ -18,6 +18,7 @@ echo 'CONFIG_FB_VOODOO=y
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="VC"
 version="$build"_"$scheduler"_"$light"_"$color"
+export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
 sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
@@ -25,11 +26,8 @@ echo "building kernel"
 make -j4
 
 echo "creating boot.img"
-if [ ! -d "release/$light/BFS/voodoo" ];
-then
-	mkdir -p release/$light/BFS/voodoo
-fi
-release/build-scripts/mkshbootimg.py release/$light/BFS/voodoo/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
@@ -50,6 +48,7 @@ echo 'CONFIG_FB_VOODOO=n
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="CMC"
 version="$build"_"$scheduler"_"$light"_"$color"
+export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
 sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
@@ -57,11 +56,8 @@ echo "building kernel"
 make -j4
 
 echo "creating boot.img"
-if [ ! -d "release/$light/BFS/no_voodoo" ];
-then
-	mkdir -p release/$light/BFS/no_voodoo
-fi
-release/build-scripts/mkshbootimg.py release/$light/BFS/no_voodoo/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
@@ -88,6 +84,7 @@ echo 'CONFIG_FB_VOODOO=y
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="VC"
 version="$build"_"$scheduler"_"$light"_"$color"
+export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
 sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
@@ -95,11 +92,8 @@ echo "building kernel"
  make -j4
 
 echo "creating boot.img"
-if [ ! -d "release/$light/CFS/voodoo" ];
-then
-	mkdir -p release/$light/CFS/voodoo
-fi
-release/build-scripts/mkshbootimg.py release/$light/CFS/voodoo/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
@@ -127,18 +121,16 @@ echo 'CONFIG_FB_VOODOO=n
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 color="CMC"
 version="$build"_"$scheduler"_"$light"_"$color"
-sed "/Devil/c\ \"("$version" )\"" init/version.c > init/version.neu
+export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
+sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
 make -j4
 
 echo "creating boot.img"
-if [ ! -d "release/$light/CFS/no_voodoo" ];
-then
-	mkdir -p release/$light/CFS/no_voodoo
-fi
-release/build-scripts/mkshbootimg.py release/$light/CFS/no_voodoo/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
