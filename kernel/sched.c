@@ -511,7 +511,7 @@ struct rq {
 
 	unsigned long cpu_power;
 
-	unsigned char idle_at_tick;
+	unsigned char idle_balance;
 	/* For active balancing */
 	int post_schedule;
 	int active_balance;
@@ -1267,6 +1267,12 @@ void wake_up_idle_cpu(int cpu)
 	if (!tsk_is_polling(rq->idle))
 		smp_send_reschedule(cpu);
 }
+
+static void reset_first_second_pick_cpu(int cpu);
+
+#else  /* CONFIG_NO_HZ */
+
+static inline void reset_first_second_pick_cpu(int cpu) { }
 
 #endif /* CONFIG_NO_HZ */
 
@@ -2569,6 +2575,11 @@ static void sched_ttwu_pending(void)
 {
 	struct rq *rq = this_rq();
 	struct task_struct *list = xchg(&rq->wake_list, NULL);
+
+  if (unlikely((rq->idle == current) && rq->nohz_balance_kick)) {
+   rq->idle_balance = 1;
+    raise_softirq_irqoff(SCHED_SOFTIRQ);
+  }
 
 	if (!list)
 		return;
@@ -4083,7 +4094,7 @@ void scheduler_tick(void)
 	perf_event_task_tick();
 
 #ifdef CONFIG_SMP
-	rq->idle_at_tick = idle_cpu(cpu);
+	rq->idle_balance = idle_cpu(cpu);
 	trigger_load_balance(rq, cpu);
 #endif
 }
