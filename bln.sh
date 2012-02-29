@@ -35,6 +35,7 @@ echo "launching packaging script"
 
 . ./packaging.inc
 release "${version}"
+exit 0
 #######################################################################################################################
 
 echo "building for galaxy s"
