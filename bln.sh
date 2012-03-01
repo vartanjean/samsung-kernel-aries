@@ -1,5 +1,5 @@
 #!/bin/sh
-build="Devil_1.1.7b"
+build="Devil_1.1.7"
 
 ######## Building BLN Kernel ##########################################################
 
@@ -23,7 +23,7 @@ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-# make -j4
+make -j4
 
 echo "creating boot.img"
 
@@ -35,7 +35,7 @@ echo "launching packaging script"
 
 . ./packaging.inc
 release "${version}"
-
+exit 0
 #######################################################################################################################
 
 echo "building for galaxy s"
@@ -90,7 +90,7 @@ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-# make -j4
+ make -j4
 
 echo "creating boot.img"
 
