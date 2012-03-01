@@ -29,13 +29,14 @@ echo "creating boot.img"
 
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
+rm arch/arm/boot/zImage
 echo "boot.img ready"
 
 echo "launching packaging script"
 
 . ./packaging.inc
 release "${version}"
-exit 0
+
 #######################################################################################################################
 
 echo "building for galaxy s"
@@ -60,6 +61,7 @@ echo "creating boot.img"
 
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
+rm arch/arm/boot/zImage
 echo "boot.img ready"
 
 echo "launching packaging script"
@@ -90,12 +92,13 @@ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
- make -j4
+make -j4
 
 echo "creating boot.img"
 
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
+rm arch/arm/boot/zImage
 echo "boot.img ready"
 
 echo "launching packaging script"
@@ -134,7 +137,7 @@ echo "creating boot.img"
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
-
+rm arch/arm/boot/zImage
 echo "launching packaging script"
 
 . ./packaging.inc
