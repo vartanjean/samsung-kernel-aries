@@ -884,6 +884,12 @@ EXPORT_SYMBOL(cpuL7freq);
 
 #endif
 
+unsigned long get_cpuminfreq(void)
+{
+    return s5pv210_freq_table[L4].frequency;
+}
+EXPORT_SYMBOL(get_cpuminfreq);
+
 static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 {
 	unsigned long mem_type;
