@@ -354,6 +354,12 @@ config CPU_FREQ_GOV_LAZY
   depends on CPU_FREQ
 
 
+config CPU_FREQ_GOV_ondemandb_2_PHASE
+	tristate "'2-phase' power-efficiency ondemandb algorithm"
+	depends on CPU_FREQ_GOV_ondemandb
+	help
+	  '2-phase' - This driver adds a new algo to save power
+
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
 	depends on CPU_FREQ
