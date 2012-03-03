@@ -27,7 +27,7 @@ echo "building kernel"
 
 echo "creating boot.img"
 
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+# release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
@@ -58,7 +58,7 @@ echo "building kernel"
 
 echo "creating boot.img"
 
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+# release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
@@ -94,7 +94,7 @@ echo "building kernel"
 
 echo "creating boot.img"
 
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+# release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
 echo "boot.img ready"
 
@@ -133,6 +133,7 @@ echo "creating boot.img"
 
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 echo "..."
+rm arch/arm/boot/Zimage
 echo "boot.img ready"
 
 echo "launching packaging script"
