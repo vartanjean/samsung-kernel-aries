@@ -1,4 +1,5 @@
 #!/bin/sh
+rm arch/arm/boot/zImage
 build="Devil_1.1.6"
 
 ######## Building BLN Kernel ##########################################################
@@ -23,7 +24,7 @@ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+# make -j4
 
 echo "creating boot.img"
 
@@ -55,7 +56,7 @@ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+# make -j4
 
 echo "creating boot.img"
 
@@ -92,7 +93,7 @@ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup
 mv init/version.neu init/version.c
 echo "building kernel"
-make -j4
+# make -j4
 
 echo "creating boot.img"
 
