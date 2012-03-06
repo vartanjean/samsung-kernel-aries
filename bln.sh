@@ -1,6 +1,6 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
-build="Devil_1.1.6"
+build="Devil_1.1.6b_nohz"
 
 ######## Building BLN Kernel ##########################################################
 
