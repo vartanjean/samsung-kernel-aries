@@ -15,21 +15,29 @@
 
 #define MAX_OCVALUE 150
 
-extern void liveoc_update(unsigned int oc_value, unsigned int oc_target);
+extern void liveoc_update(unsigned int oc_value, unsigned int oc_above, unsigned int oc_under);
 
 static int oc_value = 100;
 
 /* Apply Live OC to 400MHz and above*/
-static int oc_target = 400000;
+static int oc_above = 400000;
+
+/* Apply Live OC to 0MHz and under*/
+static int oc_under = 000000;
 
 static ssize_t liveoc_ocvalue_read(struct device * dev, struct device_attribute * attr, char * buf)
 {
     return sprintf(buf, "%u\n", oc_value);
 }
 
-static ssize_t liveoc_octarget_read(struct device * dev, struct device_attribute * attr, char * buf)
+static ssize_t liveoc_ocabove_read(struct device * dev, struct device_attribute * attr, char * buf)
 {
-    return sprintf(buf, "%u\n", oc_target);
+    return sprintf(buf, "%u\n", oc_above);
+}
+
+static ssize_t liveoc_ocunder_read(struct device * dev, struct device_attribute * attr, char * buf)
+{
+    return sprintf(buf, "%u\n", oc_under);
 }
 
 static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
@@ -44,7 +52,7 @@ static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute
 			{
 			    oc_value = data;
 
-			    liveoc_update(oc_value, oc_target);
+			    liveoc_update(oc_value, oc_above, oc_under);
 			}
 
 		    pr_info("LIVEOC oc-value set to %u\n", oc_value);
@@ -62,7 +70,7 @@ static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute
     return size;
 }
 
-static ssize_t liveoc_octarget_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+static ssize_t liveoc_ocabove_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
     unsigned int data;
 
@@ -70,10 +78,10 @@ static ssize_t liveoc_octarget_write(struct device * dev, struct device_attribut
 	{
 	    if (data != oc_value)
 		{
-		    oc_target = data;
+		    oc_above = data;
 	    
-		    liveoc_update(oc_value, oc_target);
-		    pr_info("LIVEOC oc-target set to %u\n", oc_target);
+		    liveoc_update(oc_value, oc_above, oc_under);
+		    pr_info("LIVEOC oc-above set to %u\n", oc_above);
 		}
 	    else
 		{
@@ -88,19 +96,51 @@ static ssize_t liveoc_octarget_write(struct device * dev, struct device_attribut
     return size;
 }
 
+
+static ssize_t liveoc_ocunder_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+    unsigned int data;
+
+    if(sscanf(buf, "%u\n", &data) == 1) 
+	{
+	    if (data <= oc_above)
+		{
+		    oc_under = data;
+	    
+		    liveoc_update(oc_value, oc_above, oc_under);
+		    pr_info("LIVEOC oc-under set to %u\n", oc_under);
+		}
+	    else
+		{
+		    pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
+		}
+	} 
+    else 
+	{
+	    pr_info("%s: invalid input\n", __FUNCTION__);
+	}
+
+    return size;
+}
+
+
+
+
 static ssize_t liveoc_version(struct device * dev, struct device_attribute * attr, char * buf)
 {
     return sprintf(buf, "%u\n", LIVEOC_VERSION);
 }
 
 static DEVICE_ATTR(oc_value, S_IRUGO | S_IWUGO, liveoc_ocvalue_read, liveoc_ocvalue_write);
-static DEVICE_ATTR(oc_target, S_IRUGO | S_IWUGO, liveoc_octarget_read, liveoc_octarget_write);
+static DEVICE_ATTR(oc_above, S_IRUGO | S_IWUGO, liveoc_ocabove_read, liveoc_ocabove_write);
+static DEVICE_ATTR(oc_under, S_IRUGO | S_IWUGO, liveoc_ocunder_read, liveoc_ocunder_write);
 static DEVICE_ATTR(version, S_IRUGO , liveoc_version, NULL);
 
 static struct attribute *liveoc_attributes[] = 
     {
 	&dev_attr_oc_value.attr,
-	&dev_attr_oc_target.attr,
+	&dev_attr_oc_above.attr,
+	&dev_attr_oc_under.attr,
 	&dev_attr_version.attr,
 	NULL
     };
