@@ -23,7 +23,7 @@ else
 fi
 
 	mkdir -p system/bin
-	zip -q -r "${REL}.zip" system boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
+	zip -q -r "${REL}.zip" system backup boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
 	sha256sum ${REL}.zip > ${REL}.sha256sum
 
 } || exit 1
