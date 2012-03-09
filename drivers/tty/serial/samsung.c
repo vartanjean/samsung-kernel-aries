@@ -453,7 +453,7 @@ static bool gps_running = false;
 
 bool gps_is_running(void)
 {
-    return gps_running;
+	return gps_running;
 }
 EXPORT_SYMBOL(gps_is_running);
 #endif
@@ -474,7 +474,7 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 			clk_disable(ourport->baudclk);
 #ifdef CONFIG_CPU_DIDLE
 		if (ourport->port.irq == IRQ_S3CUART_RX1) 
-		    gps_running = false;
+			gps_running = false;
 #endif
 		clk_disable(ourport->clk);
 
@@ -484,8 +484,8 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 
 		clk_enable(ourport->clk);
 #ifdef CONFIG_CPU_DIDLE
-		if (ourport->port.irq == IRQ_S3CUART_RX1)
-		    gps_running = true;
+		if (ourport->port.irq == IRQ_S3CUART_RX1) 
+			gps_running = true;
 #endif
 		if (!IS_ERR(ourport->baudclk) && ourport->baudclk != NULL)
 			clk_enable(ourport->baudclk);

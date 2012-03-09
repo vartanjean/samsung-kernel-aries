@@ -144,7 +144,7 @@ static int check_power_clock_gating(void)
 
 	/* check power gating */
 	val = __raw_readl(S5P_NORMAL_CFG);
-	if (val & (S5PV210_PD_LCD | S5PV210_PD_CAM | S5PV210_PD_TV
+	if (val & (S5PV210_PD_LCD | S5PV210_PD_TV /*| S5PV210_PD_CAM */
 				  | S5PV210_PD_MFC | S5PV210_PD_G3D))
 		return 1;
 
@@ -433,7 +433,7 @@ static int s5p_enter_idle_state(struct cpuidle_device *dev,
 	    s5p_enter_didle(false);
 	    idle_state = 2;
 	}
-#else   
+#else
 	s5p_enter_idle();
 #endif
 
@@ -442,7 +442,8 @@ static int s5p_enter_idle_state(struct cpuidle_device *dev,
 	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +
 	    (after.tv_usec - before.tv_usec);
 #ifdef CONFIG_CPU_DIDLE
-	report_idle_time(idle_state, idle_time);
+	if (dstats_is_enabled())
+		report_idle_time(idle_state, idle_time);
 #endif
 	return idle_time;
 }
