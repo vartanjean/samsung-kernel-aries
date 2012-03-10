@@ -193,7 +193,14 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= arm
-CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+#CROSS_COMPILE	?= ../../../prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
+#CROSS_COMPILE	?= /opt/toolchains/arm-2011.03/bin/arm-none-linux-gnueabi-
+#CROSS_COMPILE	?= /opt/toolchains/arm-2011.03/bin/arm-none-linux-gnueabi-
+CROSS_COMPILE	?= /opt/toolchains/arm-2009q3_arm/bin/arm-none-eabi-
+#CROSS_COMPILE   ?= /opt/toolchains/android-toolchain-eabi_4.5-2011.07/bin/arm-eabi-
+#CROSS_COMPILE   ?= /opt/toolchains/android-toolchain-eabi_4.5-2011.08/bin/arm-eabi-
+#CROSS_COMPILE   ?= /opt/toolchains/android-toolchain-eabi_4.5-2011.09/bin/arm-eabi-
+#CROSS_COMPILE   ?= /opt/toolchains/android-toolchain-eabi_4.6-2011.07/bin/arm-eabi-
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -368,7 +375,10 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks \
+		   --param l2-cache-size=256 --param l1-cache-size=16 --param simultaneous-prefetches=8 --param prefetch-latency=200 --param l1-cache-line-size=32 \
+		   -fsched-spec-load-dangerous -fpredictive-commoning \
+		   -fira-coalesce -funswitch-loops -ftree-loop-im -fipa-cp-clone
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
