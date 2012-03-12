@@ -833,15 +833,52 @@ void customvoltage_freqvolt(unsigned long * freqs, unsigned long * arm_voltages,
 }
 EXPORT_SYMBOL(customvoltage_freqvolt);
 
+unsigned long cpuL0freq(void)
+{
+    return s5pv210_freq_table[L0].frequency; // 1400 mhz
+}
+EXPORT_SYMBOL(cpuL0freq);
+
+
+unsigned long cpuL1freq(void)
+{
+    return s5pv210_freq_table[L1].frequency; // 1300 mhz
+}
+EXPORT_SYMBOL(cpuL1freq);
+
+unsigned long cpuL2freq(void)
+{
+    return s5pv210_freq_table[L2].frequency; // 1200 mhz
+}
+EXPORT_SYMBOL(cpuL2freq);
+
+unsigned long cpuL3freq(void)
+{
+    return s5pv210_freq_table[L3].frequency; // 1000 mhz
+}
+EXPORT_SYMBOL(cpuL3freq);
+
+unsigned long cpuL4freq(void)
+{
+    return s5pv210_freq_table[L4].frequency; // 800 mhz
+}
+EXPORT_SYMBOL(cpuL4freq);
+
+unsigned long cpuL5freq(void)
+{
+    return s5pv210_freq_table[L5].frequency; // 400 mhz
+}
+EXPORT_SYMBOL(cpuL5freq);
+
 unsigned long cpuL6freq(void)
 {
-    return s5pv210_freq_table[L6].frequency;
+    return s5pv210_freq_table[L6].frequency; // 200 mhz
 }
 EXPORT_SYMBOL(cpuL6freq);
 
 unsigned long cpuL7freq(void)
 {
-    return s5pv210_freq_table[L7].frequency;
+    return s5pv210_freq_table[L7].frequency; // 100 mhz
 }
 EXPORT_SYMBOL(cpuL7freq);
 
