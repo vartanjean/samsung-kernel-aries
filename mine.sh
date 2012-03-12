@@ -1,6 +1,6 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
-build="Devil2_0.2"
+build="Devil2_0.3"
 
 scheduler="CFS"
 

@@ -825,11 +825,17 @@ void customvoltage_freqvolt(unsigned long * freqs, unsigned long * arm_voltages,
 }
 EXPORT_SYMBOL(customvoltage_freqvolt);
 
-unsigned long get_gpuminfreq(void)
+unsigned long cpuL6freq(void)
 {
     return s5pv210_freq_table[L6].frequency;
 }
-EXPORT_SYMBOL(get_gpuminfreq);
+EXPORT_SYMBOL(cpuL6freq);
+
+unsigned long cpuL7freq(void)
+{
+    return s5pv210_freq_table[L7].frequency;
+}
+EXPORT_SYMBOL(cpuL7freq);
 
 #endif
 
