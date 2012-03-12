@@ -6,6 +6,8 @@ scheduler="CFS"
 
 color="CMC"
 
+light="LED"
+
 version="$build"_"$scheduler"_"$light"_"$color"
 export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
 sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
