@@ -1,8 +1,8 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
-build="Devil2_0.3"
+build="Devil2_0.31"
 
-scheduler="CFS"
+scheduler="BFS"
 
 color="CMC"
 
