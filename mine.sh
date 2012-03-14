@@ -1,6 +1,6 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
-build="Devil2_0.31"
+build="Devil2_0.32"
 
 scheduler="BFS"
 
