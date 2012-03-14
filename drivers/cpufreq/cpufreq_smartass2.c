@@ -537,7 +537,7 @@ else if(input > cpuL7freq() && input <= cpuL6freq())
 sleep_ideal_freq = cpuL6freq();
 else if(input > cpuL6freq() && input <= cpuL5freq())
 sleep_ideal_freq = cpuL5freq();
-else		sleep_ideal_freq = cpuL7freq();
+else		sleep_ideal_freq = cpuL6freq();
 		if (suspended)
 			smartass_update_min_max_allcpus();
 	}
@@ -563,6 +563,8 @@ else if(input > cpuL4freq() && input <= cpuL3freq())
 sleep_wakeup_freq = cpuL3freq();
 else if(input > cpuL5freq() && input <= cpuL4freq())
 sleep_wakeup_freq = cpuL4freq();
+else if(input > cpuL6freq() && input <= cpuL5freq())
+sleep_wakeup_freq = cpuL5freq();
 else
 		sleep_wakeup_freq = cpuL4freq();
 	return count;
@@ -587,6 +589,8 @@ else if(input > cpuL4freq() && input <= cpuL3freq())
 awake_ideal_freq = cpuL3freq();
 else if(input > cpuL5freq() && input <= cpuL4freq())
 awake_ideal_freq = cpuL4freq();
+else if(input > cpuL6freq() && input <= cpuL5freq())
+awake_ideal_freq = cpuL5freq();
 else
 		awake_ideal_freq = cpuL4freq();
 		if (!suspended)
