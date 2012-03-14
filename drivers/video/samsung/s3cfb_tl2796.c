@@ -198,6 +198,8 @@ u32 color_mult[3] = { U32_MAX, U32_MAX, U32_MAX };
 u32 hacky_v1_offset[3] = {0, 0, 0};
 #endif
 
+bool block_bl = false;
+
 static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 {
 
@@ -543,6 +545,38 @@ static void tl2796_ldi_disable(struct s5p_lcd *lcd)
 	mutex_unlock(&lcd->lock);
 }
 
+int bl_update_brightness(int bl)
+{
+	if (bl < 0 || bl > 255)
+		return -EINVAL;
+
+	mutex_lock(&lcd_->lock);
+
+	lcd_->bl = bl;
+
+	if (lcd_->ldi_enable) {
+		pr_debug("\n bl :%d\n", bl);
+		update_brightness(lcd_);
+	}
+
+	mutex_unlock(&lcd_->lock);
+
+	return 0;    
+}
+EXPORT_SYMBOL_GPL(bl_update_brightness);
+
+void block_bl_update(void)
+{
+	block_bl = true;
+}
+EXPORT_SYMBOL_GPL(block_bl_update);
+
+void unblock_bl_update(void)
+{	
+	block_bl = false;
+}
+EXPORT_SYMBOL_GPL(unblock_bl_update);
+
 static int s5p_bl_update_status(struct backlight_device *bd)
 {
 #ifdef CONFIG_SAMSUNG_FASCINATE
@@ -550,6 +584,9 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 #endif
 	struct s5p_lcd *lcd = bl_get_data(bd);
 	int bl = bd->props.brightness;
+
+	if (block_bl)
+		return 0;
 
 	pr_debug("\nupdate status brightness %d\n",
 				bd->props.brightness);

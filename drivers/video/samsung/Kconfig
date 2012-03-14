@@ -130,7 +130,7 @@ config FB_S3C_TL2796
 config FB_VOODOO
         bool "Voodoo Color"
         depends on FB_S3C_TL2796
-        default y
+        default n
         ---help---
           This enables support Voodoo color mods
 
@@ -141,6 +141,13 @@ config FB_VOODOO_DEBUG_LOG
         ---help---
           Logging for developers
           Super AMOLED hardware command decoding and driver calculations
+
+config FB_SEMA_AUTOBR
+	tristate "Semaphore Auto Brightness driver"
+	depends on FB_S3C_TL2796
+	default n
+	---help---
+	  This enables support for Semaphore Auto Brighness driver
 
 config FB_S3C_NT35580
         bool "NT35580"
