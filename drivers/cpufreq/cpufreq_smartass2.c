@@ -554,7 +554,7 @@ static ssize_t store_sleep_wakeup_freq(struct kobject *kobj, struct attribute *a
 	ssize_t res;
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
-	if (res >= 0 && input >= 0)
+	if (res >= 0 && input >= 0){
 if(input > cpuL2freq())
 sleep_wakeup_freq = cpuL1freq();
 else if(input > cpuL3freq() && input <= cpuL2freq())
@@ -567,6 +567,7 @@ else if(input > cpuL6freq() && input <= cpuL5freq())
 sleep_wakeup_freq = cpuL5freq();
 else
 		sleep_wakeup_freq = cpuL4freq();
+}
 	return count;
 }
 
