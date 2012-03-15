@@ -13,6 +13,7 @@ set_perm(0, 0, 0700, "/tmp/move.sh");
 run_program("/tmp/move.sh");
 ui_print("");
 package_extract_dir("system/", "/system/");
+delete("/system/lib/hw/lights.goldfish.so"); 
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/init.d");
 show_progress(0.200000, 10);
 assert(package_extract_file("boot.img", "/tmp/boot.img"),

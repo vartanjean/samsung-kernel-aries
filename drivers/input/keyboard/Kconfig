@@ -579,13 +579,12 @@ config KEYPAD_CYPRESS_TOUCH_HAS_LEGACY_KEYCODE
 	help
 	 Say Y here if your device uses legacy keycodes.
 
-config KEYPAD_CYPRESS_TOUCH_BLN
-  bool "Cypress touch keypad: use backlight notification"
-  depends on KEYPAD_CYPRESS_TOUCH
-  default n
+config GENERIC_BLN
+       bool "Generic BLN support for backlight notification"
+       default n
+       help
+         Say Y here to enable the backlight notification
+         for android led-notification (modified liblight needed)
 
-  help
-    Say Y here to enable the backlight notification
-    for android led-notification (modified liblight needed)
 
 endif
