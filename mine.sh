@@ -1,9 +1,9 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
 
-handy="cappy"
+handy="i9000"
 
-build="Devil2_0.33"_"$handy"
+build="Devil2_0.33b"_"$handy"
 
 scheduler="BFS"
 

@@ -97,7 +97,7 @@ void s5p_reserve_bootmem(struct s5p_media_device *mdevs,
 	struct s5p_media_device *mdev;
 	u64 start, end;
 	int i, ret;
-	dma_addr_t mfc_paddr;
+//	dma_addr_t mfc_paddr; //reverted for now
 	media_devs = mdevs;
 	nr_media_devs = nr_mdevs;
 
@@ -108,9 +108,9 @@ void s5p_reserve_bootmem(struct s5p_media_device *mdevs,
 		mdev = &media_devs[i];
 		if (mdev->memsize <= 0)
 			continue;
-		if (!strcmp(mdev->name, "jpeg"))
+/*		if (!strcmp(mdev->name, "jpeg"))
 			mdev->paddr = mfc_paddr;
-		else
+		else */ //reverted for now
 		if (!mdev->paddr) {
 			start = meminfo.bank[mdev->bank].start;
 			end = start + meminfo.bank[mdev->bank].size;
@@ -129,8 +129,8 @@ void s5p_reserve_bootmem(struct s5p_media_device *mdevs,
 
 		if (media_base[mdev->bank] > mdev->paddr)
 			media_base[mdev->bank] = mdev->paddr;
-		if (!strcmp(mdev->name, "mfc") && mdev->bank == 0)
-		    mfc_paddr = mdev->paddr;
+//		if (!strcmp(mdev->name, "mfc") && mdev->bank == 0)
+//		    mfc_paddr = mdev->paddr;
 		printk(KERN_INFO "s5p: %lu bytes system memory reserved "
 			"for %s at 0x%08x, %d-bank base(0x%08x)\n",
 			(unsigned long) mdev->memsize, mdev->name, mdev->paddr,
