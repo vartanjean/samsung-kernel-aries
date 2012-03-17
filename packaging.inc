@@ -21,6 +21,7 @@ else
 	cp lights.goldfish.so system/lib/hw/|| exit 1
 	cp updater-script.LED META-INF/com/google/android/updater-script || exit 1
 fi
+	cp S30datafix system/etc/init.d/ || exit 1
 	cp S98oc_value system/etc/init.d/ || exit 1
 	cp S99load_default system/etc/init.d/ || exit 1
 

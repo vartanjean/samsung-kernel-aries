@@ -1,5 +1,6 @@
 #!/system/bin/sh
 #
+cat /proc/last_kmsg > /data/local/lastkmsg.txt
 if [ -e /data/data/mobi.cyann.nstools/settings/default ];
 then
 echo "#!/system/bin/sh" > /data/local/nstools.sh;

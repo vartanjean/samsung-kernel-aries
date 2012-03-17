@@ -3,11 +3,11 @@ rm arch/arm/boot/zImage
 
 handy="i9000"
 
-build="Devil2_0.33b"_"$handy"
+build="Devil2_0.34b"_"$handy"
 
 scheduler="BFS"
 
-color="VC"
+color="CMC"
 
 light="BLN"
 

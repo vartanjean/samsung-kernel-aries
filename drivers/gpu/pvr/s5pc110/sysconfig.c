@@ -42,7 +42,7 @@
 #define MAPPING_SIZE 0x10000
 #define SGX540_IRQ IRQ_3D
 
-#define SYS_SGX_CLOCK_SPEED					(225000000)
+#define SYS_SGX_CLOCK_SPEED					(200000000)
 #define SYS_SGX_HWRECOVERY_TIMEOUT_FREQ		(100) // 10ms (100hz)
 #define SYS_SGX_PDS_TIMER_FREQ				(1000) // 1ms (1000hz)
 #ifndef SYS_SGX_ACTIVE_POWER_LATENCY_MS
@@ -119,7 +119,7 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 					     policy->cpuinfo.max_freq);
 #endif
 
-else 
+/*else 
 
 #ifdef CONFIG_LIVE_OC
   		cpufreq_verify_within_limits(policy, cpuL7freq(),
@@ -128,7 +128,7 @@ else
   		cpufreq_verify_within_limits(policy, CPU_LOW_SPEED,
                					policy->cpuinfo.max_freq);
 #endif
-
+*/
 	return 0;
 }
 
