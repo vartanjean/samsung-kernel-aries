@@ -46,7 +46,7 @@ static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute
 
     if(sscanf(buf, "%u\n", &data) == 1) 
 	{
-	    if (data >= 100 && data <= MAX_OCVALUE)
+	    if (data >= 90 && data <= MAX_OCVALUE)
 		{
 		    if (data != oc_value)
 			{

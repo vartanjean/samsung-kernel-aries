@@ -1,13 +1,15 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
 
+rom="sense"
+
 handy="i9000"
 
-build="Devil2_0.34b"_"$handy"
+build="Devil2_0.34c""$rom"_"$handy"
 
 scheduler="BFS"
 
-color="CMC"
+color="VC"
 
 light="BLN"
 
@@ -41,6 +43,10 @@ then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/captivate_ramdisk/ramdisk.img release/ramdisks/captivate_ramdisk/ramdisk-recovery.img
 fi
 
+if [ "$rom" = "isense"  ] 
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
+fi
 echo "..."
 echo "boot.img ready"
 rm arch/arm/boot/zImage
