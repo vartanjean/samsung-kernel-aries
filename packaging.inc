@@ -9,6 +9,7 @@ mkdir  -p release/system/bin || exit 1
 mkdir  -p release/system/lib/modules || exit 1
 mkdir  -p release/system/lib/hw || exit 1
 mkdir  -p release/system/etc/init.d || exit 1
+mkdir  -p release/system/etc/devil || exit 1
 find . -name "*.ko" -exec cp {} release/system/lib/modules/ \; 2>/dev/null || exit 1
 
 cd release && {
