@@ -50,7 +50,7 @@ extern unsigned long cpuL7freq(void);
  * towards the ideal frequency and slower after it has passed it. Similarly,
  * lowering the frequency towards the ideal frequency is faster than below it.
  */
-#define DEFAULT_AWAKE_IDEAL_FREQ (800*1000)
+#define DEFAULT_AWAKE_IDEAL_FREQ (400*1000)
 static unsigned int awake_ideal_freq;
 
 /*
@@ -59,7 +59,7 @@ static unsigned int awake_ideal_freq;
  * that practically when sleep_ideal_freq==0 the awake_ideal_freq is used
  * also when suspended).
  */
-#define DEFAULT_SLEEP_IDEAL_FREQ (200*1000)
+#define DEFAULT_SLEEP_IDEAL_FREQ (100*1000)
 static unsigned int sleep_ideal_freq;
 
 /*
@@ -81,27 +81,27 @@ static unsigned int ramp_down_step;
 /*
  * CPU freq will be increased if measured load > max_cpu_load;
  */
-#define DEFAULT_MAX_CPU_LOAD 50
+#define DEFAULT_MAX_CPU_LOAD 75
 static unsigned long max_cpu_load;
 
 /*
  * CPU freq will be decreased if measured load < min_cpu_load;
  */
-#define DEFAULT_MIN_CPU_LOAD 25
+#define DEFAULT_MIN_CPU_LOAD 45
 static unsigned long min_cpu_load;
 
 /*
  * The minimum amount of time to spend at a frequency before we can ramp up.
  * Notice we ignore this when we are below the ideal frequency.
  */
-#define DEFAULT_UP_RATE_US 10000;
+#define DEFAULT_UP_RATE_US 20000;
 static unsigned long up_rate_us;
 
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  * Notice we ignore this when we are above the ideal frequency.
  */
-#define DEFAULT_DOWN_RATE_US 99000;
+#define DEFAULT_DOWN_RATE_US 40000;
 static unsigned long down_rate_us;
 
 /*
@@ -593,7 +593,7 @@ awake_ideal_freq = cpuL4freq();
 else if(input > cpuL6freq() && input <= cpuL5freq())
 awake_ideal_freq = cpuL5freq();
 else
-		awake_ideal_freq = cpuL4freq();
+		awake_ideal_freq = cpuL5freq();
 		if (!suspended)
 			smartass_update_min_max_allcpus();
 	}
@@ -852,7 +852,7 @@ static int __init cpufreq_smartass_init(void)
 	unsigned long low_freq;
 	struct smartass_info_s *this_smartass;
 	
-	low_freq = cpuL6freq();
+	low_freq = cpuL7freq();
 	debug_mask = 0;
 	up_rate_us = DEFAULT_UP_RATE_US;
 	down_rate_us = DEFAULT_DOWN_RATE_US;
@@ -864,9 +864,9 @@ static int __init cpufreq_smartass_init(void)
 	awake_ideal_freq = cpuL4freq();
 	sample_rate_jiffies = DEFAULT_SAMPLE_RATE_JIFFIES;
 //	ramp_up_step = DEFAULT_RAMP_UP_STEP;
-	ramp_up_step = low_freq;
+	ramp_up_step = low_freq * 2;
 //	ramp_down_step = DEFAULT_RAMP_DOWN_STEP;
-	ramp_down_step = low_freq;
+	ramp_down_step = low_freq * 2;
 	max_cpu_load = DEFAULT_MAX_CPU_LOAD;
 	min_cpu_load = DEFAULT_MIN_CPU_LOAD;
 

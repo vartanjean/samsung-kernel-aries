@@ -110,12 +110,12 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 		return 0;
 
 	/* This is our indicator of GPU activity */
-	if (!regulator_is_enabled(g3d_pd_regulator))
+	if (regulator_is_enabled(g3d_pd_regulator))
 #ifdef CONFIG_LIVE_OC
-		cpufreq_verify_within_limits(policy, cpuL7freq(),
+		cpufreq_verify_within_limits(policy, cpuL6freq(),
 					     policy->cpuinfo.max_freq);
 #else
-		cpufreq_verify_within_limits(policy, CPU_LOW_SPEED,
+		cpufreq_verify_within_limits(policy, MIN_CPU_KHZ_FREQ,
 					     policy->cpuinfo.max_freq);
 #endif
 
