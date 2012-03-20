@@ -90,10 +90,8 @@ struct s5p_lcd{
 	struct dentry *debug_dir;
 };
 
-
 struct s5p_lcd *lcd_;
 #ifdef CONFIG_FB_VOODOO
-
 
 u32 original_color_adj_mults[3];
 unsigned int panel_config_sequence = 0;
@@ -198,22 +196,8 @@ u32 color_mult[3] = { U32_MAX, U32_MAX, U32_MAX };
 u32 hacky_v1_offset[3] = {0, 0, 0};
 #endif
 
-bool block_bl = false;
-
 static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 {
-
-
-
-
-
-
-
-
-
-
-
-
 	int i;
 	u32 bl = 0;
 	u32 bh = 0;
@@ -243,35 +227,16 @@ static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 		do_div(tmp, bv->v255 - bv->v0);
 		b = tmp + bv->v0;
 	}
-
-
-
-
-
 	for (i = 0; i < pdata->gamma_table_size; i++) {
 		bl = bh;
 		bh = pdata->gamma_table[i].brightness;
 		if (bh >= b)
 			break;
 	}
-
-
-
-
-
 	vh = pdata->gamma_table[i].v[c];
-
-
-
-
-
 	if (i == 0 || (b - bl) == 0) {
 		ret = vl = vh;
 	} else {
-
-
-
-
 		vl = pdata->gamma_table[i - 1].v[c];
 		tmp = (u64)vh * (b - bl) + (u64)vl * (bh - b);
 		do_div(tmp, bh - bl);
@@ -290,24 +255,12 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 	int c, i;
 	u8 brightness = lcd->bl;
 	const struct tl2796_gamma_adj_points *bv = lcd->gamma_adj_points;
-
-
-
 	for (c = 0; c < 3; c++) {
-
-
-
-
-
-
 		u32 adj;
 		u32 v0 = gamma_lookup(lcd, brightness, BV_0, c);
 		u32 vx[6];
 		u32 v1;
 		u32 v255;
-
-
-
 		v1 = vx[0] = gamma_lookup(lcd, brightness, bv->v1, c);
 		adj = 600 - 5 - DIV_ROUND_CLOSEST(600 * v1, v0);
 		adj -= lcd->gamma_reg_offsets.v[c][0];
@@ -335,8 +288,6 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 
 #endif
 
-
-
 		v255 = vx[5] = gamma_lookup(lcd, brightness, bv->v255, c);
 		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
 		adj -= lcd->gamma_reg_offsets.v[c][5];
@@ -348,23 +299,13 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 			else
 				adj = 380;
 		}
-
-
 		gamma_regs[3 * 5 + 2 * c] = adj >> 8 | 0x100;
-
-
 		gamma_regs[3 * 5 + 2 * c + 1] = (adj & 0xff) | 0x100;
 
 		vx[1] = gamma_lookup(lcd, brightness,  bv->v19, c);
 		vx[2] = gamma_lookup(lcd, brightness,  bv->v43, c);
 		vx[3] = gamma_lookup(lcd, brightness,  bv->v87, c);
 		vx[4] = gamma_lookup(lcd, brightness, bv->v171, c);
-
-
-
-
-
-
 
 		for (i = 4; i >= 1; i--) {
 			if (v1 <= vx[i + 1]) {
@@ -374,11 +315,6 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 
 				adj = DIV_ROUND_CLOSEST(320 * (v1 - vx[i]),
 							v1 - vx[i + 1]) - 65;
-
-
-
-
-
 
 				adj -= lcd->gamma_reg_offsets.v[c][i];
 			}
@@ -444,29 +380,6 @@ static void print_decoded_commands(short unsigned int commands_record[], int i)
                  commands_record[14]-256, commands_record[15]-256, commands_record[16]-256);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 static void s6e63m0_panel_send_sequence(struct s5p_lcd *lcd,
 	const u16 *wbuf)
@@ -545,38 +458,6 @@ static void tl2796_ldi_disable(struct s5p_lcd *lcd)
 	mutex_unlock(&lcd->lock);
 }
 
-int bl_update_brightness(int bl)
-{
-	if (bl < 0 || bl > 255)
-		return -EINVAL;
-
-	mutex_lock(&lcd_->lock);
-
-	lcd_->bl = bl;
-
-	if (lcd_->ldi_enable) {
-		pr_debug("\n bl :%d\n", bl);
-		update_brightness(lcd_);
-	}
-
-	mutex_unlock(&lcd_->lock);
-
-	return 0;    
-}
-EXPORT_SYMBOL_GPL(bl_update_brightness);
-
-void block_bl_update(void)
-{
-	block_bl = true;
-}
-EXPORT_SYMBOL_GPL(block_bl_update);
-
-void unblock_bl_update(void)
-{	
-	block_bl = false;
-}
-EXPORT_SYMBOL_GPL(unblock_bl_update);
-
 static int s5p_bl_update_status(struct backlight_device *bd)
 {
 #ifdef CONFIG_SAMSUNG_FASCINATE
@@ -584,9 +465,6 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 #endif
 	struct s5p_lcd *lcd = bl_get_data(bd);
 	int bl = bd->props.brightness;
-
-	if (block_bl)
-		return 0;
 
 	pr_debug("\nupdate status brightness %d\n",
 				bd->props.brightness);
@@ -1236,36 +1114,25 @@ static ssize_t blue_v1_offset_store(struct device *dev, struct device_attribute 
 	return size;
 }
 #ifdef CONFIG_FB_VOODOO
-
 static ssize_t voodoo_color_version(struct device *dev, struct device_attribute *attr, char *buf) {
 	return sprintf(buf, "%u\n", VOODOO_COLOR_VERSION);
 }
-
 static DEVICE_ATTR(gamma_table, S_IRUGO | S_IWUGO, gamma_table_show, gamma_table_store);
 static DEVICE_ATTR(apply_custom_brightness_gammas, S_IWUGO, NULL, apply_custom_brightness_gammas_store);
 static DEVICE_ATTR(panel_config_sequence, S_IRUGO | S_IWUGO, panel_config_sequence_show, panel_config_sequence_store);
-
 static DEVICE_ATTR(red_multiplier_original, S_IRUGO, red_multiplier_original_show, NULL);
-
 static DEVICE_ATTR(green_multiplier_original, S_IRUGO, green_multiplier_original_show, NULL);
-
 static DEVICE_ATTR(blue_multiplier_original, S_IRUGO, blue_multiplier_original_show, NULL);
 static DEVICE_ATTR(version, S_IRUGO, voodoo_color_version, NULL);
 #endif
 static DEVICE_ATTR(red_multiplier, S_IRUGO | S_IWUGO, red_multiplier_show, red_multiplier_store);
-
 static DEVICE_ATTR(green_multiplier, S_IRUGO | S_IWUGO, green_multiplier_show, green_multiplier_store);
-
 static DEVICE_ATTR(blue_multiplier, S_IRUGO | S_IWUGO, blue_multiplier_show, blue_multiplier_store);
-
 static DEVICE_ATTR(red_v1_offset, S_IRUGO | S_IWUGO, red_v1_offset_show, red_v1_offset_store);
 static DEVICE_ATTR(green_v1_offset, S_IRUGO | S_IWUGO, green_v1_offset_show, green_v1_offset_store);
 static DEVICE_ATTR(blue_v1_offset, S_IRUGO | S_IWUGO, blue_v1_offset_show, blue_v1_offset_store);
 
-
-
 #ifdef CONFIG_FB_VOODOO
-
 static struct attribute *voodoo_color_attributes[] = {
 	&dev_attr_gamma_table.attr,
 	&dev_attr_apply_custom_brightness_gammas.attr,
@@ -1393,8 +1260,6 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	else
 		debugfs_create_file("current_gamma", S_IRUGO,
 			lcd->debug_dir, lcd, &tl2796_current_gamma_fops);
-
-
 
 #ifdef CONFIG_FB_VOODOO
 	misc_register(&voodoo_color_device);
