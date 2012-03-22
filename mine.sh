@@ -7,9 +7,9 @@ handy="i9000"
 
 build="Devil2_0.50""$rom"_"$handy"
 
-scheduler="BFS"
+scheduler="CFS"
 
-color="VC"
+color="CMC"
 
 light="BLN"
 
