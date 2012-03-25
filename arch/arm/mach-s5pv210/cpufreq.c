@@ -40,7 +40,6 @@ static DEFINE_MUTEX(set_freq_lock);
 #define APLL_VAL_1080   ((1 << 31) | (270 << 16) | (6 << 8) | 1)
 #define APLL_VAL_1000	((1 << 31) | (125 << 16) | (3 << 8) | 1)
 #define APLL_VAL_800	((1 << 31) | (100 << 16) | (3 << 8) | 1)
-#define APLL_VAL_600    ((1 << 31) | ( 75 << 16) | (3 << 8) | 1)
 
 #define SLEEP_FREQ	(800 * 1000) /* Use 800MHz when entering sleep */
 
@@ -85,10 +84,9 @@ static struct cpufreq_frequency_table s5pv210_freq_table[] = {
 	{L3, 1080*1000},
 	{L4, 1000*1000},
 	{L5, 800*1000},
-	{L6, 600*1000},
-	{L7, 400*1000},
-	{L8, 200*1000},
-	{L9, 100*1000},
+	{L6, 400*1000},
+	{L7, 200*1000},
+	{L8, 100*1000},
 	{0, CPUFREQ_TABLE_END},
 };
 
@@ -102,7 +100,7 @@ struct s5pv210_dvs_conf {
 
 #ifdef CONFIG_DVFS_LIMIT
 static unsigned int g_dvfs_high_lock_token = 0;
-static unsigned int g_dvfs_high_lock_limit = 10;
+static unsigned int g_dvfs_high_lock_limit = 9;
 static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 //static DEFINE_MUTEX(dvfs_high_lock);
 #endif
@@ -132,7 +130,7 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 		.arm_volt   = DVSARM4,
 		.int_volt   = DVSINT4,
 	},
-	[L4] = { //1000
+	[L4] = { 
 		.arm_volt   = DVSARM5,
 		.int_volt   = DVSINT4,
 	},
@@ -140,7 +138,7 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 		.arm_volt   = DVSARM6,
 		.int_volt   = DVSINT5,
 	},
-	[L6] = { //600
+	[L6] = {
 		.arm_volt   = DVSARM7,
 		.int_volt   = DVSINT5,
 	},
@@ -150,15 +148,11 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 	[L8] = {
 		.arm_volt   = DVSARM9,
-		.int_volt   = DVSINT5,
-	},
-	[L9] = {
-		.arm_volt   = DVSARM10,
 		.int_volt   = DVSINT6,
 	},
 };
 
-static u32 clkdiv_val[10][11] = {
+static u32 clkdiv_val[9][11] = {
 	/*
 	 * Clock divider value for following
 	 * { APLL, A2M, HCLK_MSYS, PCLK_MSYS,
@@ -177,13 +171,11 @@ static u32 clkdiv_val[10][11] = {
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L5 : [800/200/200/100][166/83][133/66][200/200] */
 	{0, 3, 3, 1, 3, 1, 4, 1, 3, 0, 0}, 
-	/* L6 : [600/200/200/100][166/83][133/66][200/200] */
-  	{1, 3, 2, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* L7: [400/200/200/100][166/83][133/66][200/200] */
+	/* L6: [400/200/200/100][166/83][133/66][200/200] */
 	{1, 3, 1, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* L8 : [200/200/200/100][166/83][133/66][200/200] */
+	/* L7 : [200/200/200/100][166/83][133/66][200/200] */
 	{3, 3, 0, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* L9 : [100/100/100/100][83/83][66/66][100/100] */
+	/* L8 : [100/100/100/100][83/83][66/66][100/100] */
 	{7, 7, 0, 0, 7, 0, 9, 0, 7, 0, 0},
 };
 
@@ -195,7 +187,7 @@ static bool pllbus_changing = false;
 static int oc_value = 100;
 
 static unsigned long sleep_freq;
-static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1080000, 1000000, 800000, 800000, 800000, 800000, 800000};
+static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1080000, 1000000, 800000, 800000, 800000, 800000};
 
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
 #endif
@@ -387,7 +379,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
-	if ((index == L9) || (freqs.old == s5pv210_freq_table[L9].frequency))
+	if ((index == L8) || (freqs.old == s5pv210_freq_table[L8].frequency))
 		bus_speed_changing = 1;
 
 #ifdef CONFIG_LIVE_OC
@@ -449,7 +441,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & ((1 << 7) | (1 << 3)));
 
 		/*
-		 * 3. DMC1 refresh count for 133Mhz if (index == L9) is
+		 * 3. DMC1 refresh count for 133Mhz if (index == L8) is
 		 * true refresh counter is already programed in upper
 		 * code. 0x287@83Mhz
 		 */
@@ -494,7 +486,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	/* ARM MCS value changed */
 	reg = __raw_readl(S5P_ARM_MCS_CON);
 	reg &= ~0x3;
-	if (index >= L8)
+	if (index >= L7)
 		reg |= 0x3;
 	else
 		reg |= 0x1;
@@ -511,10 +503,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 * 6-2. Wait untile the PLL is locked
 		 */
 #ifdef CONFIG_LIVE_OC
-	if (index != L6)
 		__raw_writel(apll_values[index], S5P_APLL_CON);
-	else
-		__raw_writel(APLL_VAL_600, S5P_APLL_CON);
 #else
 		switch (index) {
 		case L0:
@@ -583,7 +572,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 		/*
 		 * 10. DMC1 refresh counter
-		 * L9 : DMC1 = 100Mhz 7.8us/(1/100) = 0x30c
+		 * L8 : DMC1 = 100Mhz 7.8us/(1/100) = 0x30c
 		 * Others : DMC1 = 200Mhz 7.8us/(1/200) = 0x618
 		 */
 		if (!bus_speed_changing)
@@ -591,7 +580,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	}
 
 	/*
-	 * L9 level need to change memory bus speed, hence onedram clock divier
+	 * L8 level need to change memory bus speed, hence onedram clock divier
 	 * and memory refresh parameter should be changed
 	 */
 	if (bus_speed_changing) {
@@ -605,7 +594,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & (1 << 15));
 
 		/* Reconfigure DRAM refresh counter value */
-		if (index != L9) {
+		if (index != L8) {
 			/*
 			 * DMC0 : 166Mhz
 			 * DMC1 : 200Mhz
@@ -695,20 +684,12 @@ static void liveoc_init(void)
 
     while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
 	index = s5pv210_freq_table[i].index;
-if (index != L6) { // don't apply live_oc to 600 mhz
+
 	fclk = original_fclk[index] / 1000;
 
 	divider = find_divider(fclk);
 
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-		}
-/*
-else 
- 	{
-	divider = 3;
-
-	apll_values[index] = ((1 << 31) | ( 75 << 16) | (3 << 8) | 1);
-	}*/
 
 	i++;
     }
@@ -739,9 +720,6 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
 	if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
 	    index_max = index;
-
-if (index != L6) {
-
 if(oc_low_freq < oc_high_freq)
 	if(s5pv210_freq_table[i].frequency >= oc_low_freq && s5pv210_freq_table[i].frequency <= oc_high_freq)
 		fclk = (original_fclk[index] * oc_value) / 100;
@@ -752,9 +730,6 @@ else
 		fclk = (original_fclk[index] * oc_value) / 100;
 	else
 		fclk = original_fclk[index];
-		}
-else
-	fclk = 600000;
 
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
@@ -765,11 +740,7 @@ else
 
 	divider = find_divider(fclk);
 
-if (index != L6) {
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-		}
-//else
-//	apll_values[index] = ((1 << 31) | ( 75 << 16) | (3 << 8) | 1);
 
 	i++;
     }
