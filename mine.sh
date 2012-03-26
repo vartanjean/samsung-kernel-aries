@@ -5,7 +5,7 @@ rom=""
 
 handy="i9000"
 
-build="Devil2_0.52""$rom"_"$handy"
+build="Devil2_0.53_bm""$rom"_"$handy"
 
 scheduler="CFS"
 
