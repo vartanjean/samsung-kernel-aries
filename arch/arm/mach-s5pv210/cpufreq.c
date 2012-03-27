@@ -195,7 +195,7 @@ static bool pllbus_changing = false;
 static int oc_value = 100;
 
 static unsigned long sleep_freq;
-static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1080000, 1000000, 800000, 800000, 800000, 800000, 800000};
+static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1080000, 1000000, 800000, 600000, 800000, 800000, 800000};
 
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
 #endif
@@ -511,10 +511,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 * 6-2. Wait untile the PLL is locked
 		 */
 #ifdef CONFIG_LIVE_OC
-	if (index != L6)
 		__raw_writel(apll_values[index], S5P_APLL_CON);
-	else
-		__raw_writel(APLL_VAL_600, S5P_APLL_CON);
 #else
 		switch (index) {
 		case L0:
@@ -695,20 +692,17 @@ static void liveoc_init(void)
 
     while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
 	index = s5pv210_freq_table[i].index;
-if (index != L6) { // don't apply live_oc to 600 mhz
+if (index != L6){
 	fclk = original_fclk[index] / 1000;
-
 	divider = find_divider(fclk);
+}
+else{ 
+	fclk = 600000 / 1000;
+	divider = 3;
+}
 
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-		}
-/*
-else 
- 	{
-	divider = 3;
-
-	apll_values[index] = ((1 << 31) | ( 75 << 16) | (3 << 8) | 1);
-	}*/
+		
 
 	i++;
     }
@@ -754,7 +748,7 @@ else
 		fclk = original_fclk[index];
 		}
 else
-	fclk = 600000;
+	fclk = 1200000;
 
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
@@ -762,15 +756,18 @@ else
 	    sleep_freq = s5pv210_freq_table[i].frequency;
 
 	fclk /= 1000;
-
+if (index != L6){
 	divider = find_divider(fclk);
-
-if (index != L6) {
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-		}
-//else
-//	apll_values[index] = ((1 << 31) | ( 75 << 16) | (3 << 8) | 1);
+}
+else{
+	divider = 3;
+	apll_values[index] = ((1 << 31) | (75 << 16) | (3 << 8) | (1));
+}
 
+if (index = L6) {
+		fclk = 600000;
+		}
 	i++;
     }
 
@@ -912,22 +909,27 @@ EXPORT_SYMBOL(cpuL5freq);
 
 unsigned long cpuL6freq(void)
 {
-    return s5pv210_freq_table[L6].frequency; // 400 mhz
+    return s5pv210_freq_table[L6].frequency; // 600 mhz
 }
 EXPORT_SYMBOL(cpuL6freq);
 
 unsigned long cpuL7freq(void)
 {
-    return s5pv210_freq_table[L7].frequency; // 200 mhz
+    return s5pv210_freq_table[L7].frequency; // 400 mhz
 }
 EXPORT_SYMBOL(cpuL7freq);
 
 unsigned long cpuL8freq(void)
 {
-    return s5pv210_freq_table[L8].frequency; // 100 mhz
+    return s5pv210_freq_table[L8].frequency; // 200 mhz
 }
 EXPORT_SYMBOL(cpuL8freq);
 
+unsigned long cpuL9freq(void)
+{
+    return s5pv210_freq_table[L9].frequency; // 100 mhz
+}
+EXPORT_SYMBOL(cpuL9freq);
 #endif
 
 static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
