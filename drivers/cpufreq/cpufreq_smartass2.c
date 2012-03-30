@@ -1,3 +1,4 @@
+
 /*
  * drivers/cpufreq/cpufreq_smartass2.c
  *
@@ -91,7 +92,7 @@ static unsigned long max_cpu_load;
 /*
  * CPU freq will be decreased if measured load < min_cpu_load;
  */
-#define DEFAULT_MIN_CPU_LOAD 30
+#define DEFAULT_MIN_CPU_LOAD 70
 static unsigned long min_cpu_load;
 
 /*
@@ -183,6 +184,7 @@ struct cpufreq_governor cpufreq_gov_smartass2 = {
 };
 
 inline static void smartass_update_min_max(struct smartass_info_s *this_smartass, struct cpufreq_policy *policy, int suspend) {
+#ifdef CONFIG_LIVE_OC
 if(sleep_ideal_freq <= cpuL9freq())
 sleep_ideal_freq = cpuL9freq();
 if(sleep_ideal_freq > cpuL9freq() && sleep_ideal_freq <= cpuL8freq())
@@ -204,6 +206,7 @@ awake_ideal_freq = cpuL5freq();
 else if(awake_ideal_freq > cpuL7freq() && awake_ideal_freq <= cpuL6freq())
 awake_ideal_freq = cpuL6freq();
 else awake_ideal_freq = cpuL6freq();
+#endif
 	if (suspend) {
 		this_smartass->ideal_speed = // sleep_ideal_freq; but make sure it obeys the policy min/max
 			policy->max > sleep_ideal_freq ?
@@ -543,6 +546,7 @@ static ssize_t store_sleep_ideal_freq(struct kobject *kobj, struct attribute *at
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
 	if (res >= 0 && input >= 0) {
+#ifdef CONFIG_LIVE_OC
 if(input > 0 && input <= cpuL9freq())
 sleep_ideal_freq = cpuL9freq();
 else if(input > cpuL9freq() && input <= cpuL8freq())
@@ -552,6 +556,9 @@ sleep_ideal_freq = cpuL7freq();
 else if(input > cpuL7freq() && input <= cpuL6freq())
 sleep_ideal_freq = cpuL6freq();
 else		sleep_ideal_freq = cpuL8freq();
+#else
+			sleep_ideal_freq = input;
+#endif
 		if (suspended)
 			smartass_update_min_max_allcpus();
 	}
@@ -569,6 +576,7 @@ static ssize_t store_sleep_wakeup_freq(struct kobject *kobj, struct attribute *a
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
 	if (res >= 0 && input >= 0){
+#ifdef CONFIG_LIVE_OC
 if(input > cpuL2freq())
 sleep_wakeup_freq = cpuL1freq();
 else if(input > cpuL3freq() && input <= cpuL2freq())
@@ -583,6 +591,9 @@ else if(input > cpuL7freq() && input <= cpuL6freq())
 sleep_wakeup_freq = cpuL6freq();
 else
 		sleep_wakeup_freq = cpuL6freq();
+#else
+		sleep_wakeup_freq = input;
+#endif
 }
 	return count;
 }
@@ -598,6 +609,7 @@ static ssize_t store_awake_ideal_freq(struct kobject *kobj, struct attribute *at
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
 	if (res >= 0 && input >= 0) {
+#ifdef CONFIG_LIVE_OC
 if(input > cpuL2freq())
 awake_ideal_freq = cpuL1freq();
 else if(input > cpuL3freq() && input <= cpuL2freq())
@@ -614,6 +626,9 @@ else if(input > cpuL8freq() && input <= cpuL7freq())
 awake_ideal_freq = cpuL7freq();
 else
 		awake_ideal_freq = cpuL6freq();
+#else
+		awake_ideal_freq = input;
+#endif
 		if (!suspended)
 			smartass_update_min_max_allcpus();
 	}
@@ -869,24 +884,31 @@ static struct early_suspend smartass_power_suspend = {
 static int __init cpufreq_smartass_init(void)
 {
 	unsigned int i;
+
 	unsigned long low_freq;
 	struct smartass_info_s *this_smartass;
 	
+#ifdef CONFIG_LIVE_OC
 	low_freq = cpuL9freq();
+#endif
+	low_freq = 
 	debug_mask = 0;
 	up_rate_us = DEFAULT_UP_RATE_US;
 	down_rate_us = DEFAULT_DOWN_RATE_US;
-// 	sleep_ideal_freq = DEFAULT_SLEEP_IDEAL_FREQ;
+#ifdef CONFIG_LIVE_OC	
 	sleep_ideal_freq = low_freq;
-//  	sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
 	sleep_wakeup_freq = cpuL6freq();
-//	awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ; 
 	awake_ideal_freq = cpuL6freq();
-	sample_rate_jiffies = DEFAULT_SAMPLE_RATE_JIFFIES;
-//	ramp_up_step = DEFAULT_RAMP_UP_STEP;
 	ramp_up_step = low_freq * 2;
-//	ramp_down_step = DEFAULT_RAMP_DOWN_STEP;
 	ramp_down_step = low_freq * 2;
+#else
+ 	sleep_ideal_freq = DEFAULT_SLEEP_IDEAL_FREQ;
+	sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
+	awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ; 
+	ramp_up_step = DEFAULT_RAMP_UP_STEP;
+	ramp_down_step = DEFAULT_RAMP_DOWN_STEP;
+#endif
+	sample_rate_jiffies = DEFAULT_SAMPLE_RATE_JIFFIES;
 	max_cpu_load = DEFAULT_MAX_CPU_LOAD;
 	min_cpu_load = DEFAULT_MIN_CPU_LOAD;
 
@@ -946,4 +968,3 @@ module_exit(cpufreq_smartass_exit);
 MODULE_AUTHOR ("Erasmux");
 MODULE_DESCRIPTION ("'cpufreq_smartass2' - A smart cpufreq governor");
 MODULE_LICENSE ("GPL");
-
