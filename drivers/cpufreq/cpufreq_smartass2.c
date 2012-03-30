@@ -891,7 +891,6 @@ static int __init cpufreq_smartass_init(void)
 #ifdef CONFIG_LIVE_OC
 	low_freq = cpuL9freq();
 #endif
-	low_freq = 
 	debug_mask = 0;
 	up_rate_us = DEFAULT_UP_RATE_US;
 	down_rate_us = DEFAULT_DOWN_RATE_US;
