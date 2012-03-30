@@ -3,9 +3,9 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-handy="cappy"
+handy="i9000"
 
-build="Devil2_0.60""$rom"_"$handy"
+build="Devil2_0.61XL_BM""$rom"_"$handy"
 
 scheduler="CFS"
 
