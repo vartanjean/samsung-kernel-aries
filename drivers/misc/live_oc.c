@@ -10,10 +10,21 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/miscdevice.h>
+//#include <linux/cpufreq.h>
 
 #define LIVEOC_VERSION 1
 
 #define MAX_OCVALUE 150
+/*
+struct cpufreq_frequency_table *freq_table;
+unsigned int freq_table_size;
+
+static unsigned int get_freq_table_size(struct cpufreq_frequency_table *freq_table) {
+	unsigned int size = 0;
+	while (freq_table[++size].frequency != CPUFREQ_TABLE_END);
+	return size;
+}
+*/
 
 extern void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq);
 
@@ -155,6 +166,7 @@ static struct miscdevice liveoc_device =
 
 static int __init liveoc_init(void)
 {
+
     int ret;
 
     pr_info("%s misc_register(%s)\n", __FUNCTION__, liveoc_device.name);

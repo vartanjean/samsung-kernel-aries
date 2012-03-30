@@ -3,7 +3,7 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-handy="i9000"
+handy="cappy"
 
 build="Devil2_0.60""$rom"_"$handy"
 
@@ -33,17 +33,12 @@ fi
 make -j4
 
 echo "creating boot.img"
-if [ "$handy" = "i9000"  ] 
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
 then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 fi
 
-if [ "$handy" = "cappy"  ] 
-then
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/captivate_ramdisk/ramdisk.img release/ramdisks/captivate_ramdisk/ramdisk-recovery.img
-fi
-
-if [ "$rom" = "isense"  ] 
+if [ "$rom" = "sense"  ] 
 then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
 fi
