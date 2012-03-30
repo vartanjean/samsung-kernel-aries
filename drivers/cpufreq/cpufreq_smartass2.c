@@ -35,6 +35,7 @@
 #include <asm/cputime.h>
 #include <linux/earlysuspend.h>
 
+#ifdef CONFIG_LIVE_OC
 extern unsigned long cpuL1freq(void);
 extern unsigned long cpuL2freq(void);
 extern unsigned long cpuL3freq(void);
@@ -43,6 +44,8 @@ extern unsigned long cpuL5freq(void);
 extern unsigned long cpuL6freq(void);
 extern unsigned long cpuL7freq(void);
 extern unsigned long cpuL8freq(void);
+extern unsigned long cpuL9freq(void);
+#endif
 
 /******************** Tunable parameters: ********************/
 
@@ -51,7 +54,7 @@ extern unsigned long cpuL8freq(void);
  * towards the ideal frequency and slower after it has passed it. Similarly,
  * lowering the frequency towards the ideal frequency is faster than below it.
  */
-#define DEFAULT_AWAKE_IDEAL_FREQ (400*1000)
+#define DEFAULT_AWAKE_IDEAL_FREQ (600*1000)
 static unsigned int awake_ideal_freq;
 
 /*
@@ -82,13 +85,13 @@ static unsigned int ramp_down_step;
 /*
  * CPU freq will be increased if measured load > max_cpu_load;
  */
-#define DEFAULT_MAX_CPU_LOAD 75
+#define DEFAULT_MAX_CPU_LOAD 85
 static unsigned long max_cpu_load;
 
 /*
  * CPU freq will be decreased if measured load < min_cpu_load;
  */
-#define DEFAULT_MIN_CPU_LOAD 45
+#define DEFAULT_MIN_CPU_LOAD 30
 static unsigned long min_cpu_load;
 
 /*
@@ -109,7 +112,7 @@ static unsigned long down_rate_us;
  * The frequency to set when waking up from sleep.
  * When sleep_ideal_freq=0 this will have no effect.
  */
-#define DEFAULT_SLEEP_WAKEUP_FREQ (800*1000)
+#define DEFAULT_SLEEP_WAKEUP_FREQ (600*1000)
 static unsigned int sleep_wakeup_freq;
 
 /*
@@ -180,15 +183,19 @@ struct cpufreq_governor cpufreq_gov_smartass2 = {
 };
 
 inline static void smartass_update_min_max(struct smartass_info_s *this_smartass, struct cpufreq_policy *policy, int suspend) {
-if(sleep_ideal_freq <= cpuL8freq())
+if(sleep_ideal_freq <= cpuL9freq())
+sleep_ideal_freq = cpuL9freq();
+if(sleep_ideal_freq > cpuL9freq() && sleep_ideal_freq <= cpuL8freq())
 sleep_ideal_freq = cpuL8freq();
-if(sleep_ideal_freq > cpuL8freq() && sleep_ideal_freq <= cpuL7freq())
+else if(sleep_ideal_freq > cpuL8freq() && sleep_ideal_freq <= cpuL7freq())
 sleep_ideal_freq = cpuL7freq();
 else if(sleep_ideal_freq > cpuL7freq() && sleep_ideal_freq <= cpuL6freq())
 sleep_ideal_freq = cpuL6freq();
-else sleep_ideal_freq = cpuL7freq();
+else sleep_ideal_freq = cpuL8freq();
 
-if(awake_ideal_freq > cpuL4freq() && awake_ideal_freq <= cpuL3freq())
+if(awake_ideal_freq > cpuL3freq() && awake_ideal_freq <= cpuL2freq())
+awake_ideal_freq = cpuL2freq();
+else if(awake_ideal_freq > cpuL4freq() && awake_ideal_freq <= cpuL3freq())
 awake_ideal_freq = cpuL3freq();
 else if(awake_ideal_freq > cpuL5freq() && awake_ideal_freq <= cpuL4freq())
 awake_ideal_freq = cpuL4freq();
@@ -536,13 +543,15 @@ static ssize_t store_sleep_ideal_freq(struct kobject *kobj, struct attribute *at
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
 	if (res >= 0 && input >= 0) {
-if(input > 0 && input <= cpuL8freq())
+if(input > 0 && input <= cpuL9freq())
+sleep_ideal_freq = cpuL9freq();
+else if(input > cpuL9freq() && input <= cpuL8freq())
 sleep_ideal_freq = cpuL8freq();
 else if(input > cpuL8freq() && input <= cpuL7freq())
 sleep_ideal_freq = cpuL7freq();
 else if(input > cpuL7freq() && input <= cpuL6freq())
 sleep_ideal_freq = cpuL6freq();
-else		sleep_ideal_freq = cpuL7freq();
+else		sleep_ideal_freq = cpuL8freq();
 		if (suspended)
 			smartass_update_min_max_allcpus();
 	}
@@ -560,7 +569,9 @@ static ssize_t store_sleep_wakeup_freq(struct kobject *kobj, struct attribute *a
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
 	if (res >= 0 && input >= 0){
-if(input > cpuL3freq())
+if(input > cpuL2freq())
+sleep_wakeup_freq = cpuL1freq();
+else if(input > cpuL3freq() && input <= cpuL2freq())
 sleep_wakeup_freq = cpuL2freq();
 else if(input > cpuL4freq() && input <= cpuL3freq())
 sleep_wakeup_freq = cpuL3freq();
@@ -571,7 +582,7 @@ sleep_wakeup_freq = cpuL5freq();
 else if(input > cpuL7freq() && input <= cpuL6freq())
 sleep_wakeup_freq = cpuL6freq();
 else
-		sleep_wakeup_freq = cpuL5freq();
+		sleep_wakeup_freq = cpuL6freq();
 }
 	return count;
 }
@@ -587,7 +598,9 @@ static ssize_t store_awake_ideal_freq(struct kobject *kobj, struct attribute *at
 	unsigned long input;
 	res = strict_strtoul(buf, 0, &input);
 	if (res >= 0 && input >= 0) {
-if(input > cpuL3freq())
+if(input > cpuL2freq())
+awake_ideal_freq = cpuL1freq();
+else if(input > cpuL3freq() && input <= cpuL2freq())
 awake_ideal_freq = cpuL2freq();
 else if(input > cpuL4freq() && input <= cpuL3freq())
 awake_ideal_freq = cpuL3freq();
@@ -597,6 +610,8 @@ else if(input > cpuL6freq() && input <= cpuL5freq())
 awake_ideal_freq = cpuL5freq();
 else if(input > cpuL7freq() && input <= cpuL6freq())
 awake_ideal_freq = cpuL6freq();
+else if(input > cpuL8freq() && input <= cpuL7freq())
+awake_ideal_freq = cpuL7freq();
 else
 		awake_ideal_freq = cpuL6freq();
 		if (!suspended)
@@ -857,14 +872,14 @@ static int __init cpufreq_smartass_init(void)
 	unsigned long low_freq;
 	struct smartass_info_s *this_smartass;
 	
-	low_freq = cpuL8freq();
+	low_freq = cpuL9freq();
 	debug_mask = 0;
 	up_rate_us = DEFAULT_UP_RATE_US;
 	down_rate_us = DEFAULT_DOWN_RATE_US;
 // 	sleep_ideal_freq = DEFAULT_SLEEP_IDEAL_FREQ;
 	sleep_ideal_freq = low_freq;
 //  	sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
-	sleep_wakeup_freq = cpuL5freq();
+	sleep_wakeup_freq = cpuL6freq();
 //	awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ; 
 	awake_ideal_freq = cpuL6freq();
 	sample_rate_jiffies = DEFAULT_SAMPLE_RATE_JIFFIES;
