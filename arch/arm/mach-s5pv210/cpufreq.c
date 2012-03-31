@@ -40,7 +40,7 @@ static DEFINE_MUTEX(set_freq_lock);
 #define APLL_VAL_1080   ((1 << 31) | (270 << 16) | (6 << 8) | 1)
 #define APLL_VAL_1000	((1 << 31) | (125 << 16) | (3 << 8) | 1)
 #define APLL_VAL_800	((1 << 31) | (100 << 16) | (3 << 8) | 1)
-//#define APLL_VAL_600    ((1 << 31) | ( 75 << 16) | (3 << 8) | 1)
+#define APLL_VAL_600    ((1 << 31) | ( 75 << 16) | (3 << 8) | 1)
 
 #define SLEEP_FREQ	(800 * 1000) /* Use 800MHz when entering sleep */
 
@@ -511,10 +511,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 * 6-2. Wait untile the PLL is locked
 		 */
 #ifdef CONFIG_LIVE_OC
-	if(index !=L6)
 		__raw_writel(apll_values[index], S5P_APLL_CON);
-	else
-		__raw_writel(APLL_VAL_800, S5P_APLL_CON);
 #else
 		switch (index) {
 		case L0:
@@ -695,20 +692,19 @@ static void liveoc_init(void)
 
     while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
 	index = s5pv210_freq_table[i].index;
-	if (index != L6){
+if (index != L6){
 	fclk = original_fclk[index] / 1000;
 	divider = find_divider(fclk);
-/*}
+}
 else{ 
 	fclk = 600000 / 1000;
 	divider = 3;
 }
-*/
+
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-		}	
+		
 
 	i++;
-	
     }
 
     sleep_freq = SLEEP_FREQ;
@@ -750,6 +746,9 @@ else
 		fclk = (original_fclk[index] * oc_value) / 100;
 	else
 		fclk = original_fclk[index];
+		}
+else
+	fclk = 1200000;
 
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
@@ -757,10 +756,18 @@ else
 	    sleep_freq = s5pv210_freq_table[i].frequency;
 
 	fclk /= 1000;
-
+if (index != L6){
 	divider = find_divider(fclk);
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-	}
+}
+else{
+	divider = 3;
+	apll_values[index] = ((1 << 31) | (75 << 16) | (3 << 8) | (1));
+}
+
+if (index = L6) {
+		fclk = 600000;
+		}
 	i++;
     }
 
