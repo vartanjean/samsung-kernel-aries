@@ -3,17 +3,23 @@ rm arch/arm/boot/zImage
 
 rom=""
 
+mem="XL_BM"
+
 handy="i9000"
 
-build="Devil2_0.62_XL""$rom"_"$handy"
+build="Devil2_0.62""$rom"_"$handy"
 
 scheduler="CFS"
 
 color="CMC"
 
 light="BLN"
-
+if [ "$mem" = "cm" ]
+then
 version="$build"_"$scheduler"_"$light"_"$color"
+else
+version="$build"_"$scheduler"_"$light"_"$color"_"$mem"
+fi
 export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
 sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
 mv init/version.c init/version.backup

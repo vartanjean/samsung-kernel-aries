@@ -19,21 +19,28 @@ config CPU_S5PV210
 	  Enable S5PV210 CPU support
 
 config S5PV210_XL
-bool "Enable XLmem (more free RAM)"
+bool "Enable XL_MEM (more free RAM)"
 default n
 help
     Aggressively restrict the memory set aside on
     boot for FIMC, MFC and JPEG.
 
 config S5PV210_XL_BIGMEM
-bool "Enable BIGMEM_XLmem (more free RAM)"
+bool "Enable XL_BIGMEM (breaks 720p recording)"
 default n
 help
     Aggressively restrict the memory set aside on
     boot for FIMC, MFC and JPEG.
 
-config S5PV210_BIGMEM
-bool "Enable Bigmem (more free RAM)"
+config S5PV210_XL_HUGHMEM
+bool "Enable XL_HUGHMEM (breaks cam)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_TESTMEM
+bool "Enable TESTMEM (more free RAM)"
 default n
 help
     Aggressively restrict the memory set aside on

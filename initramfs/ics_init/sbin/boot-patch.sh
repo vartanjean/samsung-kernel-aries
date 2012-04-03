@@ -16,7 +16,7 @@ exec 2>&1
 # start logfile output
 echo
 echo "************************************************"
-echo "MIDNIGHT-ICS BOOT LOG"
+echo "DEVIL-ICS BOOT LOG (thanks Mialwe)"
 echo "************************************************"
 echo
 
@@ -38,79 +38,8 @@ cat_msg_sysfile() {
 }
 
 #initialize cpu
-uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;uv1128=0;uv1200=0;cpumax=1000000;
+#uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;uv1080=0;uv1200=0;uv1300=0;uv1400=0;cpumax=1000000;
 
-# app settings parsing
-# this gets all values directly from the app shared_prefs file, no need for
-# other config files.
-if $BB [ ! -f /cache/midnight_block ];then
-    echo "APP: no blocker file present, proceeding..."
-    xmlfile="/datadata/com.mialwe.midnight.control/shared_prefs/com.mialwe.midnight.control_preferences.xml"
-    echo "APP: checking app preferences..."
-    if $BB [ -f $xmlfile ];then
-        echo "APP: preferences file found, parsing..."
-        sched=`$BB sed -n 's|<string name=\"midnight_io\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: IO sched -> $sched"
-        cpumax=`$BB sed -n 's|<string name=\"midnight_cpu_max\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: cpumax -> $cpumax"
-        cpugov=`$BB sed -n 's|<string name=\"midnight_cpu_gov\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: cpugov -> $cpugov"
-        uvatboot=`$BB awk -F"\"" ' /c_toggle_uv_boot\"/ {print $4}' $xmlfile`
-        uv1200=`$BB awk -F"\"" ' /uv_1200\"/ {print $4}' $xmlfile`;#uv1200=$(($uv1200*(-1)))
-        uv1128=`$BB awk -F"\"" ' /uv_1128\"/ {print $4}' $xmlfile`;#uv1128=$(($uv1128*(-1)))
-        uv1000=`$BB awk -F"\"" ' /uv_1000\"/ {print $4}' $xmlfile`;#uv1000=$(($uv1000*(-1)))
-        uv800=`$BB awk -F"\"" ' /uv_800\"/ {print $4}' $xmlfile`;#uv800=$(($uv800*(-1)))
-        uv400=`$BB awk -F"\"" ' /uv_400\"/ {print $4}' $xmlfile`;#uv400=$(($uv400*(-1)))
-        uv200=`$BB awk -F"\"" ' /uv_200\"/ {print $4}' $xmlfile`;#uv200=$(($uv200*(-1)))
-        uv100=`$BB awk -F"\"" ' /uv_100\"/ {print $4}' $xmlfile`;#uv100=$(($uv100*(-1)))
-        echo "APP: uv at boot -> $uvatboot"
-        echo "APP: uv1200 -> $uv1200"
-        echo "APP: uv1128 -> $uv1128"
-        echo "APP: uv1000 -> $uv1000"
-        echo "APP: uv800  -> $uv800"
-        echo "APP: uv400  -> $uv400"
-        echo "APP: uv200  -> $uv200"
-        echo "APP: uv100  -> $uv100"
-        mr=`$BB awk -F"\"" ' /midnight_mul_r\"/ {print $4}' $xmlfile`
-        mg=`$BB awk -F"\"" ' /midnight_mul_g\"/ {print $4}' $xmlfile`
-        mb=`$BB awk -F"\"" ' /midnight_mul_b\"/ {print $4}' $xmlfile`
-        mrn=`$BB awk -F"\"" ' /midnight_mul_r_night\"/ {print $4}' $xmlfile`
-        mgn=`$BB awk -F"\"" ' /midnight_mul_g_night\"/ {print $4}' $xmlfile`
-        mbn=`$BB awk -F"\"" ' /midnight_mul_b_night\"/ {print $4}' $xmlfile`
-        mbright=`$BB awk -F"\"" ' /midnight_mult_brightness\"/ {print $4}' $xmlfile`
-        mbrightn=`$BB awk -F"\"" ' /midnight_mult_brightness_night\"/ {print $4}' $xmlfile`
-        echo "APP: brightness  -> $mbright"
-        echo "APP: mul_r       -> $mr"
-        echo "APP: mul_g       -> $mg"
-        echo "APP: mul_b       -> $mb"
-        echo "APP: brightness_n-> $mbrightn"
-        echo "APP: mul_r_night -> $mrn"
-        echo "APP: mul_g_night -> $mgn"
-        echo "APP: mul_b_night -> $mbn"
-        logcat=`$BB awk -F"\"" ' /c_toggle_logcat\"/ {print $4}' $xmlfile`
-        initd=`$BB awk -F"\"" ' /c_toggle_initd\"/ {print $4}' $xmlfile`
-        echo "APP: initd  -> $initd"
-        echo "APP: logcat -> $logcat"
-        touch=`$BB sed -n 's|<string name=\"midnight_sensitivity\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: sensitivity -> $touch"
-        lmk=`$BB sed -n 's|<string name=\"midnight_lmk\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: LMK -> $lmk"
-        readahead=`$BB sed -n 's|<string name=\"midnight_rh\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: readahead -> $readahead"
-        vibration_intensity=`$BB awk -F"\"" ' /vibration_intensity\"/ {print $4}' $xmlfile`
-        echo "APP: vibration intensity -> $vibration_intensity"
-        touchwake=`$BB awk -F"\"" ' /touchwake\"/ {print $4}' $xmlfile`
-        touchwake_timeout=`$BB awk -F"\"" ' /touchwake_timeout\"/ {print $4}' $xmlfile`
-        echo "APP: touchwake -> $touchwake"
-        echo "APP: touchwake timeout-> $touchwake_timeout"
-    else
-        echo "APP: preferences file not found."
-    fi
-else
-    echo "APP: blocker file found, not processing MidnightControl settings..."
-    echo "APP: removing blocker file..."
-    rm /cache/midnight_block
-fi
 
 # partitions
 echo; echo "mount"
@@ -124,34 +53,16 @@ mount
 
 # set cpu max freq
 echo; echo "cpu"
-if $BB [[ "$cpumax" -eq 1200000 || "$cpumax" -eq 1128000 || "$cpumax" -eq 1000000 || "$cpumax" -eq 800000  || "$cpumax" -eq 400000 ]];then
+cpumax=`cat /etc/devil/cpumax`
+if $BB [[ "$cpumax" -eq 1400000 || "$cpumax" -eq 1300000 || "$cpumax" -eq 1200000 || "$cpumax" -eq 1080000  || "$cpumax" -eq 1000000 || "$cpumax" -eq 800000 ]];then
     echo "CPU: found vaild cpumax: <$cpumax>"
     echo $cpumax > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+else
+	echo "CPU: did not find vaild cpumax: setting 1000"
+	echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 fi
 
-# set cpu governor
-if $BB [[ "$cpugov" == "ondemand" || "$cpugov" == "conservative" || "$cpugov" == "smartassV2" ]];then
-    echo "CPU: found vaild cpugov: <$cpugov>"
-    echo $cpugov > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-fi
 
-# parse undervolting
-if $BB [ ! -f /cache/midnight_block ];then
-    if $BB [ "$uv1200" -lt 0 ];then uv1200=$(($uv1200*(-1)));else uv1200=0;fi
-    if $BB [ "$uv1128" -lt 0 ];then uv1128=$(($uv1128*(-1)));else uv1128=0;fi
-    if $BB [ "$uv1000" -lt 0 ];then uv1000=$(($uv1000*(-1)));else uv1000=0;fi
-    if $BB [ "$uv800" -lt 0 ];then uv800=$(($uv800*(-1)));else uv800=0;fi
-    if $BB [ "$uv400" -lt 0 ];then uv400=$(($uv400*(-1)));else uv400=0;fi
-    if $BB [ "$uv200" -lt 0 ];then uv200=$(($uv200*(-1)));else uv200=0;fi
-    if $BB [ "$uv100" -lt 0 ];then uv100=$(($uv100*(-1)));else uv100=0;fi
-fi
-
-# set undervolting
-echo "CPU: values after parsing: $uv1200, $uv1128, $uv1000, $uv800, $uv400, $uv200, $uv100"
-if $BB [ "$uvatboot" == "true" ];then
-    echo "CPU: UV at boot enabled, setting values now..."
-    echo $uv1200 $uv1128 $uv1000 $uv800 $uv400 $uv200 $uv100 > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-fi
 
 # debug output
 cat_msg_sysfile "max           : " /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -242,19 +153,7 @@ echo 16 > /sys/block/mtdblock2/queue/read_ahead_kb # system
 echo 16 > /sys/block/mtdblock3/queue/read_ahead_kb # cache
 echo 64 > /sys/block/mtdblock6/queue/read_ahead_kb # datadata
 
-echo; echo "io"
-MTD=`$BB ls -d /sys/block/mtdblock*`
-LOOP=`$BB ls -d /sys/block/loop*`
-MMC=`$BB ls -d /sys/block/mmc*`
-
-# set IO scheduler    
-if $BB [[ "$sched" == "noop" || "$sched" == "sio" ]];then
-    iosched=$sched    
-    echo "IO: found valid IO scheduler <$iosched>..."
-else
-    iosched="sio"    
-fi        
-
+      
 # general tweaks
 for i in $MTD $MMC $LOOP;do
     echo "$iosched" > $i/queue/scheduler
@@ -277,40 +176,35 @@ for i in $MTD $MMC $LOOP $RAM;do
     echo
 done
 
-# set vibration intensity
-echo;echo "vibration intensity"
-if $BB [ ! -z $vibration_intensity ];then
-    echo "found sensitivity value, setting..."
-    echo $vibration_intensity > /sys/class/timed_output/vibrator/duty
-    cat_msg_sysfile "/sys/class/timed_output/vibrator/duty: " /sys/class/timed_output/vibrator/duty 
-else
-    echo "deactivated, nothing to do..."
-fi
 
-# enable touchwake
-echo;echo "touchwake"
-if $BB [ "$touchwake" == "true" ];then
-    echo "found setting, activating touchwake..."
-    echo 1 > /sys/class/misc/touchwake/enabled
-    cat_msg_sysfile "/sys/class/misc/touchwake/enabled: " /sys/class/misc/touchwake/enabled
-else
-    echo "deactivated, nothing to do..."
-fi
 
 # debug output BLN
 echo;echo "bln"
 cat_msg_sysfile "/sys/class/misc/backlightnotification/enabled: " /sys/class/misc/backlightnotification/enabled
+
+
+# load profile
+echo; echo "profile"
+profile=`cat /etc/devil/profile`
+if [ $profile = "smooth" ]; then
+    $BB chmod +x /data/local/devil/smooth.sh;
+    logwrapper /system/bin/sh /data/local/devil/smooth.sh;
+fi
+
+
+if [ $profile = "powersave" ]; then
+    $BB chmod +x /data/local/devil/powersave.sh;
+    logwrapper /system/bin/sh /data/local/devil/powersave.sh;
+fi
 
 # init.d support 
 # executes <E>scriptname, <S>scriptname, <0-9><0-9>scriptname
 # in this order.
 echo; echo "init.d"
 echo "creating /system/etc/init.d..."
-$BB mount -o remount,rw /system
-$BB mkdir -p /system/etc/init.d
-$BB mount -o remount,ro /system
 
-if $BB [ "$initd" == "true" ];then
+
+#if $BB [ "$initd" == "true" ];then
     echo "starting init.d script execution..."
     echo $(date) USER EARLY INIT START from /system/etc/init.d
     if cd /system/etc/init.d >/dev/null 2>&1 ; then
@@ -344,9 +238,6 @@ if $BB [ "$initd" == "true" ];then
         done
     fi
     echo $(date) USER INIT DONE from /system/etc/init.d
-else
-    echo "init.d execution deactivated, nothing to do."
-fi
-              
-#rm /data/data/mobi.cyann.nstools/shared_prefs/mobi.cyann.nstools_preferences.xml
-#rm /datadata/mobi.cyann.nstools/shared_prefs/mobi.cyann.nstools_preferences.xml
+#else
+#    echo "init.d execution deactivated, nothing to do."
+#fi
