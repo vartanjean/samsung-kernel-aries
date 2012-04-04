@@ -26,9 +26,10 @@ static unsigned int get_freq_table_size(struct cpufreq_frequency_table *freq_tab
 }
 */
 
-extern void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq);
+extern void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq, unsigned int selective_oc);
 
 static int oc_value = 100;
+static int selective_oc = 1;
 
 /* Apply Live OC to 800MHz and above */
 static int oc_low_freq = 800000;
@@ -51,6 +52,11 @@ static ssize_t liveoc_octarget_high_read(struct device * dev, struct device_attr
    return sprintf(buf, "%u\n", oc_high_freq);
 }
 
+static ssize_t liveoc_selectiveoc_enable_read(struct device * dev, struct device_attribute * attr, char * buf)
+{
+   return sprintf(buf, "%u\n", selective_oc);
+}
+
 static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
     unsigned int data;
@@ -63,7 +69,7 @@ static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute
 			{
 			    oc_value = data;
 
-			    liveoc_update(oc_value, oc_low_freq, oc_high_freq);
+			    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 			}
 
 		    pr_info("LIVEOC oc-value set to %u\n", oc_value);
@@ -91,7 +97,7 @@ static ssize_t liveoc_octarget_low_write(struct device * dev, struct device_attr
 		{
 		    oc_low_freq = data;
 	    
-		    liveoc_update(oc_value, oc_low_freq, oc_high_freq);
+		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 
 		    pr_info("LIVEOC oc-target-low set to %u\n", oc_low_freq);
 		}
@@ -117,7 +123,7 @@ static ssize_t liveoc_octarget_high_write(struct device * dev, struct device_att
 		{
 		    oc_high_freq = data;
 	    
-		    liveoc_update(oc_value, oc_low_freq, oc_high_freq);
+		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 
 		    pr_info("LIVEOC oc-target-high set to %u\n", oc_high_freq);
 		}
@@ -134,6 +140,35 @@ static ssize_t liveoc_octarget_high_write(struct device * dev, struct device_att
 }
 
 
+
+static ssize_t liveoc_selectiveoc_enable_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+    unsigned int data;
+
+    if(sscanf(buf, "%u\n", &data) == 1)
+	{
+	    if (data != selective_oc)
+		{
+		    selective_oc = data;
+	    
+		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
+
+		    pr_info("LIVEOC selective_oc set to %u\n", selective_oc);
+		}
+	    else
+		{
+		    pr_info("%s: invalid input range %u\n", __FUNCTION__, selective_oc);
+		}
+	}
+    else
+	{
+		pr_info("%s: invalid input\n", __FUNCTION__);
+	}
+    return size;
+}
+
+
+
 static ssize_t liveoc_version(struct device * dev, struct device_attribute * attr, char * buf)
 {
     return sprintf(buf, "%u\n", LIVEOC_VERSION);
@@ -142,6 +177,7 @@ static ssize_t liveoc_version(struct device * dev, struct device_attribute * att
 static DEVICE_ATTR(oc_value, S_IRUGO | S_IWUGO, liveoc_ocvalue_read, liveoc_ocvalue_write);
 static DEVICE_ATTR(oc_target_low, S_IRUGO | S_IWUGO, liveoc_octarget_low_read, liveoc_octarget_low_write);
 static DEVICE_ATTR(oc_target_high, S_IRUGO | S_IWUGO, liveoc_octarget_high_read, liveoc_octarget_high_write);
+static DEVICE_ATTR(selective_oc, S_IRUGO | S_IWUGO, liveoc_selectiveoc_enable_read, liveoc_selectiveoc_enable_write);
 static DEVICE_ATTR(version, S_IRUGO , liveoc_version, NULL);
 
 static struct attribute *liveoc_attributes[] = 
@@ -149,6 +185,7 @@ static struct attribute *liveoc_attributes[] =
 	&dev_attr_oc_value.attr,
 	&dev_attr_oc_target_low.attr,
 	&dev_attr_oc_target_high.attr,
+	&dev_attr_selective_oc.attr,
 	&dev_attr_version.attr,
 	NULL
     };

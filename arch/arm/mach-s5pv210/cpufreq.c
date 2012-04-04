@@ -185,6 +185,9 @@ extern void cpufreq_stats_reset(void);
 static bool pllbus_changing = false;
 
 static int oc_value = 100;
+static int selective_oc = 1;
+static int oc_low_freq = 800000;
+static int oc_high_freq = 2000000;
 
 static unsigned long sleep_freq;
 
@@ -222,8 +225,15 @@ static void s5pv210_set_refresh(enum s5pv210_dmc_port ch, unsigned long freq)
 
 	do_div(tmp1, tmp);
 #ifdef CONFIG_LIVE_OC
+struct cpufreq_policy * policy = cpufreq_cpu_get(0);
+
 if (ch == DMC1)
+	{
+	if ((oc_low_freq <= policy->user_policy.min && oc_high_freq >= policy->user_policy.max) || (selective_oc != 1))
       __raw_writel((tmp1 * oc_value) / 100, reg);
+	else
+	__raw_writel(tmp1, reg);
+	}
   else
       __raw_writel(tmp1, reg);
 #else
@@ -699,7 +709,7 @@ static void liveoc_init(void)
     return;
 }
 
-void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq)
+void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq, unsigned int selective_oc)
 {
     int i, index, index_min = L0, index_max = L0, divider;
 
@@ -720,16 +730,25 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
 	if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
 	    index_max = index;
-if(oc_low_freq < oc_high_freq)
-	if(s5pv210_freq_table[i].frequency >= oc_low_freq && s5pv210_freq_table[i].frequency <= oc_high_freq)
-		fclk = (original_fclk[index] * oc_value) / 100;
-	else
-		fclk = original_fclk[index];
-else
-	if(s5pv210_freq_table[i].frequency >= oc_low_freq || s5pv210_freq_table[i].frequency <= oc_high_freq)
-		fclk = (original_fclk[index] * oc_value) / 100;
-	else
-		fclk = original_fclk[index];
+
+if(selective_oc == 1){
+
+	if(oc_low_freq < oc_high_freq){
+		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq && (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq){
+		fclk = (original_fclk[index] * oc_value) / 100;}
+		else{
+		fclk = original_fclk[index];}
+		}
+	else{
+		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq || (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq){
+		fclk = (original_fclk[index] * oc_value) / 100;}
+		else{
+		fclk = original_fclk[index];}
+		}
+}
+else{
+fclk = (original_fclk[index] * oc_value) / 100;
+}
 
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
