@@ -37,9 +37,6 @@ cat_msg_sysfile() {
     cat $SYSFILE
 }
 
-#initialize cpu
-#uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;uv1080=0;uv1200=0;uv1300=0;uv1400=0;cpumax=1000000;
-
 
 # partitions
 echo; echo "mount"
@@ -53,12 +50,12 @@ mount
 
 # set cpu max freq
 echo; echo "cpu"
-cpumax=`cat /etc/devil/cpumax`
-if $BB [[ "$cpumax" -eq 1400000 || "$cpumax" -eq 1300000 || "$cpumax" -eq 1200000 || "$cpumax" -eq 1080000  || "$cpumax" -eq 1000000 || "$cpumax" -eq 800000 ]];then
-    echo "CPU: found vaild cpumax: <$cpumax>"
-    echo $cpumax > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+bootspeed=`cat /etc/devil/bootspeed`
+if $BB [[ "$bootspeed" -eq 1400000 || "$bootspeed" -eq 1300000 || "$bootspeed" -eq 1200000 || "$bootspeed" -eq 1080000  || "$bootspeed" -eq 1000000 || "$bootspeed" -eq 800000 ]];then
+    echo "CPU: found vaild bootspeed: <$bootspeed>"
+    echo $bootspeed > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 else
-	echo "CPU: did not find vaild cpumax: setting 1000"
+	echo "CPU: did not find vaild bootspeed: setting 1000"
 	echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 fi
 
@@ -197,6 +194,24 @@ if [ $profile = "powersave" ]; then
     logwrapper /system/bin/sh /data/local/devil/powersave.sh;
 fi
 
+
+# speed to default
+echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+echo "set max freq to default"
+
+# live_oc_mode
+echo; echo "live_oc_mode"
+#bootspeed=`cat /etc/devil/bootspeed`
+#if $BB [[ "$bootspeed" -eq 1400000 || "$bootspeed" -eq 1300000 || "$bootspeed" -eq 1200000 || "$bootspeed" -eq 1080000  || "$bootspeed" -eq 1000000 || "$bootspeed" -eq 800000 ]];then
+live_oc_mode=`cat /etc/devil/live_oc_mode`
+if $BB [[ "$live_oc_mode" -eq 0 || "$live_oc_mode" -eq 1]];then
+    echo "found vaild live_oc_mode: <$live_oc_mode>"
+    echo $live_oc_mode > /sys/devices/virtual/misc/liveoc/selective_oc
+else
+	echo "did not find vaild live_oc_mode: setting 1"
+	echo 1 > /sys/devices/virtual/misc/liveoc/selective_oc
+fi
+
 # init.d support 
 # executes <E>scriptname, <S>scriptname, <0-9><0-9>scriptname
 # in this order.
@@ -238,6 +253,5 @@ echo "creating /system/etc/init.d..."
         done
     fi
     echo $(date) USER INIT DONE from /system/etc/init.d
-#else
-#    echo "init.d execution deactivated, nothing to do."
-#fi
+
+

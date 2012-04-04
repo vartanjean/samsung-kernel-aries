@@ -3,18 +3,18 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-mem="XL_BM"
+mem=""
 
 handy="i9000"
 
-build="Devil2_0.62""$rom"_"$handy"
+build="Devil2_0.63""$rom"_"$handy"
 
 scheduler="CFS"
 
 color="CMC"
 
 light="BLN"
-if [ "$mem" = "cm" ]
+if [ "$mem" = "XL_bm" ]
 then
 version="$build"_"$scheduler"_"$light"_"$color"
 else

@@ -36,7 +36,8 @@ fi
 #	cp S99load_default system/etc/init.d/ || exit 1
 #	cp S80profiles system/etc/init.d/ || exit 1
 	cp profile system/etc/devil/ || exit 1
-	cp cpumax system/etc/devil/ || exit 1
+	cp bootspeed system/etc/devil/ || exit 1
+	cp live_oc_mode system/etc/devil/ || exit 1
 
 	mkdir -p system/bin
 	zip -q -r "${REL}.zip" system data backup boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
