@@ -34,7 +34,7 @@
 #include <trace/events/power.h>
 
 static unsigned int lock_sc_min = 0;
-extern unsigned long cpuL7freq(void);
+extern unsigned long cpuL8freq(void);
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -439,7 +439,7 @@ static ssize_t store_lock_scaling_min(struct cpufreq_policy *policy, const char 
 
 	lock_sc_min = input;
 	
-	policy->min = policy->cpuinfo.min_freq = cpuL7freq();
+	policy->min = policy->cpuinfo.min_freq = cpuL8freq();
 	
 	/*ret = cpufreq_get_policy(&new_policy, policy->cpu);
 	if (ret)
