@@ -26,7 +26,7 @@ fi
 
 if [ "$mem" = "cm" ]
 then
-	cp cm/* system/lib || exit 1
+	cp cm/* system/lib/ || exit 1
 else	
 	cp xl/* system/lib/ || exit 1
 fi	
