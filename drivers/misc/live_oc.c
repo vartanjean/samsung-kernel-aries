@@ -149,6 +149,7 @@ static ssize_t liveoc_selectiveoc_enable_write(struct device * dev, struct devic
 	{
 	    if (data != selective_oc)
 		{
+		    oc_value = 100;	
 		    selective_oc = data;
 	    
 		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
