@@ -5,9 +5,12 @@
 # user/init.d-scripts.
 #
 
-# backup and clean logfile
+# backup and clean logfile and last_kmsg
 /system/xbin/busybox cp /data/user.log /data/user.log.bak
 /system/xbin/busybox rm /data/user.log
+
+/system/xbin/busybox cp /data/last_kmsg.txt /data/last_kmsg.txt.bak
+/system/xbin/busybox cp /proc/last_kmsg /data/last_kmsg.txt
 
 # start logging
 exec >>/data/user.log
@@ -201,16 +204,14 @@ echo "set max freq to default"
 
 # live_oc_mode
 echo; echo "live_oc_mode"
-#bootspeed=`cat /etc/devil/bootspeed`
-#if $BB [[ "$bootspeed" -eq 1400000 || "$bootspeed" -eq 1300000 || "$bootspeed" -eq 1200000 || "$bootspeed" -eq 1080000  || "$bootspeed" -eq 1000000 || "$bootspeed" -eq 800000 ]];then
-live_oc_mode=`cat /etc/devil/live_oc_mode`
-if $BB [[ "$live_oc_mode" -eq 0 || "$live_oc_mode" -eq 1]];then
-    echo "found vaild live_oc_mode: <$live_oc_mode>"
+if [ -e "/etc/devil/live_oc_mode" ];then
+    live_oc_mode=`cat /etc/devil/live_oc_mode`
     echo $live_oc_mode > /sys/devices/virtual/misc/liveoc/selective_oc
+    echo "liveoc mode set to: $live_oc_mode"
 else
-	echo "did not find vaild live_oc_mode: setting 1"
-	echo 1 > /sys/devices/virtual/misc/liveoc/selective_oc
-fi
+    echo "did not find vaild live_oc_mode: setting 1"
+    echo 1 > /sys/devices/virtual/misc/liveoc/selective_oc
+fi;
 
 # init.d support 
 # executes <E>scriptname, <S>scriptname, <0-9><0-9>scriptname
