@@ -1,0 +1,325 @@
+# Kernel Installer Config for Team ICSSGS
+# Copyright 2012 Team ICSSGS
+# Written by DemonWav
+
+restotmp("busybox", "busybox");
+if
+	resexec("icssgs.sh", "partitionchecker", "devicechecker") == "0"
+then
+	writetmpfile(
+		"calibrate.prop",
+		"device=GSM_MTD"
+	);
+endif;
+if
+	resexec("icssgs.sh", "partitionchecker", "devicechecker") == "1"
+then
+	writetmpfile(
+		"calibrate.prop",
+		"device=GSM_BML"
+	);
+endif;
+if
+	resexec("icssgs.sh", "partitionchecker", "devicechecker") == "2"
+then
+	writetmpfile(
+		"calibrate.prop",
+		"device=GSM_MTD_CM7"
+	);
+endif;
+if
+	resexec("icssgs.sh", "partitionchecker", "devicechecker") == "3"
+then
+	writetmpfile(
+		"calibrate.prop",
+		"device=CDMA"
+	);
+endif;
+
+if
+	file_getprop("/tmp/icssgs-data/calibrate.prop", "device")=="GSM_MTD"
+then
+	#GSM_MTD
+	calibrate("1.8447", "37", "1.2158", "27");
+	ini_set("customkeycode_up",     "115");
+	ini_set("customkeycode_down",   "114");
+	ini_set("customkeycode_select", "116");
+	ini_set("customkeycode_menu",   "139");
+	ini_set("customkeycode_back",   "158");
+else
+	if
+		file_getprop("/tmp/icssgs-data/calibrate.prop", "device")=="CDMA"
+	then
+		#CDMA
+		calibrate("0.9561", "11", "0.9682", "20", "yes");
+		ini_set("customkeycode_up",     "51");
+		ini_set("customkeycode_down",   "52");
+		ini_set("customkeycode_select", "116");
+		ini_set("customkeycode_menu",   "139");
+		ini_set("customkeycode_back",   "158");
+	else
+		if
+			file_getprop("/tmp/icssgs-data/calibrate.prop", "device")=="GSM_BML"
+		then
+			#GSM_BML
+			calibrate("0.8824", "41", "0.9469", "24", "yes");
+			ini_set("customkeycode_up",     "115");
+			ini_set("customkeycode_down",   "114");
+			ini_set("customkeycode_select", "116");
+			ini_set("customkeycode_menu",   "139");
+			ini_set("customkeycode_back",   "158");
+		else
+			if
+				file_getprop("/tmp/icssgs-data/calibrate.prop", "device")=="GSM_MTD_CM7"
+			then
+				#GSM_MTD_CM7
+				calibrate("1.8447", "37", "1.2158", "27");
+				ini_set("customkeycode_up",     "115");
+				ini_set("customkeycode_down",   "114");
+				ini_set("customkeycode_select", "116");
+				ini_set("customkeycode_menu",   "139");
+				ini_set("customkeycode_back",   "158");
+			endif;
+		endif;
+	endif;
+endif;
+
+#########################
+
+#Initializing Kernel Information
+ini_set("rom_name",             "ICSSGS Test Kernel");
+ini_set("rom_version",          "RC4.2");
+ini_set("rom_author",           "Team ICSSGS");
+ini_set("rom_device",           "Samsung Galaxy S");
+ini_set("compiled_by",		  "DemonWav");
+
+#Show splash screen for 2 seconds
+splash(2000, "splash");
+theme("ics");
+
+ini_set("force_colorspace","rgba");
+
+fontresload("0","droid.ttf","12");
+fontresload("1","droid.ttf","18");
+
+#########################
+#########################
+#########################
+
+#########################
+#Welcome screen
+viewbox(
+	"Welcome",
+	"Team ICSSGS Test Kernel"
+	"Thank you for trying a Team ICSSGS Test Kernel.\n"+
+	"If you have any problems please contact a Team ICSSGS\n"+
+	"member in ##icssgs\n\n\n"+
+	"Thanks.",
+	"@info"
+);
+
+menubox(
+	Select Phone,
+	Please choose which phone you have,
+	"@apps",
+	"phone.prop",
+	"Galaxy S","I9000", "@install",
+	"Galaxy S B","I9000B", "@install",
+	"Captivate","I897/I896", "@install",
+	"Vibrant","T959", "@install"
+);
+
+#######################
+#Confirm they have chosen the correct phone
+#Galaxy S
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="1"
+then
+	if
+		confirm(
+			"Galaxy S",
+			"You have chosen the Galaxy S as your phone, are you sure?",
+			"@info",
+			"Yes",
+			"No"
+		)=="no"
+	then
+		back("");
+	endif;
+endif;
+
+#Galaxy S B
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="2"
+then
+	if
+		confirm(
+			"Galaxy S B",
+			"You have chosen the Galaxy S B as your phone, are you sure?",
+			"@info",
+			"Yes",
+			"No"
+		)=="no"
+	then
+		back("");
+	endif;
+endif;
+
+#Captivate
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="3"
+then
+	if
+		confirm(
+			"Captivate",
+			"You have chosen the Captivate as your phone, are you sure?",
+			"@info",
+			"Yes",
+			"No"
+		)=="no"
+	then
+		back("");
+	endif;
+endif;
+
+#Vibrant
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="4"
+then
+	if
+		confirm(
+			"Vibrant",
+			"You have chosen the Vibrant as your phone, are you sure?",
+			"@info",
+			"Yes",
+			"No"
+		)=="no"
+	then
+		back("");
+	endif;
+endif;
+
+ini_set("text_next", "Install Now");
+
+#Galaxy S Install
+if
+	file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="1"
+then
+	viewbox(
+	"Ready to Install",
+
+	"You are about to begin the installation.\n"+
+	"Press <b>Install Now</b> to begin the installation for the Galaxy S.\n\n"+
+	"If you want to change your phone, press <b>Back</b>.\n"+
+	"Press Menu Key -> Quit Installation to exit the wizard.",
+
+	"@install"
+	);
+
+	ini_set("text_next", "Next >");
+
+	resexec("icssgs.sh", "mount_sdcard");
+	install(
+		"Installing",
+		"Installing ICSSGS Test Kernel for Galaxy S\n"+
+		"Please wait...",
+		"@install"
+	);
+endif;
+#Galaxy S B Install
+if
+	file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="2"
+then
+	viewbox(
+	"Ready to Install",
+
+	"You are about to begin the installation.\n"+
+	"Press <b>Install Now</b> to begin the installation for the Galaxy S B.\n\n"+
+	"If you want to change your phone, press <b>Back</b>.\n"+
+	"Press Menu Key -> Quit Installation to exit the wizard.",
+
+	"@install"
+	);
+
+	ini_set("text_next", "Next >");
+
+	resexec("icssgs.sh", "mount_sdcard");
+	install(
+		"Installing",
+		"Installing ICSSGS Test Kernel for Galaxy S B\n"+
+		"Please wait...",
+		"@install"
+	);
+endif;
+#Captivate Install
+if
+	file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="3"
+then
+	viewbox(
+	"Ready to Install",
+
+	"You are about to begin the installation.\n"+
+	"Press <b>Install Now</b> to begin the installation for the Captivate.\n\n"+
+	"If you want to change your phone, press <b>Back</b>.\n"+
+	"Press Menu Key -> Quit Installation to exit the wizard.",
+
+	"@install"
+	);
+
+	ini_set("text_next", "Next >");
+
+	resexec("icssgs.sh", "mount_sdcard");
+	install(
+		"Installing",
+		"Installing ICSSGS Test Kernel for Captivate\n"+
+		"Please wait...",
+		"@install"
+	);
+endif;
+#Vibrant Install
+if
+	file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="4"
+then
+	viewbox(
+	"Ready to Install",
+
+	"You are about to begin the installation.\n"+
+	"Press <b>Install Now</b> to begin the installation for the Vibrant.\n\n"+
+	"If you want to change your phone, press <b>Back</b>.\n"+
+	"Press Menu Key -> Quit Installation to exit the wizard.",
+
+	"@install"
+	);
+
+	ini_set("text_next", "Next >");
+
+	resexec("icssgs.sh", "mount_sdcard");
+	install(
+		"Installing",
+		"Installing ICSSGS Test Kernel for Vibrant\n"+
+		"Please wait...",
+		"@install"
+	);
+endif;
+
+pleasewait("Cleaning up...");
+
+#if they chose to save logs then export all of the logs to /sdcard/icssgslogs
+resexec("icssgs.sh", "save_logs");
+
+#reboot dialogue
+if
+	confirm(
+		resprop(getvar("lang"),"38"),
+
+		resprop(getvar("lang"),"39"),
+
+		"@info",
+
+		resprop(getvar("lang"),"40"),
+
+		resprop(getvar("lang"),"41")
+	)=="yes"
+then
+	reboot("onfinish");
+endif;

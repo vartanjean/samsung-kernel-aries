@@ -1,0 +1,107 @@
+# Updater-script for Team ICSSGS
+# Copyright 2012 Team ICSSGS
+# Written by DemonWav
+
+package_extract_dir("updates", "/tmp/updates");
+set_perm_recursive(0, 0, 0777, 06777, "/tmp/updates");
+
+#Galaxy S
+if file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="1"
+then ui_print("Beginning installation for the Galaxy S");
+endif;
+
+#Galaxy S B
+if file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="2"
+then ui_print("Beginning installation for the Galaxy S B");
+endif;
+
+#Captivate
+if file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="3"
+then ui_print("Beginning installation for the Captivate");
+endif;
+
+#Vibrant
+if file_getprop("/tmp/icssgs-data/phone.prop", "selected")=="4"
+then ui_print("Beginning installation for the Vibrant");
+endif;
+
+ui_print("<@center><b>Kernel by:</b></@>");
+ui_print("<@center>Renaud Allard</@>");
+ui_print("<@center>Team ICSSGS</@>");
+ui_print("<@center>Zacharias Maladroit</@>");
+ui_print(" ");
+ui_print(" ");
+ui_print("<@center><b>Compilation info:</b></@>");
+ui_print("DEVICE: {0}");
+ui_print("PACKAGER: {1}");
+ui_print("PACKAGE TIME: {2}");
+ui_print("VERSION: {3}");
+ui_print("<@center>Note: this information is only given for</@>");
+ui_print("<@center>reference, it <b>IS NOT</b> foolproof.</@>");
+ui_print(" ");
+ui_print(" ");
+ui_print("Cleaning scripts, OC settings, and modules");
+mount("yaffs2", "MTD", "system", "/system");
+delete_recursive("/system/etc/init.d");
+delete_recursive("/system/lib/modules");
+ui_print("Extracting modules and unmounting system");
+package_extract_dir("system/", "/system/");
+unmount("/system");
+ui_print("Cleaning Dalvik cache and logger");
+mount("yaffs2", "MTD", "userdata", "/data");
+delete_recursive("/data/dalvik-cache");
+delete("/data/local/logger.ko");
+unmount("/data");
+ui_print("Formatting Cache Partition");
+format("yaffs2", "MTD", "cache");
+ui_print("Flashing Team ICSSGS Test Kernel");
+#Galaxy S kernel
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="1"
+then
+	package_extract_dir("boot", "/tmp/boot");
+	package_extract_dir("i9000", "/tmp/i9000");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/boot");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/i9000");
+	write_raw_image("/tmp/i9000/boot.img", "boot");
+	run_program("/tmp/boot/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/i9000/boot.img");
+	delete("/tmp/i9000/boot.img");
+endif;
+#Galaxy S B kernel
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="2"
+then
+	package_extract_dir("boot", "/tmp/boot");
+	package_extract_dir("i9000b", "/tmp/i9000b");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/boot");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/i9000b");
+	write_raw_image("/tmp/i9000b/boot.img", "boot");
+	run_program("/tmp/boot/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/i9000b/boot.img");
+	delete("/tmp/i9000b/boot.img");
+endif;
+#Captivate kernel
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="3"
+then
+	package_extract_dir("boot", "/tmp/boot");
+	package_extract_dir("captivate", "/tmp/captivate");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/boot");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/captivate");
+	write_raw_image("/tmp/captivate/boot.img", "boot");
+	run_program("/tmp/boot/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/captivate/boot.img");
+	delete("/tmp/captivate/boot.img");
+endif;
+#Vibrant kernel
+if
+	file_getprop("/tmp/icssgs-data/phone.prop","selected")=="4"
+then
+	package_extract_dir("boot", "/tmp/boot");
+	package_extract_dir("vibrant", "/tmp/vibrant");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/boot");
+	set_perm_recursive(0, 0, 0777, 0777, "/tmp/vibrant");
+	write_raw_image("/tmp/vibrant/boot.img", "boot");
+	run_program("/tmp/boot/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/vibrant/boot.img");
+	delete("/tmp/vibrant/boot.img");
+endif;
+ui_print(" ");
+ui_print("Installation complete!");

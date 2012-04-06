@@ -1,0 +1,87 @@
+<!--
+    @UserSettings.xml
+    COMMIT THIS AND I (╯°□°）╯︵ ┻━┻ RAAAAA
+    
+    Notes:
+        Any tag inside of the static tag with the prefix 'auto' signifies
+        whether the option will be run when the program is invoked with no
+        arguments. The tag for that command line option itself sets the
+        default tag for when the option is run, or when the script is run
+        depending on how the 'auto' tag is set. For example:
+        
+        <static>            
+            <auto_clean>FALSE</auto_clean>
+            <clean>NORM</clean>
+        </static>
+        
+        This would not clean when the script is invoke without arguments; 
+        however, when the script is run with the 'clean' option, the 
+        default would be 'NORM'.
+
+    Rules:
+        Keep all data in the deepest scopes (must all be the same depth)
+        No newlines ('\n') inside deepest scope
+        Only add / modify / remove tags within main tags
+        Use a spaced pipe ' | ' between multiple objects
+        Use absolute paths
+        Use this syntax:
+            {0}: separator
+            {1}: Kernel build directory
+-->
+
+<!--Main user settings-->
+<config>
+    <!--Devices-->
+    <devices>
+        <!--Default devices built-->
+        <default>SGH-i897_Captivate</default>
+
+        <!--All devices possible-->
+        <SGH-i897_Captivate>aries_captivatemtd_defconfig</SGH-i897_Captivate>
+        <GT-i9000_Galaxy_S>aries_galaxysmtd_defconfig</GT-i9000_Galaxy_S>
+        <GT-i9000b_Galaxy_S>aries_galaxysbmtd_defconfig</GT-i9000b_Galaxy_S>
+        <SGH-t959_Vibrant>aries_vibrantmtd_defconfig</SGH-t959_Vibrant>
+        <SCH-i500_Fascinate>aries_fascinatemtd_defconfig</SCH-i500_Fascinate>
+    </devices>
+
+    <!--RAM Disks-->
+    <ramdisks>
+        <!--Default ramdisks used-->
+        <default>initial | recovery</default>
+
+        <!--All RAM Disks possible-->
+        <initial>{1}BuildAndPackage{0}ramdisks{0}ramdisk.img</initial>
+        <recovery>{1}BuildAndPackage{0}ramdisks{0}ramdisk-recovery.img</recovery>
+    </ramdisks>
+
+    <!--Project static variables-->
+    <static>
+        <!--Default clean-->
+        <clean>FALSE</clean>
+        
+        <!--Default packaging-->
+        <package>ZIP</package>
+
+        <!--Default upload-->
+        <cred_location>{0}home{0}trae32566{0}BuildAndPackage.cred</cred_location>
+        <upload>FALSE</upload>
+
+        <!--Kernel version prefix-->
+        <version>4.0.4</version>
+
+        <!--Built kernel location-->
+        <zImage>{1}arch{0}arm{0}boot{0}zImage</zImage>
+    </static>
+
+    <!--Toolchains-->
+    <toolchains>
+        <!--Default toolchain used-->
+        <default>codeSourcery_2010-q1</default>
+
+        <!--All toolchains possible-->
+        <codeSourcery_2010-q1>{0}home{0}trae32566{0}Android{0}Toolchains{0}CodeSourcery_2009_Q3{0}bin{0}arm-none-linux-gnueabi-</codeSourcery_2010-q1>
+        <codeSourcery_2009-q3>{0}home{0}trae32566{0}Android{0}Toolchains{0}CodeSourcery_2010_Q1{0}bin{0}arm-none-eabi-</codeSourcery_2009-q3>
+        <linaro_4.5-11>{0}home{0}trae32566{0}Android{0}Toolchains{0}Linaro_4.5-11{0}bin{0}arm-eabi-</linaro_4.5-11>
+        <linaro_4.6-12>{0}home{0}trae32566{0}Android{0}Toolchains{0}Linaro_4.6-12{0}bin{0}arm-eabi</linaro_4.6-12>
+    </toolchains>
+</config>
