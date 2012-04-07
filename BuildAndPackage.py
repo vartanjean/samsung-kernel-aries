@@ -37,10 +37,17 @@ def cli(config):
         config.clean = False
         config.package = 2
         return config
-    
+
     choiceClean = ['DIST', 'MRP', 'NORM']
     choicePack = ['HEIMDALL', 'HOC', 'ZIP', 'IMG']
     choiceUpload = ['GCODE']
+    
+    #Grab the names for easy use
+    nameTool = list()
+    for toolName in config.toolchains: nameTool.append(toolName[0])
+    
+    nameDev = list()
+    for devName in config.devices: nameDev.append(devName[0])
 
     #Add description
     cliParser = ArgumentParser(description = 'Kernel compiling and packaging system.')
@@ -60,11 +67,11 @@ def cli(config):
         help = 'Type of packaging')
 
     #Toolchain to use
-#    cliParser.add_argument(
-#        '-toolchain',
-#        choices = config.toolchains,
-#        default = config.defToolchain,
-#        help = 'Toolchain to use when building')
+    cliParser.add_argument(
+        '-toolchain',
+        choices = nameTool,
+        default = config.defToolchain,
+        help = 'Toolchain to use when building')
 
     #Google code upload
     cliParser.add_argument(
@@ -76,7 +83,7 @@ def cli(config):
     #Devices to build for
     cliParser.add_argument(
         '-devices', 
-        choices = config.devices[::2],
+        choices = nameDev,
         default = config.defDevices,
         help = 'Devices to compile for (must be at the end)',
         nargs = REMAINDER)
@@ -85,25 +92,28 @@ def cli(config):
 
     #Transfer CLI variables to config class
     config.package = choicePack.index(cliParser.package)
+    config.toolchain = config.toolchains[nameTool.index(cliParser.toolchain)][1]
     if cliParser.clean: config.clean = choiceClean.index(cliParser.clean) + 1
     else: config.clean = False
-    if config.upload: config.upload = choiceUpload.index(cliParser.upload) + 1
+    if cliParser.upload: config.upload = choiceUpload.index(cliParser.upload) + 1
     else: config.upload = False
 
-    #Set devices to whatever is requested
+    #Build only requested devices
     if cliParser.devices != 'ALL':
-        count = 0
         newDevs = list()
 
-        for device in config.devices[::2]:
+        for device in config.devices:
             try: 
-                cliParser.devices.index(device)
-                newDevs.extend([device, config.devices[(count * 2) + 1]])
-            except ValueError: pass
-            
-            count += 1
+                cliParser.devices.index(device[0])
+                newDevs.append(device)
+            except ValueError:pass
 
         config.devices = newDevs
+
+    #Remove all our defaults
+    del config.defClean, config.defDevices, config.defPackage, config.defToolchain, config.defUpload
+    del config.toolchains
+    print(config.toolchain)
 
     return config
 
@@ -139,7 +149,6 @@ def worker(config, nameDev, defDev):
     elif config.clean >= 3: print('NOTE: -clean DIST was chosen, build directory will be cleaned of everything unrevisioned!')
 
     #Get revision number, start feedback
-    print(nameDev + ':')
     config.revision = make.revision()
     if isdir(dirDev): rmtree(dirDev)
     

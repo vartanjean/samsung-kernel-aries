@@ -76,8 +76,9 @@ def build(log, toolchain):
             modules = list()
             startModule = tempLog[tempLog.find('  LD [M]  ') + 10
             while startModule != -1:
-                module = tempLog[startModule: tempLog[startModule:].find('\n')]
-                
+                modules.append(tempLog[startModule: tempLog[startModule:].find('\n')])
+                #Doublecheck
+                print(modules)
 
 def configure(defconfig, toolchain, clean = False):
     from error import OutOfBoundsError

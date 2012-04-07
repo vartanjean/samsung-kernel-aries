@@ -88,8 +88,9 @@ This class includes:
             self.zImage = get_static('zImage')
             self.locCred = get_static('cred_location')
             self.version = get_static('version')
+            
             if self.defClean == 'FALSE': self.defClean = False
-            if self.defPackage == 'FALSE': self.defClean = False
+            if self.defUpload == 'FALSE': self.defUpload = False
 
     def __raw_to_list__(self, elementName, parentElement):
         listData = list()
