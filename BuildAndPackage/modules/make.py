@@ -74,11 +74,14 @@ def build(log, toolchain):
         if tempLog.find('zImage is ready') == -1: raise BuildError()
         else:
             modules = list()
-            startModule = tempLog[tempLog.find('  LD [M]  ') + 10
+            startModule = tempLog.find('  LD [M]  ') + 10
             while startModule != -1:
                 modules.append(tempLog[startModule: tempLog[startModule:].find('\n')])
-                #Doublecheck
-                print(modules)
+                
+                startModule = tempLog[startModule:].find('  LD [M]  ') + 10
+            
+            #Doublecheck
+            print(modules)
 
 def configure(defconfig, toolchain, clean = False):
     from error import OutOfBoundsError
