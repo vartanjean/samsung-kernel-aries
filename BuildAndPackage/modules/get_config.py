@@ -77,7 +77,6 @@ This class includes:
 
             #Get all our depth 2 scopes
             self.defDevices, self.devices = get_list('devices')
-            self.defRAMDisks, self.ramDisks = get_list('ramdisks')
             self.defToolchain, self.toolchains = get_list('toolchains')
             self.defToolchain = self.defToolchain[0]
             
@@ -85,9 +84,11 @@ This class includes:
             self.defClean = get_static('clean')
             self.defPackage = get_static('package')
             self.defUpload = get_static('upload')
-            self.zImage = get_static('zImage')
+            self.initRAMDisk = get_static('initial')
             self.locCred = get_static('cred_location')
+            self.recoRAMDisk = get_static('recovery')
             self.version = get_static('version')
+            self.zImage = get_static('zImage')            
             
             if self.defClean == 'FALSE': self.defClean = False
             if self.defUpload == 'FALSE': self.defUpload = False

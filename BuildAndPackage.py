@@ -43,11 +43,11 @@ def cli(config):
     choiceUpload = ['GCODE']
     
     #Grab the names for easy use
-    nameTool = list()
-    for toolName in config.toolchains: nameTool.append(toolName[0])
+    nameDevices = list()
+    nameToolchains = list()
     
-    nameDev = list()
-    for devName in config.devices: nameDev.append(devName[0])
+    for name in config.devices: nameDevices.append(name[0])
+    for name in config.toolchains: nameToolchains.append(name[0])
 
     #Add description
     cliParser = ArgumentParser(description = 'Kernel compiling and packaging system.')
@@ -69,7 +69,7 @@ def cli(config):
     #Toolchain to use
     cliParser.add_argument(
         '-toolchain',
-        choices = nameTool,
+        choices = nameToolchains,
         default = config.defToolchain,
         help = 'Toolchain to use when building')
 
@@ -83,7 +83,7 @@ def cli(config):
     #Devices to build for
     cliParser.add_argument(
         '-devices', 
-        choices = nameDev,
+        choices = nameDevices,
         default = config.defDevices,
         help = 'Devices to compile for (must be at the end)',
         nargs = REMAINDER)
@@ -92,7 +92,7 @@ def cli(config):
 
     #Transfer CLI variables to config class
     config.package = choicePack.index(cliParser.package)
-    config.toolchain = config.toolchains[nameTool.index(cliParser.toolchain)][1]
+    config.toolchain = config.toolchains[nameToolchains.index(cliParser.toolchain)][1]
     if cliParser.clean: config.clean = choiceClean.index(cliParser.clean) + 1
     else: config.clean = False
     if cliParser.upload: config.upload = choiceUpload.index(cliParser.upload) + 1
@@ -113,7 +113,6 @@ def cli(config):
     #Remove all our defaults
     del config.defClean, config.defDevices, config.defPackage, config.defToolchain, config.defUpload
     del config.toolchains
-    print(config.toolchain)
 
     return config
 

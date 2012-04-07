@@ -44,27 +44,21 @@
         <SCH-i500_Fascinate>aries_fascinatemtd_defconfig</SCH-i500_Fascinate>
     </devices>
 
-    <!--RAM Disks-->
-    <ramdisks>
-        <!--Default ramdisks used-->
-        <default>initial | recovery</default>
-
-        <!--All RAM Disks possible-->
-        <initial>{1}BuildAndPackage{0}ramdisks{0}ramdisk.img</initial>
-        <recovery>{1}BuildAndPackage{0}ramdisks{0}ramdisk-recovery.img</recovery>
-    </ramdisks>
-
     <!--Project static variables-->
     <static>
         <!--Default clean-->
         <clean>FALSE</clean>
-        
-        <!--Default packaging-->
-        <package>ZIP</package>
 
         <!--Default upload-->
         <cred_location>{0}home{0}trae32566{0}BuildAndPackage.cred</cred_location>
         <upload>FALSE</upload>
+
+        <!--Default packaging-->
+        <package>ZIP</package>
+ 
+        <!--RAM Disks-->
+        <initial>{1}BuildAndPackage{0}ramdisks{0}ramdisk.img</initial>
+        <recovery>{1}BuildAndPackage{0}ramdisks{0}ramdisk-recovery.img</recovery>
 
         <!--Kernel version prefix-->
         <version>4.0.4</version>
