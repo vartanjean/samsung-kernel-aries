@@ -65,3 +65,4 @@ obj-$(CONFIG_DEVIL_TWEAKS)	+= devil.o
 obj-$(CONFIG_GENERIC_BLN)  += bln.o
 obj-$(CONFIG_TOUCH_WAKE)  += touch_wake.o
 obj-$(CONFIG_BLX)		+= blx.o
+obj-$(CONFIG_FSYNC_CONTROL)	+= fsync_control.o
