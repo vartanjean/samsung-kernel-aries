@@ -374,3 +374,41 @@ IF SOMETHING GOES WRONG:
    gdb'ing a non-running kernel currently fails because gdb (wrongly)
    disregards the starting offset for which the kernel is compiled.
 
+
+#@README
+#
+# Copyright 2011 Trae Santiago
+# ================================================
+#
+# This file is part of BuildAndPackage
+#
+# BuildAndPackage is free software: you 
+# can redistribute it and/or modify it under the 
+# terms of the GNU General Public License as 
+# published by the Free Software Foundation, 
+# either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# BuildAndPackage is distributed in the
+# hope that it will be useful, but WITHOUT ANY 
+# WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+# PURPOSE. See the GNU General Public License 
+# for more details.
+# 
+# You should have received a copy of the GNU 
+# General Public License along with BuildAndPackage. 
+# If not, see: <http://www.gnu.org/licenses/>.
+# (T.S / T.B / Trae32566 / Trae Santiago)
+
+INSTRUCTIONS:
+1. Fill out the userSettings.xml in BuildAndPackage/resources
+   folder. Read the comments to understand everything before 
+   any modifications are made.
+
+2. run BuildAndPackage.py with the '-help' switch 
+   from the command prompt to see the available 
+   options, IE:
+
+     "$ ./BuildAndPackage.py -help"
+
