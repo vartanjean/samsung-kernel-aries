@@ -54,7 +54,7 @@
         <upload>FALSE</upload>
 
         <!--Default packaging-->
-        <package>ZIP</package>
+        <package>HOC</package>
  
         <!--RAM Disks-->
         <initial>{1}BuildAndPackage{0}ramdisks{0}ramdisk.img</initial>

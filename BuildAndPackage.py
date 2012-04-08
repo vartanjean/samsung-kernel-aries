@@ -83,7 +83,7 @@ def cli(config):
     #Devices to build for
     cliParser.add_argument(
         '-devices', 
-        choices = nameDevices,
+        choices = ['ALL'] + nameDevices,
         default = config.defDevices,
         help = 'Devices to compile for (must be at the end)',
         nargs = REMAINDER)
@@ -99,7 +99,7 @@ def cli(config):
     else: config.upload = False
 
     #Build only requested devices
-    if cliParser.devices != 'ALL':
+    if cliParser.devices != ['ALL']:
         newDevs = list()
 
         for device in config.devices:
@@ -143,9 +143,9 @@ def worker(config, nameDev, defDev):
     dirDev = dirBAP + sep + nameDev
 
     #Tell them if we clean
-    if config.clean == 1: print('NOTE: -clean NORM was chosen, build directory will be cleaned!\n')
+    if config.clean == 1: print('NOTE: -clean NORM was chosen, build directory will be cleaned of all configurations!\n')
     elif config.clean == 2: print('NOTE: -clean MRP was chosen, build directory will be deep cleaned!\n')
-    elif config.clean >= 3: print('NOTE: -clean DIST was chosen, build directory will be cleaned of all configurations!\n')
+    elif config.clean >= 3: print('NOTE: -clean NORM was chosen, build directory will be cleaned!\n')
 
     #Get revision number, start feedback
     config.revision = make.revision()
