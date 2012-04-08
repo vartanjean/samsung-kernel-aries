@@ -130,4 +130,4 @@ def hoc(dirBAP, pkHeimdall):
     Popen(['java', '-jar', '{0}{1}resources{1}binaries{1}One-Click-Packager2.jar'.format(dirBAP, sep), pkHeimdall], stderr = STDOUT, stdout = PIPE)
 
 def revision():
-    return str(Popen(['wc', '-l'], stdin = Popen(['git', 'rev-list', '--all'], stdout=PIPE).stdout, stdout = PIPE).communicate()[0], 'utf-8')
+    return str(Popen(['wc', '-l'], stdin = Popen(['git', 'rev-list', '--all'], stdout=PIPE).stdout, stdout = PIPE).communicate()[0], 'utf-8')[:-1]
