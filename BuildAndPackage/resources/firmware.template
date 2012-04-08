@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <firmware version="1">
-  <name>Team ICSSGS Kernel</name>
+  <name>Team Nyx Kernel</name>
   <version>{0}</version>
   <platform>
     <name>Android</name>
@@ -14,7 +14,7 @@
     <name>Raymonddull</name>
     <name>Trae32566</name>
   </developers>
-  <url>http://code.google.com/p/ice-cream-sandwich-sgs/</url>
+  <url>http://team-nyx.stangs.org/</url>
   <donateurl>http://code.google.com/p/ice-cream-sandwich-sgs/wiki/Donations</donateurl>
   <devices>
     <device>
