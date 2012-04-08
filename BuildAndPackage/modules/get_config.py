@@ -29,6 +29,14 @@ class GetConfig:
 
 This class includes:
 
+  o __sanitize__(depth, domElement):
+     Cleans domElement of everything except true
+     data at the tag level depth
+     Returns domElement (cleaned)
+     depth (integer -> tag depth): data depth of tags
+     domElement (domElement object): domElement object
+
+  o __get_config
     """
     devices = list()
 
@@ -38,27 +46,11 @@ This class includes:
 
         self.mainPath = path[0]
         self.resources = '{0}{1}BuildAndPackage{1}resources{1}'.format(self.mainPath, sep)
-        
+
         self.__get_config__()
-        
-    def __sanitize__(self, depth, domElement):
-        #Lets focus on just this node
-        currentNode = domElement.firstChild 
-
-        for domIndex in range(domElement.childNodes.length):
-            #Take a copy of the next node in case we have to remove the current one
-            nextNode = currentNode.nextSibling
-
-            #If the node name isn't custom remove it
-            if currentNode.nodeName[0] == '#' and depth: domElement.removeChild(currentNode)
-            else: currentNode = self.__sanitize__(depth - 1, currentNode)
-
-            currentNode = nextNode
-
-        return domElement        
 
     def __get_config__(self):
-        from error import DefaultError, FileAccessError
+        from error import FileAccessError
         from os import sep
         from xml.dom import minidom
 
@@ -69,7 +61,7 @@ This class includes:
             with open(userSettings, 'r') as settings:
                 newSettings = settings.read().format(sep, self.mainPath + sep)
         except IOError: raise FileAccessError(userSettings)
-            
+
         with minidom.parseString(newSettings).documentElement as rawSettings:
             get_list = lambda tagName: self.__raw_to_list__(tagName, rawSettings)
             get_static = lambda tagName: rawSettings.getElementsByTagName('static').item(0).getElementsByTagName(tagName).item(0).childNodes.item(0).data
@@ -79,7 +71,7 @@ This class includes:
             self.defDevices, self.devices = get_list('devices')
             self.defToolchain, self.toolchains = get_list('toolchains')
             self.defToolchain = self.defToolchain[0]
-            
+
             #Get our static variables
             self.defClean = get_static('clean')
             self.defPackage = get_static('package')
@@ -89,23 +81,23 @@ This class includes:
             self.recoRAMDisk = get_static('recovery')
             self.version = get_static('version')
             self.zImage = get_static('zImage')            
-            
+
             if self.defClean == 'FALSE': self.defClean = False
             if self.defUpload == 'FALSE': self.defUpload = False
 
     def __raw_to_list__(self, elementName, parentElement):
         listData = list()
         listDefault = list()
-        
+
         nodeList = parentElement.getElementsByTagName(elementName).item(0).childNodes
 
         for indNode in range(nodeList.length):
             node = nodeList.item(indNode)
-            
+
             #Make sure there are no duplicates (except default)
             if indNode >= 0:
                 data = node.tagName, node.childNodes.item(0).data          
-                
+
                 try: listData.index(data)
                 except ValueError: listData.append(data)
 
@@ -126,3 +118,19 @@ This class includes:
                 indStart = indEnd + 3
 
         return listDefault, listData
+
+    def __sanitize__(self, depth, domElement):
+        #Lets focus on just this node
+        currentNode = domElement.firstChild 
+
+        for domIndex in range(domElement.childNodes.length):
+            #Take a copy of the next node in case we have to remove the current one
+            nextNode = currentNode.nextSibling
+
+            #If the node name isn't custom remove it
+            if currentNode.nodeName[0] == '#' and depth: domElement.removeChild(currentNode)
+            else: currentNode = self.__sanitize__(depth - 1, currentNode)
+
+            currentNode = nextNode
+
+        return domElement

@@ -27,31 +27,37 @@
 """Module that makes the kernel
 
 This module includes:
-  o build(toolchain, log):
+  o build(log, toolchain):
      Builds the kernel
      Returns a list of modules
      log (string -> file): Log file to write to
      toolchain (string -> directory with prefix): 
      Location of the toolchain to use
 
-  o configure(defconfig, clean = False):
+  o configure(defconfig, toolchain, clean = False):
      Imports the defconfig and cleans if wanted
      Returns None
      defconfig (string -> device defconfig): Device 
      defconfig
      toolchain (string -> directory with prefix): 
      Location of the toolchain to use
-     clean (int -> 0 - 2): Clean before make
+     clean (int -> 0 - 3): Clean before make
+
+  o hoc(dirBAP, pkHeimdall):
+     Creates a Heimdall One-Click package
+     Returns None
+     dirBAP (string -> directory): BuildAndPackage directory
+     pkHeimdall (string -> file): Heimdall package
 
   o revision():
-     Gets Git revision (REQUIRES A TAG!)
+     Gets Git revision
      Returns revision number
 """
 
 from subprocess import STDOUT, PIPE, Popen
 
 def build(log, toolchain):
-    from error import BuildError
+    from error import BuildError, FileAccessError
     from multiprocessing import cpu_count
     from subprocess import CalledProcessError
 
@@ -74,17 +80,21 @@ def build(log, toolchain):
         #Check if this build was from scratch (if it has modules)
         modules = list()
         endModule = tempLog.find('.ko') + 3
-        
+
         #It's a clean build
         if endModule >= 3:
-            with open(log, 'w+') as buildLog:
-                buildLog.write(tempLog)
+            try:
+                with open(log, 'w+') as buildLog:
+                    buildLog.write(tempLog)
+            except IOError: raise FileAccessError(log)
 
         #If it's not a clean build, try finding the modules
         else:   
-            with open(log, 'r') as buildLog:
-                tempLog = buildLog.read()
-                endModule = tempLog.find('.ko') + 3
+            try:
+                with open(log, 'r') as buildLog:
+                    tempLog = buildLog.read()
+                    endModule = tempLog.find('.ko') + 3
+            except IOError: raise FileAccessError(log)
 
         while endModule >= 3:
             startModule = -1 * tempLog[endModule::-1].find(' ') + 1 + endModule

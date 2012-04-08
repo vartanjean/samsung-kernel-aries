@@ -30,20 +30,14 @@ class BuildError:
         print('\nBuild failed, please check log!')
         exit(1)
 
-#Default error
-class DefaultError:
-    def __init__(self, node):
-        print('\nIncorrect default for tag {0}, please check userSettings.xml!'.format(node))
-        exit(2)
-
 #File access issues
 class FileAccessError:
     def __init__(self, fileName):
         print('\nLocked or non-existant file: ' + fileName)
-        exit(3)
+        exit(2)
 
 #Result out of bounds
 class OutOfBoundsError:
     def __init__(self, varData, varName):
         print('\nVariable {0} out of bounds ({1})'.format(varName, varData))
-        exit(4)
+        exit(3)
