@@ -145,18 +145,18 @@ def worker(config, nameDev, defDev):
     #Tell them if we clean
     if config.clean == 1: print('NOTE: -clean NORM was chosen, build directory will be cleaned!\n')
     elif config.clean == 2: print('NOTE: -clean MRP was chosen, build directory will be deep cleaned!\n')
-    elif config.clean >= 3: print('NOTE: -clean DIST was chosen, build directory will be cleaned of everything unrevisioned!')
+    elif config.clean >= 3: print('NOTE: -clean DIST was chosen, build directory will be cleaned of all configurations!\n')
 
     #Get revision number, start feedback
     config.revision = make.revision()
     if isdir(dirDev): rmtree(dirDev)
-    
+    print(nameDev + ':')
 
     #Start configuring, build
     cli_print('\t • Configuring...')
     make.configure(defDev, config.toolchain, clean = config.clean)
     cli_print('done\n\t • Building...')
-    make.build(dirDev + '.log', config.toolchain)
+    config.modules = make.build(dirDev + '.log', config.toolchain)
 
     #Make boot.img
     cli_print('done\n\t • Creating boot.img and copying kernel components...')
@@ -182,7 +182,7 @@ def worker(config, nameDev, defDev):
 
     #Zip
     cli_print('done\n\t • Zipping...')
-    package.make_zip('{0}{1}{2}{1}[Kernel]-{3}-{4}{5}.zip'.format(dirDev, sep, pardir, nameDev, config.version, config.revision), dirDev)
+    package.make_zip('{0}{1}{2}{1}[Kernel]-{3}-{4}.{5}.zip'.format(dirDev, sep, pardir, nameDev, config.version, config.revision), dirDev)
 
     #Clean
     cli_print('done\n\t • Cleaning...')

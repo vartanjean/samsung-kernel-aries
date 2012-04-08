@@ -48,40 +48,53 @@ This module includes:
      Returns revision number
 """
 
-from subprocess import check_output
+from subprocess import STDOUT, PIPE, Popen
 
 def build(log, toolchain):
     from error import BuildError
     from multiprocessing import cpu_count
-    from subprocess import call, STDOUT
+    from subprocess import CalledProcessError
 
-    #Write the ENTIRE build log to the file
-    with open(log, 'w+') as buildLog:
-        try: call(['ccache', 'make', 'ARCH=arm', 
+    #Build the kernel using ccache
+    try: tempLog = str(Popen(['ccache', 'make', 'ARCH=arm', 
+            '-j' + str(cpu_count() + 1), 
+            'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE).communicate()[0], 'utf-8')
+    #Can't find ccache, so build without
+    except CalledProcessError: 
+        print('not using ccache...', end = '')
+        try: tempLog = str(Popen(['make', 'ARCH=arm', 
                 '-j' + str(cpu_count() + 1), 
-                'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = buildLog)
-        except CalledProcessError: 
-            print('not using ccache...', end = '')
-            try: call(['make', 'ARCH=arm', 
-                    '-j' + str(cpu_count() + 1), 
-                    'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = buildLog)
-            except CalledProcessError: raise BuildError()
+                'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE).communicate()[0], 'utf-8')
+        except CalledProcessError: raise BuildError()
 
-        #Error checking code & module finder
-        buildLog.seek(0, 0)
-        tempLog = buildLog.read()
+    #Error checking code
+    if tempLog.find('zImage is ready') == -1: raise BuildError()
+    #Module finding code    
+    else:
+        #Check if this build was from scratch (if it has modules)
+        modules = list()
+        endModule = tempLog.find('.ko') + 3
+        
+        #It's a clean build
+        if endModule >= 3:
+            with open(log, 'w+') as buildLog:
+                buildLog.write(tempLog)
 
-        if tempLog.find('zImage is ready') == -1: raise BuildError()
-        else:
-            modules = list()
-            startModule = tempLog.find('  LD [M]  ') + 10
-            while startModule != -1:
-                modules.append(tempLog[startModule: tempLog[startModule:].find('\n')])
-                
-                startModule = tempLog[startModule:].find('  LD [M]  ') + 10
-            
-            #Doublecheck
-            print(modules)
+        #If it's not a clean build, try finding the modules
+        else:   
+            with open(log, 'r') as buildLog:
+                tempLog = buildLog.read()
+                endModule = tempLog.find('.ko') + 3
+
+        while endModule >= 3:
+            startModule = -1 * tempLog[endModule::-1].find(' ') + 1 + endModule
+            modules.append(tempLog[startModule:endModule])
+
+            #Cut off the part we already searched and find again
+            tempLog = tempLog[endModule:]
+            endModule = tempLog.find('.ko') + 3
+
+        return modules
 
 def configure(defconfig, toolchain, clean = False):
     from error import OutOfBoundsError
@@ -89,18 +102,17 @@ def configure(defconfig, toolchain, clean = False):
     from shutil import copyfile
 
     if not clean: pass
-    elif clean == 1: check_output(['make', 'distclean', 'CROSS_COMPILE={0}'.format(toolchain)])
-    elif clean == 2: check_output(['make', 'mrproper', 'CROSS_COMPILE={0}'.format(toolchain)])
-    elif clean == 3: check_output(['make', 'clean', 'CROSS_COMPILE={0}'.format(toolchain)])
+    elif clean == 1: Popen(['make', 'ARCH=arm', 'distclean', 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE)
+    elif clean == 2: Popen(['make', 'ARCH=arm', 'mrproper', 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE)
+    elif clean == 3: Popen(['make', 'ARCH=arm', 'clean', 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE)
     else: raise OutOfBoundsError(clean , 'clean')
 
-    check_output(['make', defconfig, 'ARCH=arm', 'CROSS_COMPILE={0}'.format(toolchain)])
+    Popen(['make', 'ARCH=arm', defconfig, 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE)
 
 def hoc(dirBAP, pkHeimdall):
     from os import sep
 
-    check_output(['java', '-jar', '{0}{1}resources{1}binaries{1}One-Click-Packager2.jar'.format(dirBAP, sep), pkHeimdall])
+    Popen(['java', '-jar', '{0}{1}resources{1}binaries{1}One-Click-Packager2.jar'.format(dirBAP, sep), pkHeimdall], stderr = STDOUT, stdout = PIPE)
 
 def revision():
-    revision = str(check_output(['git', 'describe']), 'UTF-8')
-    return revision[6: revision[6:].find('-') + 6]
+    return str(Popen(['wc', '-l'], stdin = Popen(['git', 'rev-list', '--all'], stdout=PIPE).stdout, stdout = PIPE).communicate()[0], 'utf-8')
