@@ -29,7 +29,7 @@
 This module includes:
   o build(log, toolchain):
      Builds the kernel
-     Returns a list of modules
+     Returns a list of modules, or none if they aren't found
      log (string -> file): Log file to write to
      toolchain (string -> directory with prefix): 
      Location of the toolchain to use
@@ -94,8 +94,13 @@ def build(log, toolchain):
                 with open(log, 'r') as buildLog:
                     tempLog = buildLog.read()
                     endModule = tempLog.find('.ko') + 3
-            except IOError: raise FileAccessError(log)
-
+            #The modules were not found
+            except IOError:
+                try: 
+                    with open(log, 'w+') as buildLog:
+                        buildLog.write(tempLog)
+                        return None
+                except IOError: raise FileAccessError(log)
         while endModule >= 3:
             startModule = -1 * tempLog[endModule::-1].find(' ') + 1 + endModule
             modules.append(tempLog[startModule:endModule])

@@ -156,7 +156,10 @@ def worker(config, nameDev, defDev):
     cli_print('\t • Configuring...')
     make.configure(defDev, config.toolchain, clean = config.clean)
     cli_print('done\n\t • Building...')
-    config.modules = make.build(dirDev + '.log', config.toolchain)
+    try: 
+        config.modules
+        make.build(dirDev + '.log', config.toolchain)
+    except AttributeError: config.modules = make.build(dirDev + '.log', config.toolchain)
 
     #Make boot.img
     cli_print('done\n\t • Creating boot.img and copying kernel components...')

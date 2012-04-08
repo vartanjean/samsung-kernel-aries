@@ -372,3 +372,5 @@ echo "launching packaging script"
 release "${version}"
 
 echo "all done!"
+
+rm arch/arm/boot/compressed/piggy.xzkern
