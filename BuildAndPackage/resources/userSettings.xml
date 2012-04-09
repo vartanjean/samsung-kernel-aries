@@ -29,7 +29,7 @@
     </devices>
 
     <!--Project static variables-->
-    <statics>
+    <static>
         <!--Default clean-->
         <clean>FALSE</clean>
 
