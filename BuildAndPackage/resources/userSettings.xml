@@ -2,22 +2,6 @@
     @UserSettings.xml
     COMMIT THIS AND I (╯°□°）╯︵ ┻━┻ RAAAAA
     
-    Notes:
-        Any tag inside of the static tag with the prefix 'auto' signifies
-        whether the option will be run when the program is invoked with no
-        arguments. The tag for that command line option itself sets the
-        default tag for when the option is run, or when the script is run
-        depending on how the 'auto' tag is set. For example:
-        
-        <static>            
-            <auto_clean>FALSE</auto_clean>
-            <clean>NORM</clean>
-        </static>
-        
-        This would not clean when the script is invoke without arguments; 
-        however, when the script is run with the 'clean' option, the 
-        default would be 'NORM'.
-
     Rules:
         Keep all data in the deepest scopes (must all be the same depth)
         No newlines ('\n') inside deepest scope
@@ -45,7 +29,7 @@
     </devices>
 
     <!--Project static variables-->
-    <static>
+    <statics>
         <!--Default clean-->
         <clean>FALSE</clean>
 

@@ -41,3 +41,8 @@ class OutOfBoundsError:
     def __init__(self, varData, varName):
         print('\nVariable {0} out of bounds ({1})'.format(varName, varData))
         exit(3)
+        
+class UserSettingsError:
+    def __init__(self, traceback):
+        print('\nYour userSetttings.xml file is improperly configured, please check {0}.'.format(traceback))
+        exit(4)

@@ -50,9 +50,11 @@ This class includes:
         self.__get_config__()
 
     def __get_config__(self):
-        from error import FileAccessError
+        from error import FileAccessError, UserSettingsError
         from os import sep
+        from traceback import format_exc
         from xml.dom import minidom
+        from xml.parsers.expat import ExpatError
 
         newSettings = str()
         userSettings = '{0}{1}userSettings.xml'.format(self.resources, sep)
@@ -62,28 +64,32 @@ This class includes:
                 newSettings = settings.read().format(sep, self.mainPath + sep)
         except IOError: raise FileAccessError(userSettings)
 
-        with minidom.parseString(newSettings).documentElement as rawSettings:
-            get_list = lambda tagName: self.__raw_to_list__(tagName, rawSettings)
-            get_static = lambda tagName: rawSettings.getElementsByTagName('static').item(0).getElementsByTagName(tagName).item(0).childNodes.item(0).data
-            rawSettings = self.__sanitize__(2, rawSettings)
+        try:
+            with minidom.parseString(newSettings).documentElement as rawSettings:
+                get_list = lambda tagName: self.__raw_to_list__(tagName, rawSettings)
+                get_static = lambda tagName: rawSettings.getElementsByTagName('static').item(0).getElementsByTagName(tagName).item(0).childNodes.item(0).data
+                rawSettings = self.__sanitize__(2, rawSettings)
+    
+                #Get all our depth 2 scopes
+                self.defDevices, self.devices = get_list('devices')
+                self.defToolchain, self.toolchains = get_list('toolchains')
+                self.defToolchain = self.defToolchain[0]
+    
+                #Get our static variables
+                self.defClean = get_static('clean')
+                self.defPackage = get_static('package')
+                self.defUpload = get_static('upload')
+                self.initRAMDisk = get_static('initial')
+                self.locCred = get_static('cred_location')
+                self.recoRAMDisk = get_static('recovery')
+                self.version = get_static('version')
+                self.zImage = get_static('zImage')            
 
-            #Get all our depth 2 scopes
-            self.defDevices, self.devices = get_list('devices')
-            self.defToolchain, self.toolchains = get_list('toolchains')
-            self.defToolchain = self.defToolchain[0]
-
-            #Get our static variables
-            self.defClean = get_static('clean')
-            self.defPackage = get_static('package')
-            self.defUpload = get_static('upload')
-            self.initRAMDisk = get_static('initial')
-            self.locCred = get_static('cred_location')
-            self.recoRAMDisk = get_static('recovery')
-            self.version = get_static('version')
-            self.zImage = get_static('zImage')            
-
-            if self.defClean == 'FALSE': self.defClean = False
-            if self.defUpload == 'FALSE': self.defUpload = False
+                if self.defClean == 'FALSE': self.defClean = False
+                if self.defUpload == 'FALSE': self.defUpload = False
+        except ExpatError: 
+            traceback = format_exc()
+            raise UserSettingsError(traceback[traceback.find('g:') + 3:-1])
 
     def __raw_to_list__(self, elementName, parentElement):
         listData = list()
