@@ -29,7 +29,7 @@ static unsigned int get_freq_table_size(struct cpufreq_frequency_table *freq_tab
 extern void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq, unsigned int selective_oc);
 
 static int oc_value = 100;
-static int selective_oc = 1;
+static int selective_oc = 0;
 
 /* Apply Live OC to 800MHz and above */
 static int oc_low_freq = 800000;
