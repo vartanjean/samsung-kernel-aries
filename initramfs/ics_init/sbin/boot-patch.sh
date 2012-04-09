@@ -54,7 +54,7 @@ mount
 # set cpu max freq
 echo; echo "cpu"
 bootspeed=`cat /etc/devil/bootspeed`
-if $BB [[ "$bootspeed" -eq 1400000 || "$bootspeed" -eq 1300000 || "$bootspeed" -eq 1200000 || "$bootspeed" -eq 1080000  || "$bootspeed" -eq 1000000 || "$bootspeed" -eq 800000 ]];then
+if $BB [[ "$bootspeed" -eq 1400000 || "$bootspeed" -eq 1300000 || "$bootspeed" -eq 1200000 || "$bootspeed" -eq 1000000 || "$bootspeed" -eq 800000 ]];then
     echo "CPU: found vaild bootspeed: <$bootspeed>"
     echo $bootspeed > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 else
@@ -198,6 +198,19 @@ if [ $profile = "powersave" ]; then
 fi
 
 
+# set cpu max freq
+echo; echo "vibrator"
+if [ -e "/etc/devil/vibrator" ];then
+	vibrator=`cat /etc/devil/vibrator`
+	if [ "$vibrator" -le 43640 ] && [ "$vibrator" -ge 20000 ];then
+    		echo "vibrator: found vaild vibrator intensity: <$vibrator>"
+    		echo $vibrator > /sys/class/timed_output/vibrator/duty
+	else
+		echo "vibrator: did not find vaild vibrator intensity: setting default"
+		echo 40140 > /sys/class/timed_output/vibrator/duty
+	fi
+fi
+
 # speed to default
 echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 echo "set max freq to default"
@@ -210,7 +223,7 @@ if [ -e "/etc/devil/live_oc_mode" ];then
     echo "liveoc mode set to: $live_oc_mode"
 else
     echo "did not find vaild live_oc_mode: setting 1"
-    echo 1 > /sys/devices/virtual/misc/liveoc/selective_oc
+    echo 0 > /sys/devices/virtual/misc/liveoc/selective_oc
 fi;
 
 # init.d support 
