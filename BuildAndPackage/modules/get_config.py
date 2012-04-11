@@ -52,7 +52,6 @@ This class includes:
     def __get_config__(self):
         from error import FileAccessError, UserSettingsError
         from os import sep
-        from traceback import format_exc
         from xml.dom import minidom
         from xml.parsers.expat import ExpatError
 
@@ -87,9 +86,7 @@ This class includes:
 
                 if self.defClean == 'FALSE': self.defClean = False
                 if self.defUpload == 'FALSE': self.defUpload = False
-        except ExpatError: 
-            traceback = format_exc()
-            raise UserSettingsError(traceback[traceback.find('g:') + 3:-1])
+        except ExpatError as err: raise UserSettingsError(str(err)[str(err).find('g:') + 3:])
 
     def __raw_to_list__(self, elementName, parentElement):
         from error import UserSettingsError

@@ -70,22 +70,20 @@ def build(log, toolchain, retry = None):
         try: tempLog = str(Popen(['make', 'ARCH=arm', 
                 '-j' + str(cpu_count() + 1), 
                 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE).communicate()[0], 'utf-8')
-        except OSError:
-            #Make is a very unpredictable program; lets try again just to be sure (used after distclean!)
-            raise BuildError()
+        except OSError: raise BuildError()
 
     #Error checking code
     if tempLog.find('zImage is ready') == -1:
         #Make sure we give them an error log!
         if not retry: 
             print('retrying...', end = '')
-            build(log, toolchain, retry = True)
+            return build(log, toolchain, retry = True)
         else:
             try:
                 with open(log + 'Error', 'w+') as errorLog:
                     errorLog.write(tempLog)
                 raise BuildError()
-            except IOError or OSError: FileAccessError(log + 'Error')
+            except: FileAccessError(log + 'Error')
     #Module finding code    
     else:
         #Check if this build was from scratch (if it has modules)
@@ -97,7 +95,7 @@ def build(log, toolchain, retry = None):
             try:
                 with open(log, 'w+') as buildLog:
                     buildLog.write(tempLog)
-            except IOError or OSError: raise FileAccessError(log)
+            except: raise FileAccessError(log)
 
         #If it's not a clean build, try finding the modules
         else:   
@@ -106,12 +104,12 @@ def build(log, toolchain, retry = None):
                     tempLog = buildLog.read()
                     endModule = tempLog.find('.ko') + 3
             #The modules were not found
-            except IOError or OSError:
+            except:
                 try: 
                     with open(log, 'w+') as buildLog:
                         buildLog.write(tempLog)
                         return None
-                except IOError or OSError: raise FileAccessError(log)
+                except: raise FileAccessError(log)
         while endModule >= 3:
             startModule = -1 * tempLog[endModule::-1].find(' ') + 1 + endModule
             modules.append(tempLog[startModule:endModule])

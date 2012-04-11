@@ -44,5 +44,5 @@ class OutOfBoundsError:
         
 class UserSettingsError:
     def __init__(self, traceback):
-        print('\nYour userSetttings.xml file is improperly configured, please check {0}.'.format(traceback))
+        print('\nYour userSettings.xml file is improperly configured, please check {0}.'.format(traceback))
         exit(4)
