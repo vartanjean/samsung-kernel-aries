@@ -59,22 +59,25 @@ from subprocess import STDOUT, PIPE, Popen
 def build(log, toolchain):
     from error import BuildError, FileAccessError
     from multiprocessing import cpu_count
-    from subprocess import CalledProcessError
 
     #Build the kernel using ccache
     try: tempLog = str(Popen(['ccache', 'make', 'ARCH=arm', 
             '-j' + str(cpu_count() + 1), 
             'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE).communicate()[0], 'utf-8')
     #Can't find ccache, so build without
-    except CalledProcessError: 
+    except OSError: 
         print('not using ccache...', end = '')
         try: tempLog = str(Popen(['make', 'ARCH=arm', 
                 '-j' + str(cpu_count() + 1), 
                 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE).communicate()[0], 'utf-8')
-        except CalledProcessError: raise BuildError()
+        except OSError: raise BuildError()
 
     #Error checking code
-    if tempLog.find('zImage is ready') == -1: raise BuildError()
+    if tempLog.find('zImage is ready') == -1:
+        #Make sure we give them an error log!
+        with open(log + 'Error', 'w+') as errorLog:
+            errorLog.write(tempLog)
+        raise BuildError()
     #Module finding code    
     else:
         #Check if this build was from scratch (if it has modules)
