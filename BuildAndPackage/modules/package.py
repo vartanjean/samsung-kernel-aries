@@ -107,8 +107,8 @@ def make_script(device, script, template, version):
                     scriptUpdtr.write(template.read().format(device, getlogin(), 
                                                              str(datetime.utcnow()) + ' UTC', 
                                                              version))
-            except OSError: FileAccessError(str(template))
-    except IOError: FileAccessError(str(script))
+            except OSError: FileAccessError(template)
+    except IOError: FileAccessError(script)
 
 def make_zip(name, tree):
     from os import walk, sep

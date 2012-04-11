@@ -27,11 +27,11 @@
 """Module that makes the kernel
 
 This module includes:
-  o build(log, toolchain):
+  o build(log, toolchain, __retry__ = None):
      Builds the kernel
      Returns a list of modules, or none if they aren't found
      log (string -> file): Log file to write to
-     toolchain (string -> directory with prefix): 
+     toolchain (string -> directory with prefix):
      Location of the toolchain to use
 
   o configure(defconfig, toolchain, clean = False):
@@ -56,7 +56,7 @@ This module includes:
 
 from subprocess import STDOUT, PIPE, Popen
 
-def build(log, toolchain, retry = None):
+def build(log, toolchain, __retry__ = None):
     from error import BuildError, FileAccessError
     from multiprocessing import cpu_count
 
@@ -75,9 +75,9 @@ def build(log, toolchain, retry = None):
     #Error checking code
     if tempLog.find('zImage is ready') == -1:
         #Make sure we give them an error log!
-        if not retry: 
+        if not __retry__: 
             print('retrying...', end = '')
-            return build(log, toolchain, retry = True)
+            return build(log, toolchain, __retry__ = True)
         else:
             try:
                 with open(log + 'Error', 'w+') as errorLog:

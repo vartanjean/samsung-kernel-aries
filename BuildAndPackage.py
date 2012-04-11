@@ -41,11 +41,11 @@ def cli(config):
     choiceClean = ['DIST', 'MRP', 'NORM']
     choicePack = ['HEIMDALL', 'HOC', 'ZIP', 'IMG']
     choiceUpload = ['GCODE']
-    
+
     #Grab the names for easy use
     nameDevices = list()
     nameToolchains = list()
-    
+
     for name in config.devices: nameDevices.append(name[0])
     for name in config.toolchains: nameToolchains.append(name[0])
 
@@ -117,9 +117,14 @@ def cli(config):
     return config
 
 def main():
+    from os import getuid
     #Add our module directory to the path and import modules
     path.append('{0}{1}modules{1}'.format(dirBAP, sep))
+    from error import RootError
     import get_config
+
+    #Make sure we aren't su
+    if not getuid(): raise RootError
 
     #Get config
     config = cli(get_config.GetConfig())
@@ -175,7 +180,7 @@ def worker(config, nameDev, defDev):
     if config.package != 2:
         print('done\n')
         return
-    
+
     #Make the script
     cli_print('done\n\t • Making script...')
     package.make_script(nameDev, 

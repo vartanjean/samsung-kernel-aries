@@ -68,12 +68,12 @@ This class includes:
                 get_list = lambda tagName: self.__raw_to_list__(tagName, rawSettings)
                 get_static = lambda tagName: rawSettings.getElementsByTagName('static').item(0).getElementsByTagName(tagName).item(0).childNodes.item(0).data
                 rawSettings = self.__sanitize__(2, rawSettings)
-    
+
                 #Get all our depth 2 scopes
                 self.defDevices, self.devices = get_list('devices')
                 self.defToolchain, self.toolchains = get_list('toolchains')
                 self.defToolchain = self.defToolchain[0]
-    
+
                 #Get our static variables
                 self.defClean = get_static('clean')
                 self.defPackage = get_static('package')
@@ -126,7 +126,7 @@ This class includes:
         for data in listDefault:
             names = list()
             for name in listData: names.append(name[0])
-            
+
             try: names.index(data)
             except ValueError: 
                 print(str(data) + 'was not found in ' + str(listData))
