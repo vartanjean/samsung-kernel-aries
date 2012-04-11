@@ -56,7 +56,7 @@ This module includes:
 
 from subprocess import STDOUT, PIPE, Popen
 
-def build(log, toolchain):
+def build(log, toolchain, retry = None):
     from error import BuildError, FileAccessError
     from multiprocessing import cpu_count
 
@@ -70,14 +70,20 @@ def build(log, toolchain):
         try: tempLog = str(Popen(['make', 'ARCH=arm', 
                 '-j' + str(cpu_count() + 1), 
                 'CROSS_COMPILE={0}'.format(toolchain)], stderr = STDOUT, stdout = PIPE).communicate()[0], 'utf-8')
-        except OSError: raise BuildError()
+        except OSError:
+            #Make is a very unpredictable program; lets try again just to be sure (used after distclean!)
+            raise BuildError()
 
     #Error checking code
     if tempLog.find('zImage is ready') == -1:
         #Make sure we give them an error log!
-        with open(log + 'Error', 'w+') as errorLog:
-            errorLog.write(tempLog)
-        raise BuildError()
+        if not retry: 
+            print('retrying...', end = '')
+            build(log, toolchain, retry = True)
+        else:
+            with open(log + 'Error', 'w+') as errorLog:
+                errorLog.write(tempLog)
+            raise BuildError()
     #Module finding code    
     else:
         #Check if this build was from scratch (if it has modules)

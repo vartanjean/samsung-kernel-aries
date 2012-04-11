@@ -92,6 +92,8 @@ This class includes:
             raise UserSettingsError(traceback[traceback.find('g:') + 3:-1])
 
     def __raw_to_list__(self, elementName, parentElement):
+        from error import UserSettingsError
+
         listData = list()
         listDefault = list()
 
@@ -122,6 +124,16 @@ This class includes:
             else:
                 listDefault.append(default[indStart: indEnd])
                 indStart = indEnd + 3
+
+        #Check for user errors
+        for data in listDefault:
+            names = list()
+            for name in listData: names.append(name[0])
+            
+            try: names.index(data)
+            except ValueError: 
+                print(str(data) + 'was not found in ' + str(listData))
+                raise UserSettingsError('your default tags')
 
         return listDefault, listData
 
