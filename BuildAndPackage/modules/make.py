@@ -81,9 +81,11 @@ def build(log, toolchain, retry = None):
             print('retrying...', end = '')
             build(log, toolchain, retry = True)
         else:
-            with open(log + 'Error', 'w+') as errorLog:
-                errorLog.write(tempLog)
-            raise BuildError()
+            try:
+                with open(log + 'Error', 'w+') as errorLog:
+                    errorLog.write(tempLog)
+                raise BuildError()
+            except IOError or OSError: FileAccessError(log + 'Error')
     #Module finding code    
     else:
         #Check if this build was from scratch (if it has modules)
@@ -95,7 +97,7 @@ def build(log, toolchain, retry = None):
             try:
                 with open(log, 'w+') as buildLog:
                     buildLog.write(tempLog)
-            except IOError: raise FileAccessError(log)
+            except IOError or OSError: raise FileAccessError(log)
 
         #If it's not a clean build, try finding the modules
         else:   
@@ -104,12 +106,12 @@ def build(log, toolchain, retry = None):
                     tempLog = buildLog.read()
                     endModule = tempLog.find('.ko') + 3
             #The modules were not found
-            except IOError:
+            except IOError or OSError:
                 try: 
                     with open(log, 'w+') as buildLog:
                         buildLog.write(tempLog)
                         return None
-                except IOError: raise FileAccessError(log)
+                except IOError or OSError: raise FileAccessError(log)
         while endModule >= 3:
             startModule = -1 * tempLog[endModule::-1].find(' ') + 1 + endModule
             modules.append(tempLog[startModule:endModule])

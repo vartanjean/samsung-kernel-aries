@@ -69,7 +69,7 @@ def make_boot_img(bootDisk, zImage, recovery = None):
         #Change current location and record old one
         tableLoc = (len(bootImg) + 510) & -512
         bootImg += bytes('\x00' * (tableLoc - len(bootImg) + 512), 'utf-8')
-    except IOError: raise FileAccessError(zImage)
+    except IOError or OSError: raise FileAccessError(zImage)
 
     #Write the boot ramdisk to bootIMG 
     try:
@@ -78,7 +78,7 @@ def make_boot_img(bootDisk, zImage, recovery = None):
             bootImg += ramDisk.read()
             offsetTbl += 'boot_offset={0};boot_len={1};'.format(1 + int(bOffset / 512), 
                                                                 1 + int((ramDisk.tell() + 1) / 512))
-    except IOError: raise FileAccessError(bootDisk)
+    except IOError or OSError: raise FileAccessError(bootDisk)
 
     #Write the recovery to bootIMG and add it's entry to the table
     if recovery:
@@ -88,7 +88,7 @@ def make_boot_img(bootDisk, zImage, recovery = None):
                 bootImg += bytes('\x00' * (((len(bootImg) + 510) & -512) - len(bootImg)), 'utf-8') + ramDisk.read()
                 offsetTbl += 'recovery_offset={0};recovery_len={1};\n\n'.format(int(1 + bOffset / 512), 
                                                                                 int(1 + (ramDisk.tell() + 1) / 512))
-        except IOError: raise FileAccessError(recovery)
+        except IOError or OSError: raise FileAccessError(recovery)
 
     bootImg = bootImg[:tableLoc] + bytes(offsetTbl, 'utf-8') + bootImg[tableLoc + len(offsetTbl):] 
 
@@ -107,8 +107,8 @@ def make_script(device, script, template, version):
                     scriptUpdtr.write(template.read().format(device, getlogin(), 
                                                              str(datetime.utcnow()) + ' UTC', 
                                                              version))
-            except IOError: FileAccessError(template)
-    except IOError: FileAccessError(script)
+            except IOError or OSError: FileAccessError(template)
+    except IOError or OSError: FileAccessError(script)
 
 def make_zip(name, tree):
     from os import walk, sep
@@ -133,7 +133,7 @@ def make_zip(name, tree):
                 for fileName in files: cwmZip.write(root + sep + fileName, zipRoot + sep + fileName)
             else: continue
         cwmZip.close()       
-    except IOError: raise FileAccessError(name)
+    except IOError or OSError: raise FileAccessError(name)
 
 def prep_compilation(objBImg, config, dirBAP, dirDev, nameDev):
     from error import OutOfBoundsError
@@ -187,7 +187,7 @@ def prep_compilation(objBImg, config, dirBAP, dirDev, nameDev):
 
         for module in config.modules: 
             try: copy(module, dirModule)
-            except IOError: FileAccessError(module)
+            except IOError or OSError: FileAccessError(module)
     elif config.package == 3: pass
     else: OutOfBoundsError(config.package, 'config.package')
 
@@ -195,4 +195,4 @@ def prep_compilation(objBImg, config, dirBAP, dirDev, nameDev):
     try:
         with open(locBImg, 'w+b') as fileBImg:
             fileBImg.write(objBImg)
-    except IOError: FileAccessError(locBImg)
+    except IOError or OSError: FileAccessError(locBImg)
