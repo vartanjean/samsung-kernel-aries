@@ -124,7 +124,7 @@ def main():
     import get_config
 
     #Make sure we aren't su
-    if not getuid(): raise RootError
+    if not getuid(): raise RootError()
 
     #Get config
     config = cli(get_config.GetConfig())
