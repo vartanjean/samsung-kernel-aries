@@ -722,16 +722,18 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 if(selective_oc == 1){
 
 //	if(oc_low_freq < oc_high_freq){
-		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq && (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq){
-		fclk = (original_fclk[index] * oc_value) / 100;}
-		else{
-		fclk = original_fclk[index];}
+		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq && (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq)
+		fclk = (original_fclk[index] * oc_value) / 100;
+		else
+		fclk = original_fclk[index];
 //		}
-/*	else{
-		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq || (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq){
-		fclk = (original_fclk[index] * oc_value) / 100;}
-		else{
-		fclk = original_fclk[index];}
+	
+
+/*	else if (oc_low_freq >= oc_high_freq) {
+		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq || (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq)
+		fclk = (original_fclk[index] * oc_value) / 100;
+		else
+		fclk = original_fclk[index];
 		}*/
 }
 else{
