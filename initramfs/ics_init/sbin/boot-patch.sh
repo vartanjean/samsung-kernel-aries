@@ -62,7 +62,22 @@ else
 	echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 fi
 
-
+# set fsync
+echo; echo "fsync"
+if [ -e "/etc/devil/fsync" ];then
+	fsync=`cat /etc/devil/fsync`
+	if [ "$fsync" -eq 0 ] || [ "$fsync" -eq 1 ];then
+    		echo "fsync: found vaild fsync mode: <$fsync>"
+    		echo $fsync > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
+	else
+		echo "fsync: did not find vaild fsync mode: setting default"
+		echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
+	fi
+else
+echo "fsync: did not find vaild fsync mode: setting default"
+echo 1 > /etc/devil/fsync
+echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
+fi
 
 # debug output
 cat_msg_sysfile "max           : " /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -209,6 +224,23 @@ if [ -e "/etc/devil/vibrator" ];then
 		echo "vibrator: did not find vaild vibrator intensity: setting default"
 		echo 40140 > /sys/class/timed_output/vibrator/duty
 	fi
+fi
+
+# set wifi
+echo; echo "wifi"
+if [ -e "/etc/devil/wifi" ];then
+	wifi=`cat /etc/devil/wifi`
+	if [ "$wifi" -eq 0 ] || [ "$wifi" -eq 1 ];then
+    		echo "wifi: found vaild wifi mode: <$wifi>"
+    		echo $wifi > /sys/module/bcmdhd/parameters/uiFastWifi
+	else
+		echo "wifi: did not find vaild wifi mode: setting default"
+		echo 0 > /sys/module/bcmdhd/parameters/uiFastWifi
+	fi
+else
+	echo "wifi: did not find vaild wifi mode: setting default"
+	echo 0 > /etc/devil/wifi
+	echo 0 > /sys/module/bcmdhd/parameters/uiFastWifi
 fi
 
 # speed to default
