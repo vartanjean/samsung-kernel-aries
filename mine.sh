@@ -3,7 +3,7 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-mem="cm"
+mem="XL"
 
 handy="i9000"
 
