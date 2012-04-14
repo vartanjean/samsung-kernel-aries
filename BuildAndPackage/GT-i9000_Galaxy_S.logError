@@ -1,0 +1,9 @@
+make: /home/dominik/android/system/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi--gcc: Kommando nicht gefunden
+  CHK     include/linux/version.h
+  CC      scripts/mod/empty.o
+/bin/sh: /home/dominik/android/system/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi--gcc: not found
+make[2]: *** [scripts/mod/empty.o] Fehler 127
+  CHK     include/generated/utsrelease.h
+make[1]: *** [scripts/mod] Fehler 2
+make: *** [scripts] Fehler 2
+make: *** Warte auf noch nicht beendete Prozesse...

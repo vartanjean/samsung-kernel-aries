@@ -18,7 +18,7 @@
     <!--Devices-->
     <devices>
         <!--Default devices built-->
-        <default>SGH-i897_Captivate</default>
+        <default>GT-i9000_Galaxy_S</default>
 
         <!--All devices possible-->
         <SGH-i897_Captivate>aries_captivatemtd_defconfig</SGH-i897_Captivate>
@@ -34,15 +34,15 @@
         <clean>FALSE</clean>
 
         <!--Default upload-->
-        <cred_location>{0}home{0}trae32566{0}BuildAndPackage.cred</cred_location>
+        <cred_location>{0}home{0}dominik{0}BuildAndPackage.cred</cred_location>
         <upload>FALSE</upload>
 
         <!--Default packaging-->
-        <package>HOC</package>
+        <package>ZIP</package>
  
         <!--RAM Disks-->
-        <initial>{1}BuildAndPackage{0}ramdisks{0}ramdisk.img</initial>
-        <recovery>{1}BuildAndPackage{0}ramdisks{0}ramdisk-recovery.img</recovery>
+        <initial>{1}release{0}ramdisks{0}galaxys_ramdisk{0}ramdisk.img</initial>
+        <recovery>{1}release{0}ramdisks{0}galaxys_ramdisk{0}ramdisk-recovery.img</recovery>
 
         <!--Kernel version prefix-->
         <version>4.0.4</version>
@@ -54,10 +54,10 @@
     <!--Toolchains-->
     <toolchains>
         <!--Default toolchain used-->
-        <default>codeSourcery_2010-q1</default>
+        <default>arm-eabi-4.4.3</default>
 
         <!--All toolchains possible-->
-        <codeSourcery_2010-q1>{0}home{0}trae32566{0}Android{0}Toolchains{0}CodeSourcery_2009_Q3{0}bin{0}arm-none-linux-gnueabi-</codeSourcery_2010-q1>
+        <arm-eabi-4.4.3>{0}home{0}dominik{0}android{0}system{0}prebuilt{0}linux-x86{0}toolchain{0}arm-eabi-4.4.3{0}bin{0}arm-eabi-</arm-eabi-4.4.3>
         <codeSourcery_2009-q3>{0}home{0}trae32566{0}Android{0}Toolchains{0}CodeSourcery_2010_Q1{0}bin{0}arm-none-eabi-</codeSourcery_2009-q3>
         <linaro_4.5-11>{0}home{0}trae32566{0}Android{0}Toolchains{0}Linaro_4.5-11{0}bin{0}arm-eabi-</linaro_4.5-11>
         <linaro_4.6-12>{0}home{0}trae32566{0}Android{0}Toolchains{0}Linaro_4.6-12{0}bin{0}arm-eabi</linaro_4.6-12>
