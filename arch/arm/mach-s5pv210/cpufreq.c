@@ -719,27 +719,17 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 	if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
 	    index_max = index;
 
-if(selective_oc == 1){
+if(selective_oc == 0)
+	fclk = (original_fclk[index] * oc_value) / 100;
 
-//	if(oc_low_freq < oc_high_freq){
-		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq && (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq)
-		fclk = (original_fclk[index] * oc_value) / 100;
-		else
-		fclk = original_fclk[index];
-//		}
-	
-
-/*	else if (oc_low_freq >= oc_high_freq) {
-		if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) >= oc_low_freq || (original_fclk[index] ) / (clkdiv_val[index][0] + 1) <= oc_high_freq)
-		fclk = (original_fclk[index] * oc_value) / 100;
-		else
-		fclk = original_fclk[index];
-		}*/
-}
 else{
-fclk = (original_fclk[index] * oc_value) / 100;
+	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)
+	fclk = original_fclk[index];
+	else if ((original_fclk[index] ) / (clkdiv_val[index][0] + 1) > oc_high_freq)
+	fclk = original_fclk[index];
+	else
+	fclk = (original_fclk[index] * oc_value) / 100;	
 }
-
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
 	if (original_fclk[index] / (clkdiv_val[index][0] + 1) == SLEEP_FREQ)
