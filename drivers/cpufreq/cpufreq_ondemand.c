@@ -44,7 +44,7 @@
 
 // raise sampling rate to SR*multiplier on blank screen
 static unsigned int sampling_rate_awake;
-#define SAMPLING_RATE_SLEEP_MULTIPLIER (1)
+#define SAMPLING_RATE_SLEEP_MULTIPLIER (2)
 
 /*
  * The polling frequency of this governor depends on the capability of
@@ -575,7 +575,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	/* Check for frequency increase */
   	if (policy->cur < dbs_tuners_ins.responsiveness_freq && dbs_tuners_ins.early_suspend == -1) {
 	     up_threshold = dbs_tuners_ins.up_threshold_min_freq;
-// printk(KERN_WARNING "up_threshold = UP_THRESHOLD_AT_MIN_FREQ;\n");
+
   	}
 
 	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
