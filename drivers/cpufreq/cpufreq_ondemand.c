@@ -34,7 +34,7 @@
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(85)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
@@ -42,8 +42,11 @@
 #define UP_THRESHOLD_AT_MIN_FREQ    (40)
 #define FREQ_FOR_RESPONSIVENESS      (400000)
 
+#define UP_THRESHOLD_AT_SLEEP    (95)
+
 // raise sampling rate to SR*multiplier on blank screen
 static unsigned int sampling_rate_awake;
+static unsigned int up_threshold_awake;
 #define SAMPLING_RATE_SLEEP_MULTIPLIER (2)
 
 /*
@@ -135,7 +138,6 @@ static struct dbs_tuners {
 	.sleep_multiplier= SAMPLING_RATE_SLEEP_MULTIPLIER,
 	.up_threshold_min_freq= UP_THRESHOLD_AT_MIN_FREQ,
 	.responsiveness_freq= FREQ_FOR_RESPONSIVENESS, 
-
 	.early_suspend = -1,
 };
 
@@ -714,6 +716,8 @@ static void powersave_early_suspend(struct early_suspend *handler)
   mutex_lock(&dbs_mutex);
   sampling_rate_awake = dbs_tuners_ins.sampling_rate;
   dbs_tuners_ins.sampling_rate *= dbs_tuners_ins.sleep_multiplier;
+  up_threshold_awake = dbs_tuners_ins.up_threshold;
+  dbs_tuners_ins.up_threshold = UP_THRESHOLD_AT_SLEEP; 
   mutex_unlock(&dbs_mutex);
 }
 
@@ -722,6 +726,7 @@ static void powersave_late_resume(struct early_suspend *handler)
   dbs_tuners_ins.early_suspend = -1;
   mutex_lock(&dbs_mutex);
   dbs_tuners_ins.sampling_rate = sampling_rate_awake;
+  dbs_tuners_ins.up_threshold = up_threshold_awake;
   mutex_unlock(&dbs_mutex);
 }
 
@@ -836,6 +841,7 @@ static int __init cpufreq_gov_dbs_init(void)
 	if (idle_time != -1ULL) {
 		/* Idle micro accounting is supported. Use finer thresholds */
 		dbs_tuners_ins.up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
+	 	up_threshold_awake = dbs_tuners_ins.up_threshold;
 		dbs_tuners_ins.down_differential =
 					MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
 		/*
