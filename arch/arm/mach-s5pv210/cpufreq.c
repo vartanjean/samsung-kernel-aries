@@ -699,7 +699,7 @@ static void liveoc_init(void)
 
 void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq, unsigned int selective_oc)
 {
-    int i, index, index_min = L0, index_max = L0, divider;
+    int i, index, index_min = L0, index_max = L0, index_lowfreq = L0, divider;
 
     unsigned long fclk;
 
@@ -723,8 +723,12 @@ if(selective_oc == 0)
 	fclk = (original_fclk[index] * oc_value) / 100;
 
 else{
-	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)
+	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)//{
 	fclk = original_fclk[index];
+//		if((original_fclk[index + 1] ) / (clkdiv_val[index + 1][0] + 1) >= oc_low_freq)
+//		index_lowfreq = index;
+//	}
+
 	else if ((original_fclk[index] ) / (clkdiv_val[index][0] + 1) > oc_high_freq)
 	fclk = original_fclk[index];
 	else
