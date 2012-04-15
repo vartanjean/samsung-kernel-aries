@@ -321,8 +321,8 @@ static ssize_t store_responsiveness_freq(struct kobject *a, struct attribute *b,
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	if (ret != 1 || input > 1400000 ||
-			input < 100000) {
+	if (ret != 1 || input > 800000 ||
+			input < 400000) {
 		return -EINVAL;
 	}
 	dbs_tuners_ins.responsiveness_freq = input;
@@ -458,9 +458,9 @@ static struct attribute *dbs_attributes[] = {
 	&ignore_nice_load.attr,
 	&powersave_bias.attr,
 	&io_is_busy.attr,
-	&sleep_multiplier,
-	&up_threshold_min_freq,
-	&responsiveness_freq,
+	&sleep_multiplier.attr,
+	&up_threshold_min_freq.attr,
+	&responsiveness_freq.attr,
 
 	NULL
 };

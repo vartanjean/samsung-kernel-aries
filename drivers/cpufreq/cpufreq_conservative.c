@@ -92,7 +92,9 @@ static struct dbs_tuners {
 	unsigned int down_threshold;
 	unsigned int ignore_nice;
 	unsigned int freq_step;
+	unsigned int sleep_multiplier;
 } dbs_tuners_ins = {
+	.sleep_multiplier = SAMPLING_RATE_SLEEP_MULTIPLIER,
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
 	.down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD,
 	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
@@ -187,6 +189,22 @@ show_one(up_threshold, up_threshold);
 show_one(down_threshold, down_threshold);
 show_one(ignore_nice_load, ignore_nice);
 show_one(freq_step, freq_step);
+show_one(sleep_multiplier, sleep_multiplier);
+
+static ssize_t store_sleep_multiplier(struct kobject *a, struct attribute *b,
+				  const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+
+	if (ret != 1 || input < 1 ||
+			input > 5) {
+		return -EINVAL;
+	}
+	dbs_tuners_ins.sleep_multiplier = input;
+	return count;
+}
 
 static ssize_t store_sampling_down_factor(struct kobject *a,
 					  struct attribute *b,
@@ -305,6 +323,7 @@ define_one_global_rw(up_threshold);
 define_one_global_rw(down_threshold);
 define_one_global_rw(ignore_nice_load);
 define_one_global_rw(freq_step);
+define_one_global_rw(sleep_multiplier);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -314,6 +333,7 @@ static struct attribute *dbs_attributes[] = {
 	&down_threshold.attr,
 	&ignore_nice_load.attr,
 	&freq_step.attr,
+	&sleep_multiplier.attr,
 	NULL
 };
 
@@ -484,7 +504,7 @@ static void powersave_early_suspend(struct early_suspend *handler)
 {
   mutex_lock(&dbs_mutex);
   sampling_rate_awake = dbs_tuners_ins.sampling_rate;
-  dbs_tuners_ins.sampling_rate *= SAMPLING_RATE_SLEEP_MULTIPLIER;
+  dbs_tuners_ins.sampling_rate *= dbs_tuners_ins.sleep_multiplier;
   mutex_unlock(&dbs_mutex);
 }
 
