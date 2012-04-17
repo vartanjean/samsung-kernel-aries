@@ -177,9 +177,6 @@ extern void cpufreq_stats_reset(void);
 static bool pllbus_changing = false;
 
 static int oc_value = 100;
-static int selective_oc = 0;
-static int oc_low_freq = 800000;
-static int oc_high_freq = 2000000;
 
 static unsigned long sleep_freq;
 
@@ -377,7 +374,8 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
 	/* Check if there need to change PLL */
-	if ((index <= L3) || (freqs.old >= s5pv210_freq_table[L3].frequency))
+//	if ((index <= L3) || (freqs.old >= s5pv210_freq_table[L3].frequency))
+	if ((index <= L7) || (freqs.old >= s5pv210_freq_table[L7].frequency))
 		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
@@ -683,10 +681,8 @@ static void liveoc_init(void)
 
     while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
 	index = s5pv210_freq_table[i].index;
-
 	fclk = original_fclk[index] / 1000;
 	divider = find_divider(fclk);
-
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
 
 	i++;
@@ -699,7 +695,7 @@ static void liveoc_init(void)
 
 void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq, unsigned int selective_oc)
 {
-    int i, index, index_min = L0, index_max = L0, index_lowfreq = L0, divider;
+    int i, index, index_min = L0, index_max = L0, divider;
 
     unsigned long fclk;
 
@@ -718,17 +714,13 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
 	if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
 	    index_max = index;
-
 if(selective_oc == 0)
 	fclk = (original_fclk[index] * oc_value) / 100;
 
 else{
-	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)//{
-	fclk = original_fclk[index];
-//		if((original_fclk[index + 1] ) / (clkdiv_val[index + 1][0] + 1) >= oc_low_freq)
-//		index_lowfreq = index;
-//	}
 
+	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)
+	fclk = original_fclk[index];
 	else if ((original_fclk[index] ) / (clkdiv_val[index][0] + 1) > oc_high_freq)
 	fclk = original_fclk[index];
 	else
@@ -742,7 +734,6 @@ else{
 	fclk /= 1000;
 	divider = find_divider(fclk);
 	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-
 	i++;
     }
 
