@@ -183,6 +183,7 @@ static unsigned long sleep_freq;
 static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1000000, 800000, 800000, 800000, 800000};
 
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
+static int apll_old;
 #endif
 
 /*
@@ -375,8 +376,10 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 	/* Check if there need to change PLL */
 //	if ((index <= L3) || (freqs.old >= s5pv210_freq_table[L3].frequency))
-	if ((index <= L7) || (freqs.old >= s5pv210_freq_table[L7].frequency))
+		if(apll_old != apll_values[index])
 		pll_changing = 1;
+//printk("apll_old(%d) apll_values(%d)\n", s5pv210_freq_table[index].frequency, freqs.old);
+
 
 	/* Check if there need to change System bus clock */
 	if ((index == L7) || (freqs.old == s5pv210_freq_table[L7].frequency))
@@ -504,6 +507,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 */
 #ifdef CONFIG_LIVE_OC
 		__raw_writel(apll_values[index], S5P_APLL_CON);
+		apll_old = apll_values[index];
 #else
 		switch (index) {
 		case L0:
