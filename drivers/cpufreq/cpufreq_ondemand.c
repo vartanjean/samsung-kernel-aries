@@ -125,8 +125,6 @@ static struct dbs_tuners {
 	unsigned int sleep_multiplier;
 	unsigned int up_threshold_min_freq;
 	unsigned int responsiveness_freq;
-
-
 	int early_suspend;
 
 } dbs_tuners_ins = {
@@ -575,12 +573,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	}
 
 	/* Check for frequency increase */
-  	if (policy->cur < dbs_tuners_ins.responsiveness_freq && dbs_tuners_ins.early_suspend == -1) {
-	     up_threshold = dbs_tuners_ins.up_threshold_min_freq;
-
+	if(dbs_tuners_ins.up_threshold_min_freq != 100){
+  		if (policy->cur < dbs_tuners_ins.responsiveness_freq && dbs_tuners_ins.early_suspend == -1)
+	     	up_threshold = dbs_tuners_ins.up_threshold_min_freq;
   	}
-
-	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+	if (max_load_freq > up_threshold * policy->cur) {
 		/* If switching to max speed, apply sampling_down_factor */
 		if (policy->cur < policy->max)
 			this_dbs_info->rate_mult =
@@ -613,10 +610,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 		if (freq_next < policy->min)
 			freq_next = policy->min;
+if(dbs_tuners_ins.up_threshold_min_freq != 100){
 	down_thres = dbs_tuners_ins.up_threshold_min_freq - dbs_tuners_ins.down_differential;
-
     	if (freq_next < dbs_tuners_ins.responsiveness_freq && (max_load_freq / freq_next) > down_thres && dbs_tuners_ins.early_suspend == -1)
       freq_next = dbs_tuners_ins.responsiveness_freq;
+}
 
 		if (!dbs_tuners_ins.powersave_bias) {
 			__cpufreq_driver_target(policy, freq_next,
