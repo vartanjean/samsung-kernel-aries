@@ -56,7 +56,7 @@ static unsigned int sampling_rate_awake;
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(10)
 #define TRANSITION_LATENCY_LIMIT		(10 * 1000 * 1000)
-#define UP_THRESHOLD_AT_MIN_FREQ    (40)
+#define UP_THRESHOLD_AT_MIN_FREQ    (100)
 #define FREQ_FOR_RESPONSIVENESS      (400000)
 
 static void do_dbs_timer(struct work_struct *work);
