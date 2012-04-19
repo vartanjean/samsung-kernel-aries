@@ -49,7 +49,9 @@ static unsigned int min_sampling_rate;
 
 // raise sampling rate to SR*multiplier on blank screen
 static unsigned int sampling_rate_awake;
+static unsigned int up_threshold_awake;
 #define SAMPLING_RATE_SLEEP_MULTIPLIER (3)
+#define UP_THRESHOLD_AT_SLEEP    (95)
 
 #define LATENCY_MULTIPLIER			(1000)
 #define MIN_LATENCY_MULTIPLIER			(100)
@@ -561,6 +563,8 @@ static void powersave_early_suspend(struct early_suspend *handler)
   dbs_tuners_ins.early_suspend = 1;
   sampling_rate_awake = dbs_tuners_ins.sampling_rate;
   dbs_tuners_ins.sampling_rate *= dbs_tuners_ins.sleep_multiplier;
+  up_threshold_awake = dbs_tuners_ins.up_threshold;
+  dbs_tuners_ins.up_threshold = UP_THRESHOLD_AT_SLEEP;
   mutex_unlock(&dbs_mutex);
 }
 
@@ -569,6 +573,7 @@ static void powersave_late_resume(struct early_suspend *handler)
   mutex_lock(&dbs_mutex);
   dbs_tuners_ins.early_suspend = -1;
   dbs_tuners_ins.sampling_rate = sampling_rate_awake;
+  dbs_tuners_ins.up_threshold = up_threshold_awake;
   mutex_unlock(&dbs_mutex);
 }
 
