@@ -6,14 +6,13 @@ export USE_CCACHE=1
         CCACHE_COMPRESS=1
         CCACHE_DIR=/home/dominik/android/ccache
         export CCACHE_DIR CCACHE_COMPRESS
-
 ###########################################################################################################
 
 
 rom=""
 
 
-handy="i9000b"
+handy="i9000"
 
 build="Devil2_0.72""$rom"_"$handy"
 
@@ -47,11 +46,6 @@ then
 make aries_galaxysmtd_defconfig
 fi
 
-if [ "$handy" = "i9000b"  ] 
-then
-make aries_galaxysbmtd_defconfig
-fi
-
 if [ "$handy" = "cappy"  ] 
 then
 make aries_captivatemtd_defconfig
@@ -64,7 +58,7 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 make -j4
 
 echo "creating boot.img"
-if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "i9000b"  ] 
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
 then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 fi
@@ -108,11 +102,6 @@ then
 make aries_galaxysmtd_defconfig
 fi
 
-if [ "$handy" = "i9000b"  ] 
-then
-make aries_galaxysbmtd_defconfig
-fi
-
 if [ "$handy" = "cappy"  ] 
 then
 make aries_captivatemtd_defconfig
@@ -129,8 +118,15 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 make -j4
 
 echo "creating boot.img"
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+fi
 
+if [ "$rom" = "sense"  ] 
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
+fi
 echo "..."
 echo "boot.img ready"
 rm arch/arm/boot/zImage
@@ -167,11 +163,6 @@ then
 make aries_galaxysmtd_defconfig
 fi
 
-if [ "$handy" = "i9000b"  ] 
-then
-make aries_galaxysbmtd_defconfig
-fi
-
 if [ "$handy" = "cappy"  ] 
 then
 make aries_captivatemtd_defconfig
@@ -188,9 +179,15 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 make -j4
 
 echo "creating boot.img"
-
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+fi
 
+if [ "$rom" = "sense"  ] 
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
+fi
 echo "..."
 echo "boot.img ready"
 rm arch/arm/boot/zImage
@@ -230,11 +227,6 @@ then
 make aries_galaxysmtd_defconfig
 fi
 
-if [ "$handy" = "i9000b"  ] 
-then
-make aries_galaxysbmtd_defconfig
-fi
-
 if [ "$handy" = "cappy"  ] 
 then
 make aries_captivatemtd_defconfig
@@ -247,9 +239,15 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 make -j4
 
 echo "creating boot.img"
-
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+fi
 
+if [ "$rom" = "sense"  ] 
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
+fi
 echo "..."
 echo "boot.img ready"
 rm arch/arm/boot/zImage
@@ -285,11 +283,6 @@ then
 make aries_galaxysmtd_defconfig
 fi
 
-if [ "$handy" = "i9000b"  ] 
-then
-make aries_galaxysbmtd_defconfig
-fi
-
 if [ "$handy" = "cappy"  ] 
 then
 make aries_captivatemtd_defconfig
@@ -306,9 +299,15 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 make -j4
 
 echo "creating boot.img"
-
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+fi
 
+if [ "$rom" = "sense"  ] 
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
+fi
 echo "..."
 echo "boot.img ready"
 rm arch/arm/boot/zImage
@@ -345,11 +344,6 @@ then
 make aries_galaxysmtd_defconfig
 fi
 
-if [ "$handy" = "i9000b"  ] 
-then
-make aries_galaxysbmtd_defconfig
-fi
-
 if [ "$handy" = "cappy"  ] 
 then
 make aries_captivatemtd_defconfig
@@ -366,9 +360,15 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 make -j4
 
 echo "creating boot.img"
-
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+fi
 
+if [ "$rom" = "sense"  ] 
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
+fi
 echo "..."
 echo "boot.img ready"
 rm arch/arm/boot/zImage
