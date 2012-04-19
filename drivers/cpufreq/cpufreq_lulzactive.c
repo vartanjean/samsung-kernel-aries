@@ -36,7 +36,7 @@
 #define LULZACTIVE_AUTHOR	"tegrak"
 
 // if you changed some codes for optimization, just write your name here.
-#define LULZACTIVE_TUNER "simone201"
+#define LULZACTIVE_TUNER "DerTeufel1980, simone201"
 
 #define LOGI(fmt...) printk(KERN_INFO "[lulzactive] " fmt)
 #define LOGW(fmt...) printk(KERN_WARNING "[lulzactive] " fmt)
@@ -78,11 +78,17 @@ static spinlock_t down_cpumask_lock;
 #define DEFAULT_UP_SAMPLE_TIME 20000
 static unsigned long up_sample_time;
 
+#define DEFAULT_UP_SAMPLE_TIME_SLEEP 50000
+static unsigned long up_sample_time_awake;
+
 /*
  * The minimum amount of time to spend at a frequency before we can step down.
  */
 #define DEFAULT_DOWN_SAMPLE_TIME 40000
 static unsigned long down_sample_time;
+
+#define DEFAULT_DOWN_SAMPLE_TIME_SLEEP 40000
+static unsigned long down_sample_time_awake;
 
 /*
  * DEBUG print flags
@@ -102,6 +108,9 @@ enum {
  */
 #define DEFAULT_INC_CPU_LOAD 60
 static unsigned long inc_cpu_load;
+
+#define DEFAULT_INC_CPU_LOAD_SLEEP 90
+static unsigned long inc_cpu_load_awake;
 
 /*
  * CPU freq will be decreased if measured load < dec_cpu_load;
@@ -972,11 +981,21 @@ static int cpufreq_governor_lulzactive(struct cpufreq_policy *new_policy,
 	return 0;
 }
 
+/*
+ * The minimum amount of time to spend at a frequency before we can step down.
+ */
+
 static void lulzactive_early_suspend(struct early_suspend *handler) {
 	struct cpufreq_lulzactive_cpuinfo *pcpu;
 	unsigned int min_freq, max_freq;
     
 	early_suspended = 1;
+	up_sample_time_awake = up_sample_time;
+	up_sample_time = DEFAULT_UP_SAMPLE_TIME_SLEEP;
+	down_sample_time_awake = down_sample_time;
+	down_sample_time = DEFAULT_DOWN_SAMPLE_TIME_SLEEP;
+	inc_cpu_load_awake = inc_cpu_load;
+	inc_cpu_load = DEFAULT_INC_CPU_LOAD_SLEEP;
     
 	if (debug_mode & LULZACTIVE_DEBUG_EARLY_SUSPEND) {
 		LOGI("%s\n", __func__);
@@ -994,6 +1013,10 @@ static void lulzactive_early_suspend(struct early_suspend *handler) {
 
 static void lulzactive_late_resume(struct early_suspend *handler) {
 	early_suspended = 0;
+	up_sample_time = up_sample_time_awake;
+	down_sample_time = down_sample_time_awake;
+	inc_cpu_load = 	inc_cpu_load_awake;
+
 	if (debug_mode & LULZACTIVE_DEBUG_EARLY_SUSPEND) {
 		LOGI("%s\n", __func__);
 	}

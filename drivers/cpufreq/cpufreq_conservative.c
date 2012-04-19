@@ -212,7 +212,7 @@ static ssize_t store_sleep_multiplier(struct kobject *a, struct attribute *b,
 	ret = sscanf(buf, "%u", &input);
 
 	if (ret != 1 || input < 1 ||
-			input > 5) {
+			input > 10) {
 		return -EINVAL;
 	}
 	dbs_tuners_ins.sleep_multiplier = input;
@@ -242,7 +242,7 @@ static ssize_t store_responsiveness_freq(struct kobject *a, struct attribute *b,
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	if (ret != 1 || input > 800000 ||
+	if (ret != 1 || input > 1400000 ||
 			input < 100000) {
 		return -EINVAL;
 	}
