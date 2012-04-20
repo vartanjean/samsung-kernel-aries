@@ -21,7 +21,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/cpufreq.h>
 #include <linux/platform_device.h>
-
+#include <linux/miscdevice.h>
 #include <mach/map.h>
 #include <mach/regs-clock.h>
 #include <mach/cpu-freq-v210.h>
@@ -32,6 +32,8 @@ static struct clk *dmc0_clk;
 static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
+
+bool bus_limit_enable = false;
 
 /* APLL M,P,S values for 1.4GHz/1.3GHz/1.2GHz/1.0GHz/800MHz */
 #define APLL_VAL_1400	((1 << 31) | (175 << 16) | (3 << 8) | 1)
@@ -184,6 +186,7 @@ static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1000000, 8000
 
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
 static int apll_old;
+static int bus_speed_old;
 #endif
 
 /*
@@ -382,8 +385,15 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 
 	/* Check if there need to change System bus clock */
-	if ((index == L7) || (freqs.old == s5pv210_freq_table[L7].frequency))
+/*	if ((index == L7) || (freqs.old == s5pv210_freq_table[L7].frequency))
 		bus_speed_changing = 1;
+	else
+		bus_speed_old = original_fclk[index] / (clkdiv_val[index][3] + 1);*/
+
+	if((original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1) != bus_speed_old){
+	bus_speed_changing = 1;
+printk("bus_speed(%d) bus_speed_old(%d)\n", s5pv210_freq_table[index].frequency, freqs.old);
+}
 
 #ifdef CONFIG_LIVE_OC
 	if (pllbus_changing) {
@@ -581,10 +591,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	}
 
 	/*
-	 * L8 level need to change memory bus speed, hence onedram clock divier
+	 * L7 level need to change memory bus speed, hence onedram clock divier
 	 * and memory refresh parameter should be changed
 	 */
 	if (bus_speed_changing) {
+	bus_speed_old = (original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1); 
 		reg = __raw_readl(S5P_CLK_DIV6);
 		reg &= ~S5P_CLKDIV6_ONEDRAM_MASK;
 		reg |= (clkdiv_val[index][8] << S5P_CLKDIV6_ONEDRAM_SHIFT);
@@ -595,7 +606,9 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & (1 << 15));
 
 		/* Reconfigure DRAM refresh counter value */
-		if (index != L7) {
+//		if (index != L7) {
+		if ((original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1) != 100000){
+printk("bus_speed is not 100 mhz: clock freq(%d)\n", (original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1));
 			/*
 			 * DMC0 : 166Mhz
 			 * DMC1 : 200Mhz
@@ -603,6 +616,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			s5pv210_set_refresh(DMC0, 166000);
 			s5pv210_set_refresh(DMC1, 200000);
 		} else {
+printk("bus_speed is 100 mhz: clock freq(%d)\n", (original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1));
 			/*
 			 * DMC0 : 83Mhz
 			 * DMC1 : 100Mhz
@@ -1085,10 +1099,75 @@ static struct platform_driver s5pv210_cpufreq_drv = {
 	},
 };
 
+
+
+
+static ssize_t bus_limit_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf,"%u\n",(bus_limit_enable ? 1 : 0));
+}
+
+static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned short state;
+  if (sscanf(buf, "%hu", &state) == 1)
+  {
+    bus_limit_enable = state == 0 ? false : true;
+    if (bus_limit_enable) {
+      s5pv210_bus_limit_true();
+    } else {
+      s5pv210_bus_limit_false();
+    }    
+  }
+  return size;
+}
+ 
+static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
+ 
+static struct attribute *devil_cpufreq_attributes[] = {
+    &dev_attr_bus_limit_enable.attr,
+    NULL
+};
+
+static struct attribute_group devil_cpufreq_group = {
+    .attrs  = devil_cpufreq_attributes,
+};
+
+static struct miscdevice devil_cpufreq_device = {
+    .minor = MISC_DYNAMIC_MINOR,
+    .name = "devil_cpufreq",
+};
+
+void s5pv210_bus_limit_true(void)
+{
+  
+  mutex_lock(&set_freq_lock);
+  clkdiv_val[5][2] = 3;
+  clkdiv_val[6][2] = 1;
+  bus_speed_old = 0;
+  mutex_unlock(&set_freq_lock);
+}
+
+void s5pv210_bus_limit_false(void)
+{
+  mutex_lock(&set_freq_lock);
+  clkdiv_val[5][2] = 1;
+  clkdiv_val[6][2] = 0;
+  bus_speed_old = 0;
+  mutex_unlock(&set_freq_lock);
+}
+
+
+
 static int __init s5pv210_cpufreq_init(void)
 {
 	int ret;
-
+	misc_register(&devil_cpufreq_device);
+    	if (sysfs_create_group(&devil_cpufreq_device.this_device->kobj, &devil_cpufreq_group) < 0)
+    	{
+      	printk("%s sysfs_create_group fail\n", __FUNCTION__);
+      	pr_err("Failed to create sysfs group for device (%s)!\n", devil_cpufreq_device.name);
+    	}
 	ret = platform_driver_register(&s5pv210_cpufreq_drv);
 	if (!ret)
 		pr_info("%s: S5PV210 cpu-freq driver\n", __func__);
