@@ -26,6 +26,7 @@
 #include <mach/regs-clock.h>
 #include <mach/cpu-freq-v210.h>
 #include <mach/voltages.h>
+#include <linux/earlysuspend.h>
 
 static struct clk *cpu_clk;
 static struct clk *dmc0_clk;
@@ -34,6 +35,7 @@ static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
 bool bus_limit_enable = false;
+bool bus_limit_automatic = false;
 
 /* APLL M,P,S values for 1.4GHz/1.3GHz/1.2GHz/1.0GHz/800MHz */
 #define APLL_VAL_1400	((1 << 31) | (175 << 16) | (3 << 8) | 1)
@@ -187,6 +189,7 @@ static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1000000, 8000
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
 static int apll_old;
 static int bus_speed_old;
+int early_suspend = -1;
 #endif
 
 /*
@@ -1100,6 +1103,21 @@ static struct platform_driver s5pv210_cpufreq_drv = {
 };
 
 
+static ssize_t bus_limit_automatic_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf,"%u\n",(bus_limit_automatic ? 1 : 0));
+}
+
+static ssize_t bus_limit_automatic_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned short state;
+  if (sscanf(buf, "%hu", &state) == 1)
+  {
+    bus_limit_automatic = state == 0 ? false : true;    
+  }
+  return size;
+}
+
 
 
 static ssize_t bus_limit_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -1114,6 +1132,7 @@ static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribut
   {
     bus_limit_enable = state == 0 ? false : true;
     if (bus_limit_enable) {
+      bus_limit_automatic = false;	
       s5pv210_bus_limit_true();
     } else {
       s5pv210_bus_limit_false();
@@ -1123,9 +1142,11 @@ static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribut
 }
  
 static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
+static DEVICE_ATTR(bus_limit_automatic, S_IRUGO | S_IWUGO , bus_limit_automatic_show, bus_limit_automatic_store);
  
 static struct attribute *devil_cpufreq_attributes[] = {
     &dev_attr_bus_limit_enable.attr,
+    &dev_attr_bus_limit_automatic.attr,
     NULL
 };
 
@@ -1136,6 +1157,31 @@ static struct attribute_group devil_cpufreq_group = {
 static struct miscdevice devil_cpufreq_device = {
     .minor = MISC_DYNAMIC_MINOR,
     .name = "devil_cpufreq",
+};
+
+static void powersave_early_suspend(struct early_suspend *handler)
+{
+  early_suspend = 1;
+  if (bus_limit_automatic){
+  bus_limit_enable = true;
+  s5pv210_bus_limit_true();
+  }
+}
+
+
+static void powersave_late_resume(struct early_suspend *handler)
+{
+  early_suspend = -1;
+  if (bus_limit_automatic){
+  bus_limit_enable = true;
+  s5pv210_bus_limit_false();
+  }
+}
+
+static struct early_suspend _powersave_early_suspend = {
+  .suspend = powersave_early_suspend,
+  .resume = powersave_late_resume,
+  .level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
 };
 
 void s5pv210_bus_limit_true(void)
@@ -1162,6 +1208,7 @@ void s5pv210_bus_limit_false(void)
 static int __init s5pv210_cpufreq_init(void)
 {
 	int ret;
+	register_early_suspend(&_powersave_early_suspend);
 	misc_register(&devil_cpufreq_device);
     	if (sysfs_create_group(&devil_cpufreq_device.this_device->kobj, &devil_cpufreq_group) < 0)
     	{
