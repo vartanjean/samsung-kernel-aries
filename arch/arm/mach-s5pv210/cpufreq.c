@@ -110,6 +110,9 @@ static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 #ifdef CONFIG_CUSTOM_VOLTAGE
 unsigned long arm_volt_max = 1500000;
 unsigned long int_volt_max = 1300000;
+unsigned long L4_int_volt = DVSINT5;
+unsigned long L5_int_volt = DVSINT5;
+unsigned long L6_int_volt = DVSINT5;
 #else
 const unsigned long arm_volt_max = 1500000;
 const unsigned long int_volt_max = 1300000;
@@ -1112,6 +1115,7 @@ static ssize_t bus_limit_automatic_store(struct device *dev, struct device_attri
 {
   unsigned short state;
   if (sscanf(buf, "%hu", &state) == 1)
+  bus_limit_enable = false;
   {
     bus_limit_automatic = state == 0 ? false : true;    
   }
@@ -1131,8 +1135,8 @@ static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribut
   if (sscanf(buf, "%hu", &state) == 1)
   {
     bus_limit_enable = state == 0 ? false : true;
+    bus_limit_automatic = false;
     if (bus_limit_enable) {
-      bus_limit_automatic = false;	
       s5pv210_bus_limit_true();
     } else {
       s5pv210_bus_limit_false();
@@ -1163,7 +1167,6 @@ static void powersave_early_suspend(struct early_suspend *handler)
 {
   early_suspend = 1;
   if (bus_limit_automatic){
-  bus_limit_enable = true;
   s5pv210_bus_limit_true();
   }
 }
@@ -1173,7 +1176,6 @@ static void powersave_late_resume(struct early_suspend *handler)
 {
   early_suspend = -1;
   if (bus_limit_automatic){
-  bus_limit_enable = true;
   s5pv210_bus_limit_false();
   }
 }
@@ -1188,8 +1190,16 @@ void s5pv210_bus_limit_true(void)
 {
   
   mutex_lock(&set_freq_lock);
+  clkdiv_val[4][2] = 7;
   clkdiv_val[5][2] = 3;
   clkdiv_val[6][2] = 1;
+  L4_int_volt = dvs_conf[L4].int_volt;
+  L5_int_volt = dvs_conf[L5].int_volt;
+  L6_int_volt = dvs_conf[L6].int_volt;
+  dvs_conf[L4].int_volt = L4_int_volt - 50000;
+  dvs_conf[L5].int_volt = L5_int_volt - 50000;
+  dvs_conf[L6].int_volt = L6_int_volt - 50000;
+printk("dvs_conf[L6].int_volt(%d)\n", dvs_conf[L6].int_volt);
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
@@ -1197,8 +1207,12 @@ void s5pv210_bus_limit_true(void)
 void s5pv210_bus_limit_false(void)
 {
   mutex_lock(&set_freq_lock);
+  clkdiv_val[4][2] = 3;
   clkdiv_val[5][2] = 1;
   clkdiv_val[6][2] = 0;
+  dvs_conf[L4].int_volt = L4_int_volt;
+  dvs_conf[L5].int_volt = L5_int_volt;
+  dvs_conf[L6].int_volt = L6_int_volt;
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
