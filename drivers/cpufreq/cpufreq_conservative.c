@@ -47,11 +47,12 @@
 
 static unsigned int min_sampling_rate;
 
-// raise sampling rate to SR*multiplier on blank screen
 static unsigned int sampling_rate_awake;
 static unsigned int up_threshold_awake;
+static unsigned int down_threshold_awake;
 #define SAMPLING_RATE_SLEEP_MULTIPLIER (3)
 #define UP_THRESHOLD_AT_SLEEP    (95)
+#define DOWN_THRESHOLD_AT_SLEEP	 (50)
 
 #define LATENCY_MULTIPLIER			(1000)
 #define MIN_LATENCY_MULTIPLIER			(100)
@@ -565,6 +566,8 @@ static void powersave_early_suspend(struct early_suspend *handler)
   dbs_tuners_ins.sampling_rate *= dbs_tuners_ins.sleep_multiplier;
   up_threshold_awake = dbs_tuners_ins.up_threshold;
   dbs_tuners_ins.up_threshold = UP_THRESHOLD_AT_SLEEP;
+  down_threshold_awake = dbs_tuners_ins.down_threshold;
+  dbs_tuners_ins.down_threshold = DOWN_THRESHOLD_AT_SLEEP;
   mutex_unlock(&dbs_mutex);
 }
 
@@ -574,6 +577,7 @@ static void powersave_late_resume(struct early_suspend *handler)
   dbs_tuners_ins.early_suspend = -1;
   dbs_tuners_ins.sampling_rate = sampling_rate_awake;
   dbs_tuners_ins.up_threshold = up_threshold_awake;
+  dbs_tuners_ins.down_threshold = down_threshold_awake;
   mutex_unlock(&dbs_mutex);
 }
 
@@ -646,6 +650,8 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 				max(min_sampling_rate,
 				    latency * LATENCY_MULTIPLIER);
             sampling_rate_awake = dbs_tuners_ins.sampling_rate;
+            up_threshold_awake = dbs_tuners_ins.up_threshold;
+            down_threshold_awake = dbs_tuners_ins.down_threshold; 
 
 			cpufreq_register_notifier(
 					&dbs_cpufreq_notifier_block,

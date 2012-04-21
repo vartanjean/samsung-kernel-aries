@@ -42,6 +42,9 @@
 #define UP_THRESHOLD_AT_MIN_FREQ    (40)
 #define FREQ_FOR_RESPONSIVENESS      (400000)
 
+#define UP_THRESHOLD_AT_MEDIUM_FREQ    (60)
+#define DEF_MEDIUM_FREQ      (800000)
+
 #define UP_THRESHOLD_AT_SLEEP    (95)
 
 // raise sampling rate to SR*multiplier on blank screen
@@ -125,6 +128,8 @@ static struct dbs_tuners {
 	unsigned int sleep_multiplier;
 	unsigned int up_threshold_min_freq;
 	unsigned int responsiveness_freq;
+	unsigned int up_threshold_medium_freq;
+	unsigned int medium_freq;
 	int early_suspend;
 
 } dbs_tuners_ins = {
@@ -136,6 +141,8 @@ static struct dbs_tuners {
 	.sleep_multiplier= SAMPLING_RATE_SLEEP_MULTIPLIER,
 	.up_threshold_min_freq= UP_THRESHOLD_AT_MIN_FREQ,
 	.responsiveness_freq= FREQ_FOR_RESPONSIVENESS, 
+	.up_threshold_medium_freq= UP_THRESHOLD_AT_MEDIUM_FREQ,
+	.medium_freq = DEF_MEDIUM_FREQ,
 	.early_suspend = -1,
 };
 
@@ -279,6 +286,8 @@ show_one(powersave_bias, powersave_bias);
 show_one(sleep_multiplier, sleep_multiplier);
 show_one(up_threshold_min_freq, up_threshold_min_freq);
 show_one(responsiveness_freq, responsiveness_freq);
+show_one(up_threshold_medium_freq, up_threshold_medium_freq);
+show_one(medium_freq, medium_freq);
 
 
 static ssize_t store_sleep_multiplier(struct kobject *a, struct attribute *b,
@@ -311,6 +320,21 @@ static ssize_t store_up_threshold_min_freq(struct kobject *a, struct attribute *
 	return count;
 }
 
+static ssize_t store_up_threshold_medium_freq(struct kobject *a, struct attribute *b,
+				  const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+
+	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
+			input < MIN_FREQUENCY_UP_THRESHOLD) {
+		return -EINVAL;
+	}
+	dbs_tuners_ins.up_threshold_medium_freq = input;
+	return count;
+}
+
 
 static ssize_t store_responsiveness_freq(struct kobject *a, struct attribute *b,
 				  const char *buf, size_t count)
@@ -323,7 +347,26 @@ static ssize_t store_responsiveness_freq(struct kobject *a, struct attribute *b,
 			input < 100000) {
 		return -EINVAL;
 	}
+	if (input > dbs_tuners_ins.medium_freq)
+	dbs_tuners_ins.medium_freq = input;
+
 	dbs_tuners_ins.responsiveness_freq = input;
+	return count;
+}
+
+static ssize_t store_medium_freq(struct kobject *a, struct attribute *b,
+				  const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+
+	if (ret != 1 || input > 1400000 ||
+			input < 100000 ||
+			input < dbs_tuners_ins.responsiveness_freq) {
+		return -EINVAL;
+	}
+	dbs_tuners_ins.medium_freq = input;
 	return count;
 }
 
@@ -447,6 +490,8 @@ define_one_global_rw(powersave_bias);
 define_one_global_rw(sleep_multiplier);
 define_one_global_rw(up_threshold_min_freq);
 define_one_global_rw(responsiveness_freq);
+define_one_global_rw(up_threshold_medium_freq);
+define_one_global_rw(medium_freq);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -459,6 +504,8 @@ static struct attribute *dbs_attributes[] = {
 	&sleep_multiplier.attr,
 	&up_threshold_min_freq.attr,
 	&responsiveness_freq.attr,
+	&up_threshold_medium_freq.attr,
+	&medium_freq.attr,
 
 	NULL
 };
@@ -577,6 +624,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
   		if (policy->cur < dbs_tuners_ins.responsiveness_freq && dbs_tuners_ins.early_suspend == -1)
 	     	up_threshold = dbs_tuners_ins.up_threshold_min_freq;
   	}
+	if(dbs_tuners_ins.up_threshold_medium_freq != 100){
+  		if (policy->cur < dbs_tuners_ins.medium_freq && dbs_tuners_ins.early_suspend == -1)
+	     	up_threshold = dbs_tuners_ins.up_threshold_medium_freq;
+  	}
+
 	if (max_load_freq > up_threshold * policy->cur) {
 		/* If switching to max speed, apply sampling_down_factor */
 		if (policy->cur < policy->max)
