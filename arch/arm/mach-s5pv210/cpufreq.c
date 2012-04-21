@@ -163,7 +163,7 @@ static u32 clkdiv_val[8][11] = {
 	/* L0 : [1400/200/200/100][166/83][133/66][200/200] */
 	{0, 6, 6, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L1 : [1300/200/200/100][166/83][133/66][200/200] */
-	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
+	{0, 5.5, 5.5, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L2 : [1200/200/200/100][166/83][133/66][200/200] */
 	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L3 : [1000/200/200/100][166/83][133/66][200/200] */
@@ -384,21 +384,12 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
 	/* Check if there need to change PLL */
-//	if ((index <= L3) || (freqs.old >= s5pv210_freq_table[L3].frequency))
 		if(apll_old != apll_values[index])
 		pll_changing = 1;
-//printk("apll_old(%d) apll_values(%d)\n", s5pv210_freq_table[index].frequency, freqs.old);
-
 
 	/* Check if there need to change System bus clock */
-/*	if ((index == L7) || (freqs.old == s5pv210_freq_table[L7].frequency))
-		bus_speed_changing = 1;
-	else
-		bus_speed_old = original_fclk[index] / (clkdiv_val[index][3] + 1);*/
-
 	if((original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1) != bus_speed_old){
 	bus_speed_changing = 1;
-printk("bus_speed(%d) bus_speed_old(%d)\n", s5pv210_freq_table[index].frequency, freqs.old);
 }
 
 #ifdef CONFIG_LIVE_OC
@@ -614,7 +605,6 @@ printk("bus_speed(%d) bus_speed_old(%d)\n", s5pv210_freq_table[index].frequency,
 		/* Reconfigure DRAM refresh counter value */
 //		if (index != L7) {
 		if ((original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1) != 100000){
-printk("bus_speed is not 100 mhz: clock freq(%d)\n", (original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1));
 			/*
 			 * DMC0 : 166Mhz
 			 * DMC1 : 200Mhz
@@ -622,7 +612,6 @@ printk("bus_speed is not 100 mhz: clock freq(%d)\n", (original_fclk[index] / (cl
 			s5pv210_set_refresh(DMC0, 166000);
 			s5pv210_set_refresh(DMC1, 200000);
 		} else {
-printk("bus_speed is 100 mhz: clock freq(%d)\n", (original_fclk[index] / (clkdiv_val[index][0] + 1)) / (clkdiv_val[index][2] + 1));
 			/*
 			 * DMC0 : 83Mhz
 			 * DMC1 : 100Mhz
@@ -1115,8 +1104,8 @@ static ssize_t bus_limit_automatic_store(struct device *dev, struct device_attri
 {
   unsigned short state;
   if (sscanf(buf, "%hu", &state) == 1)
-  bus_limit_enable = false;
   {
+    bus_limit_enable = false;
     bus_limit_automatic = state == 0 ? false : true;    
   }
   return size;
@@ -1148,19 +1137,19 @@ static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribut
 static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
 static DEVICE_ATTR(bus_limit_automatic, S_IRUGO | S_IWUGO , bus_limit_automatic_show, bus_limit_automatic_store);
  
-static struct attribute *devil_cpufreq_attributes[] = {
+static struct attribute *devil_idle_attributes[] = {
     &dev_attr_bus_limit_enable.attr,
     &dev_attr_bus_limit_automatic.attr,
     NULL
 };
 
-static struct attribute_group devil_cpufreq_group = {
-    .attrs  = devil_cpufreq_attributes,
+static struct attribute_group devil_idle_group = {
+    .attrs  = devil_idle_attributes,
 };
 
-static struct miscdevice devil_cpufreq_device = {
+static struct miscdevice devil_idle_device = {
     .minor = MISC_DYNAMIC_MINOR,
-    .name = "devil_cpufreq",
+    .name = "devil_idle",
 };
 
 static void powersave_early_suspend(struct early_suspend *handler)
@@ -1193,13 +1182,12 @@ void s5pv210_bus_limit_true(void)
   clkdiv_val[4][2] = 7;
   clkdiv_val[5][2] = 3;
   clkdiv_val[6][2] = 1;
-  L4_int_volt = dvs_conf[L4].int_volt;
-  L5_int_volt = dvs_conf[L5].int_volt;
-  L6_int_volt = dvs_conf[L6].int_volt;
-  dvs_conf[L4].int_volt = L4_int_volt - 50000;
-  dvs_conf[L5].int_volt = L5_int_volt - 50000;
-  dvs_conf[L6].int_volt = L6_int_volt - 50000;
-printk("dvs_conf[L6].int_volt(%d)\n", dvs_conf[L6].int_volt);
+  L4_int_volt = dvs_conf[4].int_volt;
+  L5_int_volt = dvs_conf[5].int_volt;
+  L6_int_volt = dvs_conf[6].int_volt;
+  dvs_conf[4].int_volt = L4_int_volt - 50000;
+  dvs_conf[5].int_volt = L5_int_volt - 50000;
+  dvs_conf[6].int_volt = L6_int_volt - 50000;
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
@@ -1210,9 +1198,9 @@ void s5pv210_bus_limit_false(void)
   clkdiv_val[4][2] = 3;
   clkdiv_val[5][2] = 1;
   clkdiv_val[6][2] = 0;
-  dvs_conf[L4].int_volt = L4_int_volt;
-  dvs_conf[L5].int_volt = L5_int_volt;
-  dvs_conf[L6].int_volt = L6_int_volt;
+  dvs_conf[4].int_volt = L4_int_volt;
+  dvs_conf[5].int_volt = L5_int_volt;
+  dvs_conf[6].int_volt = L6_int_volt;
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
@@ -1223,11 +1211,11 @@ static int __init s5pv210_cpufreq_init(void)
 {
 	int ret;
 	register_early_suspend(&_powersave_early_suspend);
-	misc_register(&devil_cpufreq_device);
-    	if (sysfs_create_group(&devil_cpufreq_device.this_device->kobj, &devil_cpufreq_group) < 0)
+	misc_register(&devil_idle_device);
+    	if (sysfs_create_group(&devil_idle_device.this_device->kobj, &devil_idle_group) < 0)
     	{
       	printk("%s sysfs_create_group fail\n", __FUNCTION__);
-      	pr_err("Failed to create sysfs group for device (%s)!\n", devil_cpufreq_device.name);
+      	pr_err("Failed to create sysfs group for device (%s)!\n", devil_idle_device.name);
     	}
 	ret = platform_driver_register(&s5pv210_cpufreq_drv);
 	if (!ret)
