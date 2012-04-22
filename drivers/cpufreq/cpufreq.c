@@ -30,7 +30,7 @@
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/syscore_ops.h>
-
+#include <linux/earlysuspend.h>
 #include <trace/events/power.h>
 
 static unsigned int lock_sc_min = 0;
