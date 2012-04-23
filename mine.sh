@@ -21,9 +21,9 @@ else
 version="$build"_"$scheduler"_"$light"_"$color"_"$mem"
 fi
 export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
-sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
-mv init/version.c init/version.backup
-mv init/version.neu init/version.c
+# sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
+# mv init/version.c init/version.backup
+# mv init/version.neu init/version.c
 echo "building kernel"
 
 if [ "$handy" = "i9000"  ] 
@@ -36,10 +36,15 @@ then
 make aries_captivatemtd_defconfig
 fi
 
+if [ "$handy" = "vibrant"  ] 
+then
+make aries_vibrantmtd_defconfig
+fi
+
 make -j4
 
 echo "creating boot.img"
-if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
 then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 fi
