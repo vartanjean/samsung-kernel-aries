@@ -1190,6 +1190,7 @@ void s5pv210_bus_limit_true(void)
   dvs_conf[5].int_volt = L5_int_volt - 50000;
   dvs_conf[6].int_volt = L6_int_volt - 50000;
   bus_speed_old = 0;
+printk("oc_value screen off (%d)\n", oc_value);
   mutex_unlock(&set_freq_lock);
 }
 
@@ -1203,6 +1204,7 @@ void s5pv210_bus_limit_false(void)
   dvs_conf[5].int_volt = L5_int_volt;
   dvs_conf[6].int_volt = L6_int_volt;
   bus_speed_old = 0;
+printk("oc_value screen on (%d)\n", oc_value);
   mutex_unlock(&set_freq_lock);
 }
 
