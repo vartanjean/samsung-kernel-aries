@@ -5,7 +5,7 @@ rom=""
 
 mem="cm"
 
-handy="cappy"
+handy="vibrant"
 
 build="Devil2_0.74 -""$rom"_"$handy"
 
@@ -36,10 +36,15 @@ then
 make aries_captivatemtd_defconfig
 fi
 
+if [ "$handy" = "vibrant"  ] 
+then
+make aries_vibrantmtd_defconfig
+fi
+
 make -j4
 
 echo "creating boot.img"
-if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] 
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
 then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 fi
