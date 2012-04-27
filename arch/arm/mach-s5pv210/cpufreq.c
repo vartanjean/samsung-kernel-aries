@@ -713,6 +713,8 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
     unsigned long fclk;
 
+	pr_info("LIVEOC oc-value set to %u\n", oc_value);	
+
     struct cpufreq_policy * policy = cpufreq_cpu_get(0);
 
     mutex_lock(&set_freq_lock);
@@ -1111,7 +1113,7 @@ static ssize_t bus_limit_automatic_store(struct device *dev, struct device_attri
   }
   return size;
 }
-
+EXPORT_SYMBOL(bus_limit_automatic);
 
 
 static ssize_t bus_limit_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -1190,7 +1192,6 @@ void s5pv210_bus_limit_true(void)
   dvs_conf[5].int_volt = L5_int_volt - 50000;
   dvs_conf[6].int_volt = L6_int_volt - 50000;
   bus_speed_old = 0;
-printk("oc_value screen off (%d)\n", oc_value);
   mutex_unlock(&set_freq_lock);
 }
 
@@ -1204,7 +1205,6 @@ void s5pv210_bus_limit_false(void)
   dvs_conf[5].int_volt = L5_int_volt;
   dvs_conf[6].int_volt = L6_int_volt;
   bus_speed_old = 0;
-printk("oc_value screen on (%d)\n", oc_value);
   mutex_unlock(&set_freq_lock);
 }
 
