@@ -61,6 +61,7 @@ static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute
 		    if (data != oc_value)
 			{
 			    oc_value = data;
+			    oc_value_on = data;
 
 			    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 			}

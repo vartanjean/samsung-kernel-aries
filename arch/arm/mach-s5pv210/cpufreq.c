@@ -98,6 +98,10 @@ static struct regulator *internal_regulator;
 struct s5pv210_dvs_conf {
 	unsigned long	arm_volt; /* uV */
 	unsigned long	int_volt; /* uV */
+#ifdef CONFIG_CUSTOM_VOLTAGE
+	unsigned long arm_screenoff_volt;
+	unsigned long arm_screenon_volt;
+#endif
 };
 
 #ifdef CONFIG_DVFS_LIMIT
@@ -121,34 +125,42 @@ const unsigned long int_volt_max = 1300000;
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
 		.arm_volt   = DVSARM1,
+		.arm_screenoff_volt = DVSARM1,
 		.int_volt   = DVSINT1,
 	},
 	[L1] = {
 		.arm_volt   = DVSARM2,
+		.arm_screenoff_volt = DVSARM2,
 		.int_volt   = DVSINT2,
 	},
 	[L2] = {
 		.arm_volt   = DVSARM3,
+		.arm_screenoff_volt = DVSARM3,
 		.int_volt   = DVSINT3,
 	},
 	[L3] = { //1000
 		.arm_volt   = DVSARM4,
+		.arm_screenoff_volt = DVSARM4,
 		.int_volt   = DVSINT4,
 	},
 	[L4] = { 
 		.arm_volt   = DVSARM5,
+		.arm_screenoff_volt = DVSARM5,
 		.int_volt   = DVSINT5,
 	},
 	[L5] = {
 		.arm_volt   = DVSARM6,
+		.arm_screenoff_volt = DVSARM6,
 		.int_volt   = DVSINT5,
 	},
 	[L6] = {
 		.arm_volt   = DVSARM7,
+		.arm_screenoff_volt = DVSARM7,
 		.int_volt   = DVSINT5,
 	},
 	[L7] = {
 		.arm_volt   = DVSARM8,
+		.arm_screenoff_volt = DVSARM8,
 		.int_volt   = DVSINT6,
 	},
 };
@@ -793,6 +805,24 @@ void customvoltage_updatearmvolt(unsigned long * arm_voltages)
 }
 EXPORT_SYMBOL(customvoltage_updatearmvolt);
 
+void customvoltage_updatearm_screenoff_volt(unsigned long * arm_screenoff_voltages)
+{
+    int i;
+
+    mutex_lock(&set_freq_lock);
+
+    for (i = 0; i < num_freqs; i++) {
+	if (arm_screenoff_voltages[i] > arm_volt_max)
+	    arm_screenoff_voltages[i] = arm_volt_max;
+	dvs_conf[i].arm_screenoff_volt = arm_screenoff_voltages[i];
+    }
+
+    mutex_unlock(&set_freq_lock);
+
+    return;
+}
+EXPORT_SYMBOL(customvoltage_updatearm_screenoff_volt);
+
 void customvoltage_updateintvolt(unsigned long * int_voltages)
 {
     int i;
@@ -830,8 +860,7 @@ int customvoltage_numfreqs(void)
 }
 EXPORT_SYMBOL(customvoltage_numfreqs);
 
-void customvoltage_freqvolt(unsigned long * freqs, unsigned long * arm_voltages,
-			    unsigned long * int_voltages, unsigned long * max_voltages)
+void customvoltage_freqvolt(unsigned long * freqs, unsigned long * arm_voltages, unsigned long * arm_screenoff_voltages, unsigned long * int_voltages, unsigned long * max_voltages)
 {
     int i = 0;
 
@@ -842,6 +871,7 @@ void customvoltage_freqvolt(unsigned long * freqs, unsigned long * arm_voltages,
 
     for (i = 0; i < num_freqs; i++) {
 	arm_voltages[i] = dvs_conf[i].arm_volt;
+	arm_screenoff_voltages[i] = dvs_conf[i].arm_screenoff_volt;
 	int_voltages[i] = dvs_conf[i].int_volt;
     }
 
@@ -1180,30 +1210,51 @@ static struct early_suspend _powersave_early_suspend = {
 
 void s5pv210_bus_limit_true(void)
 {
-  
+ int i; 
   mutex_lock(&set_freq_lock);
   clkdiv_val[4][2] = 7;
   clkdiv_val[5][2] = 3;
   clkdiv_val[6][2] = 1;
+  clkdiv_val[4][3] = 0;
+  clkdiv_val[5][3] = 0;
+  clkdiv_val[6][3] = 0;
   L4_int_volt = dvs_conf[4].int_volt;
   L5_int_volt = dvs_conf[5].int_volt;
   L6_int_volt = dvs_conf[6].int_volt;
   dvs_conf[4].int_volt = L4_int_volt - 50000;
   dvs_conf[5].int_volt = L5_int_volt - 50000;
   dvs_conf[6].int_volt = L6_int_volt - 50000;
+  if (bus_limit_automatic){
+    for (i = 0; i < num_freqs; i++) {
+	dvs_conf[i].arm_screenon_volt = dvs_conf[i].arm_volt;
+	dvs_conf[i].arm_volt = dvs_conf[i].arm_screenoff_volt;
+	pr_info("dvs_conf[i].arm_volt while screen off, set to %u\n", dvs_conf[i].arm_volt);
+    	}
+  }
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
 
 void s5pv210_bus_limit_false(void)
 {
+int i;
   mutex_lock(&set_freq_lock);
   clkdiv_val[4][2] = 3;
   clkdiv_val[5][2] = 1;
   clkdiv_val[6][2] = 0;
+  clkdiv_val[4][3] = 1;
+  clkdiv_val[5][3] = 1;
+  clkdiv_val[6][3] = 1;
   dvs_conf[4].int_volt = L4_int_volt;
   dvs_conf[5].int_volt = L5_int_volt;
   dvs_conf[6].int_volt = L6_int_volt;
+
+  if (bus_limit_automatic){
+    for (i = 0; i < num_freqs; i++) {
+	dvs_conf[i].arm_volt = dvs_conf[i].arm_screenon_volt;
+	pr_info("dvs_conf[i].arm_volt set to %u\n", dvs_conf[i].arm_volt);
+    	}
+  }
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
