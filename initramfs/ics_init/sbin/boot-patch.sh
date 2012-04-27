@@ -51,6 +51,9 @@ for i in $($BB mount | $BB grep relatime | $BB cut -d " " -f3);do
 done
 mount
 
+echo; echo "mount system rw"
+busybox mount -o rw,remount,noatime /system
+
 # set cpu max freq
 echo; echo "cpu"
 bootspeed=`cat /etc/devil/bootspeed`
@@ -152,12 +155,12 @@ cat_msg_sysfile "panic: " /proc/sys/kernel/panic
 
 # set sdcard read_ahead
 echo; echo "read_ahead_kb"
-cat_msg_sysfile "default: " /sys/devices/virtual/bdi/default/read_ahead_kb
-if $BB [[ "$readahead" -eq 64 || "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512  || "$readahead" -eq 1024 || "$readahead" -eq 2048 || "$readahead" -eq 3096 ]];then
-    echo "CPU: found vaild readahead: <$readahead>"
-else
-    readahead=512
-fi
+#cat_msg_sysfile "default: " /sys/devices/virtual/bdi/default/read_ahead_kb
+#if $BB [[ "$readahead" -eq 64 || "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512  || "$readahead" -eq 1024 || "$readahead" -eq 2048 || "$readahead" -eq 3096 ]];then
+#    echo "CPU: found vaild readahead: <$readahead>"
+#else
+    readahead=256
+#fi
 echo $readahead > /sys/devices/virtual/bdi/179:0/read_ahead_kb
 echo $readahead > /sys/devices/virtual/bdi/179:8/read_ahead_kb
 cat_msg_sysfile "179.0: " /sys/devices/virtual/bdi/179:0/read_ahead_kb
@@ -299,5 +302,8 @@ echo "creating /system/etc/init.d..."
         done
     fi
     echo $(date) USER INIT DONE from /system/etc/init.d
+
+echo; echo "mount system ro"
+busybox mount -o ro,remount,noatime /system
 
 
