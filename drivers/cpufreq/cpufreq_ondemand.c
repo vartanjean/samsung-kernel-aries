@@ -39,7 +39,7 @@
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 
-#define UP_THRESHOLD_AT_MIN_FREQ    (40)
+#define UP_THRESHOLD_AT_MIN_FREQ    (60)
 #define FREQ_FOR_RESPONSIVENESS      (400000)
 
 #define UP_THRESHOLD_AT_MEDIUM_FREQ    (60)
@@ -141,7 +141,7 @@ static struct dbs_tuners {
 	.sleep_multiplier= SAMPLING_RATE_SLEEP_MULTIPLIER,
 	.up_threshold_min_freq= UP_THRESHOLD_AT_MIN_FREQ,
 	.responsiveness_freq= FREQ_FOR_RESPONSIVENESS, 
-	.up_threshold_medium_freq= UP_THRESHOLD_AT_MEDIUM_FREQ,
+	.up_threshold_medium_freq= (2 * UP_THRESHOLD_AT_MIN_FREQ + 3 * DEF_FREQUENCY_UP_THRESHOLD)/5,
 	.medium_freq = DEF_MEDIUM_FREQ,
 	.early_suspend = -1,
 };
@@ -317,6 +317,7 @@ static ssize_t store_up_threshold_min_freq(struct kobject *a, struct attribute *
 		return -EINVAL;
 	}
 	dbs_tuners_ins.up_threshold_min_freq = input;
+	dbs_tuners_ins.up_threshold_medium_freq= DIV_ROUND_CLOSEST(2 * dbs_tuners_ins.up_threshold_min_freq + 3 * dbs_tuners_ins.up_threshold, 5);
 	return count;
 }
 
@@ -407,6 +408,7 @@ static ssize_t store_up_threshold(struct kobject *a, struct attribute *b,
 		return -EINVAL;
 	}
 	dbs_tuners_ins.up_threshold = input;
+	dbs_tuners_ins.up_threshold_medium_freq= DIV_ROUND_CLOSEST(2 * dbs_tuners_ins.up_threshold_min_freq + 3 * dbs_tuners_ins.up_threshold, 5);
 	return count;
 }
 
