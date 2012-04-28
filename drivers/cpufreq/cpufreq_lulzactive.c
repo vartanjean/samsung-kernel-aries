@@ -44,6 +44,7 @@
 
 static void (*pm_idle_old)(void);
 static atomic_t active_count = ATOMIC_INIT(0);
+extern unsigned int touch_state_val;
 
 struct cpufreq_lulzactive_cpuinfo {
 	struct timer_list cpu_timer;
@@ -89,6 +90,9 @@ static unsigned long down_sample_time;
 
 #define DEFAULT_DOWN_SAMPLE_TIME_SLEEP 40000
 static unsigned long down_sample_time_awake;
+
+#define DEF_SMOOTH_UI        (0)
+unsigned int smooth_ui;
 
 /*
  * DEBUG print flags
@@ -364,7 +368,10 @@ static void cpufreq_lulzactive_timer(unsigned long data)
 	/* 
 	 * START lulzactive algorithm section
 	 */
-	if (cpu_load >= inc_cpu_load) {
+	if(smooth_ui && touch_state_val)
+		new_freq = pcpu->policy->max;
+
+	else if (cpu_load >= inc_cpu_load) {
 		if (pump_up_step && pcpu->policy->cur < pcpu->policy->max) {
 			ret = cpufreq_frequency_table_target(
                                                  pcpu->policy, pcpu->freq_table,
@@ -839,6 +846,32 @@ static ssize_t store_screen_off_min_step(struct kobject *kobj,
 static struct global_attr screen_off_min_step_attr = __ATTR(screen_off_min_step, 0666,
                                                             show_screen_off_min_step, store_screen_off_min_step);
 
+//smooth_ui
+
+static ssize_t show_smooth_ui(struct kobject *kobj,
+                                   struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%lu\n", smooth_ui);
+}
+
+static ssize_t store_smooth_ui(struct kobject *kobj,
+                                    struct attribute *attr, const char *buf, size_t count)
+{
+  unsigned int input;
+  int ret;
+
+  ret = sscanf(buf, "%u", &input);
+  if (ret != 1)
+    return -EINVAL;
+  smooth_ui = !!input;
+  return count;
+}
+
+static struct global_attr smooth_ui_attr = __ATTR(smooth_ui, 0666,
+                                                       show_smooth_ui, store_smooth_ui);
+
+
+
 // author
 static ssize_t show_author(struct kobject *kobj,
                            struct attribute *attr, char *buf)
@@ -902,6 +935,7 @@ static struct attribute *lulzactive_attributes[] = {
 	&tuner_attr.attr,
 	&version_attr.attr,
 	&freq_table_attr.attr,
+	&smooth_ui_attr.attr,
 	NULL,
 };
 
@@ -1094,6 +1128,7 @@ static int __init cpufreq_lulzactive_init(void)
 	inc_cpu_load = DEFAULT_INC_CPU_LOAD;
 	dec_cpu_load = DEFAULT_DEC_CPU_LOAD;
 	pump_up_step = DEFAULT_PUMP_UP_STEP;
+	smooth_ui = DEF_SMOOTH_UI;
 	pump_down_step = DEFAULT_PUMP_DOWN_STEP;
 	early_suspended = 0;
 	suspending = 0;
