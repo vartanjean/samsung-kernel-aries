@@ -313,7 +313,8 @@ static ssize_t store_up_threshold_min_freq(struct kobject *a, struct attribute *
 	ret = sscanf(buf, "%u", &input);
 
 	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
-			input < MIN_FREQUENCY_UP_THRESHOLD) {
+			input < MIN_FREQUENCY_UP_THRESHOLD ||
+			(input != 100 && input > dbs_tuners_ins.up_threshold)) {
 		return -EINVAL;
 	}
 	dbs_tuners_ins.up_threshold_min_freq = input;
