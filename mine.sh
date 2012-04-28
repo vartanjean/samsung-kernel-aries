@@ -7,7 +7,7 @@ mem="cm"
 
 handy="i9000"
 
-build="Devil2_0.76""$rom"_"$handy"
+build="Devil2_0.78_swap""$rom"_"$handy"
 
 scheduler="CFS"
 
@@ -20,10 +20,10 @@ version="$build"_"$scheduler"_"$light"_"$color"
 else
 version="$build"_"$scheduler"_"$light"_"$color"_"$mem"
 fi
-export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
-# sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
-# mv init/version.c init/version.backup
-# mv init/version.neu init/version.c
+# export KBUILD_BUILD_VERSION="$build"_"$scheduler"_"$color"
+ sed "/Devil/c\ \" ("$version")\"" init/version.c > init/version.neu
+ mv init/version.c init/version.backup
+ mv init/version.neu init/version.c
 echo "building kernel"
 
 if [ "$handy" = "i9000"  ] 
