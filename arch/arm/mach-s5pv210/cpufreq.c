@@ -198,7 +198,7 @@ static bool pllbus_changing = false;
 static int oc_value = 100;
 
 static unsigned long user_max = 1000000;
-
+static unsigned long user_min = 100000;
 static unsigned long sleep_freq;
 
 static unsigned long original_fclk[] = {1400000, 1300000, 1200000, 1000000, 800000, 800000, 800000, 800000};
@@ -1201,16 +1201,51 @@ unsigned long get_user_max(void)
 }
 EXPORT_SYMBOL(get_user_max);
 
+
+static ssize_t user_min_read(struct device * dev, struct device_attribute * attr, char * buf)
+{
+    return sprintf(buf, "%u\n", user_min);
+}
+
+static ssize_t user_min_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+    unsigned int data;
+
+    if(sscanf(buf, "%u\n", &data) == 1)
+	{
+	    if (data >= s5pv210_freq_table[L7].frequency && data <= s5pv210_freq_table[L0].frequency)
+		{
+		    user_min = data;
+		}
+	    else
+		{
+		    pr_info("%s: invalid input range %u\n", __FUNCTION__, user_min);
+		}
+	}
+    else
+	{
+		pr_info("%s: invalid input\n", __FUNCTION__);
+	}
+    return size;
+}
+unsigned long get_user_min(void)
+{
+    return user_min;
+}
+EXPORT_SYMBOL(get_user_min);
+
  
 static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
 static DEVICE_ATTR(bus_limit_automatic, S_IRUGO | S_IWUGO , bus_limit_automatic_show, bus_limit_automatic_store);
 static DEVICE_ATTR(user_max, S_IRUGO | S_IWUGO , user_max_read, user_max_write);
+static DEVICE_ATTR(user_min, S_IRUGO | S_IWUGO , user_min_read, user_min_write);
 
  
 static struct attribute *devil_idle_attributes[] = {
     &dev_attr_bus_limit_enable.attr,
     &dev_attr_bus_limit_automatic.attr,
     &dev_attr_user_max.attr,
+    &dev_attr_user_min.attr,
     NULL
 };
 
