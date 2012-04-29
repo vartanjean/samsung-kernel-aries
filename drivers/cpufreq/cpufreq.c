@@ -39,6 +39,8 @@ extern unsigned long cpuL7freq(void);
 extern unsigned long cpuL3freq(void);
 extern unsigned long get_user_max(void);
 extern unsigned long get_user_min(void);
+static unsigned int orig_user_max = 1000000;
+static unsigned int orig_user_min = 100000;
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -1866,7 +1868,8 @@ static void powersave_early_suspend(struct early_suspend *handler)
 			return;
 		if (cpufreq_get_policy(&new_policy, cpu))
 			goto out;
-
+		orig_user_max = new_policy.max;
+		orig_user_min = new_policy.min;
 		new_policy.max = get_user_max();
 		new_policy.min = get_user_min();
 
@@ -1891,8 +1894,8 @@ static void powersave_late_resume(struct early_suspend *handler)
 		if (cpufreq_get_policy(&new_policy, cpu))
 			goto out;
 
-		new_policy.max = cpuL3freq();
-		new_policy.min = cpuL7freq();
+		new_policy.max = orig_user_max;
+		new_policy.min = orig_user_min;
 
 		__cpufreq_set_policy(cpu_policy, &new_policy);
 		cpu_policy->user_policy.max = cpu_policy->max;
