@@ -91,7 +91,7 @@ static unsigned long down_sample_time;
 #define DEFAULT_DOWN_SAMPLE_TIME_SLEEP 40000
 static unsigned long down_sample_time_awake;
 
-#define DEF_SMOOTH_UI        (0)
+#define DEF_SMOOTH_UI        (1)
 unsigned int smooth_ui;
 
 /*
