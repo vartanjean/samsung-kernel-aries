@@ -36,7 +36,11 @@
 
 static unsigned int lock_sc_min = 0;
 extern unsigned long cpuL7freq(void);
-
+extern unsigned long cpuL3freq(void);
+extern unsigned long get_user_max(void);
+extern unsigned long get_user_min(void);
+static unsigned int orig_user_max = 1000000;
+static unsigned int orig_user_min = 100000;
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -1852,7 +1856,60 @@ static struct notifier_block __refdata cpufreq_cpu_notifier = {
     .notifier_call = cpufreq_cpu_callback,
 };
 
+static void powersave_early_suspend(struct early_suspend *handler)
+{
+	int cpu;
 
+	for_each_online_cpu(cpu) {
+		struct cpufreq_policy *cpu_policy, new_policy;
+
+		cpu_policy = cpufreq_cpu_get(cpu);
+		if (!cpu_policy)
+			return;
+		if (cpufreq_get_policy(&new_policy, cpu))
+			goto out;
+		orig_user_max = new_policy.max;
+		orig_user_min = new_policy.min;
+		new_policy.max = get_user_max();
+		new_policy.min = get_user_min();
+
+		__cpufreq_set_policy(cpu_policy, &new_policy);
+		cpu_policy->user_policy.max = cpu_policy->max;
+		cpu_policy->user_policy.min = cpu_policy->min;
+	out:
+		cpufreq_cpu_put(cpu_policy);
+	}
+}
+
+static void powersave_late_resume(struct early_suspend *handler)
+{
+	int cpu;
+
+	for_each_online_cpu(cpu) {
+		struct cpufreq_policy *cpu_policy, new_policy;
+
+		cpu_policy = cpufreq_cpu_get(cpu);
+		if (!cpu_policy)
+			return;
+		if (cpufreq_get_policy(&new_policy, cpu))
+			goto out;
+
+		new_policy.max = orig_user_max;
+		new_policy.min = orig_user_min;
+
+		__cpufreq_set_policy(cpu_policy, &new_policy);
+		cpu_policy->user_policy.max = cpu_policy->max;
+		cpu_policy->user_policy.min = cpu_policy->min;
+	out:
+		cpufreq_cpu_put(cpu_policy);
+	}
+}
+
+static struct early_suspend _powersave_early_suspend = {
+	.suspend = powersave_early_suspend,
+	.resume = powersave_late_resume,
+	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
+};
 
 /*********************************************************************
  *               REGISTER / UNREGISTER CPUFREQ DRIVER                *
@@ -1972,6 +2029,7 @@ static int __init cpufreq_core_init(void)
 	BUG_ON(!cpufreq_global_kobject);
 	register_syscore_ops(&cpufreq_syscore_ops);
 
+	register_early_suspend(&_powersave_early_suspend);
 
 	return 0;
 }

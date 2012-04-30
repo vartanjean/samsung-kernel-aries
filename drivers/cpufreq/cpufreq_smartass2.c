@@ -181,15 +181,17 @@ struct cpufreq_governor cpufreq_gov_smartass2 = {
 	.owner = THIS_MODULE,
 };
 
-inline static void smartass_update_min_max(struct smartass_info_s *this_smartass, struct cpufreq_policy *policy, int suspend) {
+inline static void smartass_update_min_max(struct smartass_info_s *this_smartass, struct cpufreq_policy *policy, int suspend) {/*
 #ifdef CONFIG_LIVE_OC
-if(sleep_ideal_freq <= cpuL7freq())
+if(sleep_ideal_freq <= cpuL9freq())
+sleep_ideal_freq = cpuL9freq();
+if(sleep_ideal_freq > cpuL9freq() && sleep_ideal_freq <= cpuL8freq())
+sleep_ideal_freq = cpuL8freq();
+else if(sleep_ideal_freq > cpuL8freq() && sleep_ideal_freq <= cpuL7freq())
 sleep_ideal_freq = cpuL7freq();
 else if(sleep_ideal_freq > cpuL7freq() && sleep_ideal_freq <= cpuL6freq())
 sleep_ideal_freq = cpuL6freq();
-if(sleep_ideal_freq > cpuL6freq() && sleep_ideal_freq <= cpuL5freq())
-sleep_ideal_freq = cpuL5freq();
-else sleep_ideal_freq = cpuL6freq();
+else sleep_ideal_freq = cpuL8freq();
 
 if(awake_ideal_freq > cpuL3freq() && awake_ideal_freq <= cpuL2freq())
 awake_ideal_freq = cpuL2freq();
@@ -201,8 +203,8 @@ else if(awake_ideal_freq > cpuL6freq() && awake_ideal_freq <= cpuL5freq())
 awake_ideal_freq = cpuL5freq();
 else if(awake_ideal_freq > cpuL7freq() && awake_ideal_freq <= cpuL6freq())
 awake_ideal_freq = cpuL6freq();
-else awake_ideal_freq = cpuL5freq();
-#endif
+else awake_ideal_freq = cpuL6freq();
+#endif*/
 	if (suspend) {
 		this_smartass->ideal_speed = // sleep_ideal_freq; but make sure it obeys the policy min/max
 			policy->max > sleep_ideal_freq ?
