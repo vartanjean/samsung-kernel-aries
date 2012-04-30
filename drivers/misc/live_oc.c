@@ -23,6 +23,7 @@ static int oc_value = 100;
 static int oc_value_on = 100;
 static int selective_oc = 1;
 extern bool bus_limit_automatic;
+bool oc_changend = false;
 
 /* Apply Live OC to 800MHz and above */
 static int oc_low_freq = 800000;
@@ -62,6 +63,7 @@ static ssize_t liveoc_ocvalue_write(struct device * dev, struct device_attribute
 			{
 			    oc_value = data;
 			    oc_value_on = data;
+			    oc_changend = true;
 
 			    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 			}
@@ -90,6 +92,7 @@ static ssize_t liveoc_octarget_low_write(struct device * dev, struct device_attr
 	    if (data != oc_low_freq && data <= oc_high_freq)
 		{
 		    oc_low_freq = data;
+		    oc_changend = true;
 	    
 		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 
@@ -116,6 +119,7 @@ static ssize_t liveoc_octarget_high_write(struct device * dev, struct device_att
 	    if (data != oc_high_freq && data >= oc_low_freq)
 		{
 		    oc_high_freq = data;
+		    oc_changend = true;	
 	    
 		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 
@@ -149,6 +153,7 @@ static ssize_t liveoc_selectiveoc_enable_write(struct device * dev, struct devic
 		}
 		    oc_value = 100;	
 		    selective_oc = data;
+		    oc_changend = true;	
 	    
 		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 
@@ -165,7 +170,7 @@ static ssize_t liveoc_selectiveoc_enable_write(struct device * dev, struct devic
 	}
     return size;
 }
-
+EXPORT_SYMBOL(oc_changend);
 
 
 static ssize_t liveoc_version(struct device * dev, struct device_attribute * attr, char * buf)

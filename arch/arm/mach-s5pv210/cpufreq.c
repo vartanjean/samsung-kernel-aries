@@ -37,6 +37,12 @@ static DEFINE_MUTEX(set_freq_lock);
 bool bus_limit_enable = false;
 bool bus_limit_automatic = false;
 
+int orig_user_max = 1000000;
+int orig_user_min = 100000;
+
+static int __cpufreq_set_policy(struct cpufreq_policy *data,
+				struct cpufreq_policy *policy);
+
 /* APLL M,P,S values for 1.4GHz/1.3GHz/1.2GHz/1.0GHz/800MHz */
 #define APLL_VAL_1400	((1 << 31) | (175 << 16) | (3 << 8) | 1)
 #define APLL_VAL_1300	((1 << 31) | (325 << 16) | (6 << 8) | 1)
@@ -1171,7 +1177,7 @@ static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribut
 
 static ssize_t user_max_read(struct device * dev, struct device_attribute * attr, char * buf)
 {
-    return sprintf(buf, "%u\n", user_max);
+    return sprintf(buf, "%lu\n", user_max);
 }
 
 static ssize_t user_max_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
@@ -1186,7 +1192,7 @@ static ssize_t user_max_write(struct device * dev, struct device_attribute * att
 		}
 	    else
 		{
-		    pr_info("%s: invalid input range %u\n", __FUNCTION__, user_max);
+		    pr_info("%s: invalid input range %lu\n", __FUNCTION__, user_max);
 		}
 	}
     else
@@ -1204,7 +1210,7 @@ EXPORT_SYMBOL(get_user_max);
 
 static ssize_t user_min_read(struct device * dev, struct device_attribute * attr, char * buf)
 {
-    return sprintf(buf, "%u\n", user_min);
+    return sprintf(buf, "%lu\n", user_min);
 }
 
 static ssize_t user_min_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
@@ -1219,7 +1225,7 @@ static ssize_t user_min_write(struct device * dev, struct device_attribute * att
 		}
 	    else
 		{
-		    pr_info("%s: invalid input range %u\n", __FUNCTION__, user_min);
+		    pr_info("%s: invalid input range %lu\n", __FUNCTION__, user_min);
 		}
 	}
     else
@@ -1233,6 +1239,179 @@ unsigned long get_user_min(void)
     return user_min;
 }
 EXPORT_SYMBOL(get_user_min);
+
+
+void set_min_max(void)
+{
+  struct cpufreq_policy *policy;
+  mutex_lock(&set_freq_lock);
+  policy = cpufreq_cpu_get(0);
+  if (policy == NULL)
+    return;
+  orig_user_max = policy->max;
+  orig_user_min = policy->min;
+pr_info("early: orig_user_max %u, orig_user_min %u\n", orig_user_max, orig_user_min);
+
+if(user_max < cpuL7freq() || user_max > cpuL0freq())
+	user_max = cpuL3freq();
+if(user_min < cpuL7freq() || user_min > user_max)
+	user_min = cpuL7freq();
+pr_info("user_max %lu\n", user_max);
+pr_info("user_min %lu\n", user_min);
+
+  policy->max = user_max;
+  policy->min = user_min;
+pr_info("policy->max %u\n", policy->max);
+pr_info("policy->min %u\n", policy->min);
+  mutex_unlock(&set_freq_lock);
+  if (bus_limit_automatic)
+  s5pv210_bus_limit_true();
+}
+
+void orig_min_max(void)
+{
+/*  struct cpufreq_policy *policy;
+  mutex_lock(&set_freq_lock);
+  policy = cpufreq_cpu_get(0);
+  if (policy == NULL)
+    return;
+
+if(orig_user_max < cpuL7freq() || orig_user_max > cpuL0freq())
+	orig_user_max = cpuL3freq();
+if(orig_user_min < cpuL7freq() || orig_user_min > orig_user_max)
+	orig_user_min = cpuL7freq();
+
+  policy->max = orig_user_max;
+  policy->min = orig_user_min;
+  mutex_unlock(&set_freq_lock);*/
+
+	int cpu, user_min, user_max;
+  mutex_lock(&set_freq_lock);
+	for_each_online_cpu(cpu) {
+		struct cpufreq_policy *cpu_policy, new_policy;
+
+		cpu_policy = cpufreq_cpu_get(cpu);
+		if (!cpu_policy)
+			return;
+		if (cpufreq_get_policy(&new_policy, cpu))
+			goto out;
+		orig_user_max = new_policy.max;
+		orig_user_min = new_policy.min;
+pr_info("early: orig_user_max %u, orig_user_min %u\n", orig_user_max, orig_user_min);
+
+pr_info("get_user_max() %lu\n", get_user_max());
+if(get_user_max() < cpuL7freq() || get_user_max() > cpuL0freq()){
+	user_max = cpuL3freq();
+}
+else{
+	user_max = get_user_max();
+}
+pr_info("user_max %u\n", user_max);
+
+pr_info("get_user_min() %lu\n", get_user_min());
+if(get_user_min() < cpuL7freq() || get_user_min() > user_max){
+	user_min = cpuL7freq();
+}
+else{
+	user_min = get_user_min();
+}
+pr_info("user_min %u\n", user_min);
+
+		new_policy.max = user_max;
+		new_policy.min = user_min;
+
+		__cpufreq_set_policy(cpu_policy, &new_policy);
+		cpu_policy->user_policy.max = cpu_policy->max;
+		cpu_policy->user_policy.min = cpu_policy->min;
+	out:
+		cpufreq_cpu_put(cpu_policy);
+	}
+  mutex_unlock(&set_freq_lock);
+
+  if (bus_limit_automatic)
+  s5pv210_bus_limit_false();
+}
+
+/*
+static void powersave_early_suspend(struct early_suspend *handler)
+{
+	int cpu, user_min, user_max;
+
+	for_each_online_cpu(cpu) {
+		struct cpufreq_policy *cpu_policy, new_policy;
+
+		cpu_policy = cpufreq_cpu_get(cpu);
+		if (!cpu_policy)
+			return;
+		if (cpufreq_get_policy(&new_policy, cpu))
+			goto out;
+		orig_user_max = new_policy.max;
+		orig_user_min = new_policy.min;
+pr_info("early: orig_user_max %u, orig_user_min %u\n", orig_user_max, orig_user_min);
+
+pr_info("get_user_max() %lu\n", get_user_max());
+if(get_user_max() < cpuL7freq() || get_user_max() > cpuL0freq()){
+	user_max = cpuL3freq();
+}
+else{
+	user_max = get_user_max();
+}
+pr_info("user_max %u\n", user_max);
+
+pr_info("get_user_min() %lu\n", get_user_min());
+if(get_user_min() < cpuL7freq() || get_user_min() > user_max){
+	user_min = cpuL7freq();
+}
+else{
+	user_min = get_user_min();
+}
+pr_info("user_min %u\n", user_min);
+
+		new_policy.max = user_max;
+		new_policy.min = user_min;
+
+		__cpufreq_set_policy(cpu_policy, &new_policy);
+		cpu_policy->user_policy.max = cpu_policy->max;
+		cpu_policy->user_policy.min = cpu_policy->min;
+	out:
+		cpufreq_cpu_put(cpu_policy);
+	}
+}
+
+static void powersave_late_resume(struct early_suspend *handler)
+{
+//	int cpu;
+int new_policy.max, new_policy.min;
+struct cpufreq_policy *policy;
+
+	for_each_online_cpu(cpu) {
+		struct cpufreq_policy *cpu_policy, new_policy;
+
+		cpu_policy = cpufreq_cpu_get(cpu);
+		if (!cpu_policy)
+			return;
+		if (cpufreq_get_policy(&new_policy, cpu))
+			goto out;
+ policy = cpufreq_cpu_get(0);
+   if (policy == NULL)
+     return;
+if(orig_user_max < cpuL7freq() || orig_user_max > cpuL0freq())
+	orig_user_max = cpuL3freq();
+		new_policy.max = orig_user_max;
+if(orig_user_min < cpuL7freq() || orig_user_min > orig_user_max)
+	orig_user_min = cpuL7freq();
+		new_policy.min = orig_user_min;
+pr_info("late: orig_user_max %u, orig_user_min %u\n", orig_user_max, orig_user_min);
+pr_info("late: new_policy.max %u, new_policy.min %u\n", new_policy.max, new_policy.min);
+
+
+//		__cpufreq_set_policy(cpu_policy, &new_policy);
+		policy->max = new_policy.max;
+		policy->min = new_policy.min;
+//	out:
+//		cpufreq_cpu_put(cpu_policy);
+	}
+}*/
 
  
 static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
@@ -1261,18 +1440,14 @@ static struct miscdevice devil_idle_device = {
 static void powersave_early_suspend(struct early_suspend *handler)
 {
   early_suspend = 1;
-  if (bus_limit_automatic){
-  s5pv210_bus_limit_true();
-  }
+  set_min_max();
 }
 
 
 static void powersave_late_resume(struct early_suspend *handler)
 {
   early_suspend = -1;
-  if (bus_limit_automatic){
-  s5pv210_bus_limit_false();
-  }
+  orig_min_max();
 }
 
 static struct early_suspend _powersave_early_suspend = {
@@ -1301,7 +1476,7 @@ void s5pv210_bus_limit_true(void)
     for (i = 0; i < num_freqs; i++) {
 	dvs_conf[i].arm_screenon_volt = dvs_conf[i].arm_volt;
 	dvs_conf[i].arm_volt = dvs_conf[i].arm_screenoff_volt;
-	pr_info("dvs_conf[i].arm_volt while screen off, set to %u\n", dvs_conf[i].arm_volt);
+	pr_info("dvs_conf[i].arm_volt while screen off, set to %lu\n", dvs_conf[i].arm_volt);
     	}
   }
   bus_speed_old = 0;
@@ -1325,7 +1500,7 @@ int i;
   if (bus_limit_automatic){
     for (i = 0; i < num_freqs; i++) {
 	dvs_conf[i].arm_volt = dvs_conf[i].arm_screenon_volt;
-	pr_info("dvs_conf[i].arm_volt set to %u\n", dvs_conf[i].arm_volt);
+	pr_info("dvs_conf[i].arm_volt set to %lu\n", dvs_conf[i].arm_volt);
     	}
   }
   bus_speed_old = 0;
