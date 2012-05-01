@@ -167,6 +167,23 @@ static ssize_t liveoc_selectiveoc_enable_write(struct device * dev, struct devic
 }
 
 
+int get_oc_value(void)
+{
+    return oc_value;
+}
+EXPORT_SYMBOL(get_oc_value);
+
+unsigned long get_oc_low_freq(void)
+{
+    return oc_low_freq;
+}
+EXPORT_SYMBOL(get_oc_low_freq);
+
+unsigned long get_oc_high_freq(void)
+{
+    return oc_high_freq;
+}
+EXPORT_SYMBOL(get_oc_high_freq);
 
 static ssize_t liveoc_version(struct device * dev, struct device_attribute * attr, char * buf)
 {
