@@ -1179,14 +1179,19 @@ static ssize_t user_max_read(struct device * dev, struct device_attribute * attr
 static ssize_t user_max_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
     unsigned int data;
+    int i, index;
 
     if(sscanf(buf, "%u\n", &data) == 1)
 	{
 	    if (data >= s5pv210_freq_table[L7].frequency && data <= s5pv210_freq_table[L0].frequency)
 		{
-		    user_max = data;
-//	if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)
-//				user_max = user_max * get_oc_value() / 100;
+    		i = 0;
+    			while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
+			index = s5pv210_freq_table[i].index;
+			if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) == data)
+		    	user_max = data;
+			i++;	
+			}
 		}
 	    else
 		{
@@ -1201,8 +1206,6 @@ static ssize_t user_max_write(struct device * dev, struct device_attribute * att
 }
 unsigned long get_user_max(void)
 {
-//if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)
-//		user_max = user_max * get_oc_value() / 100;
     return user_max;
 }
 EXPORT_SYMBOL(get_user_max);
@@ -1216,12 +1219,19 @@ static ssize_t user_min_read(struct device * dev, struct device_attribute * attr
 static ssize_t user_min_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
     unsigned int data;
+    int i, index;
 
     if(sscanf(buf, "%u\n", &data) == 1)
 	{
 	    if (data >= s5pv210_freq_table[L7].frequency && data <= s5pv210_freq_table[L0].frequency)
 		{
-		    user_min = data;
+    		i = 0;
+    			while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
+			index = s5pv210_freq_table[i].index;
+			if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) == data)
+		    	user_min = data;
+			i++;	
+			}
 		}
 	    else
 		{
