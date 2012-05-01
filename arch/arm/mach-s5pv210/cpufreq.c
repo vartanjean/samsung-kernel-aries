@@ -194,9 +194,9 @@ static u32 clkdiv_val[8][11] = {
 extern void cpufreq_stats_reset(void);
 
 static bool pllbus_changing = false;
-
-static int oc_value = 100;
-
+extern int get_oc_value(void); 
+extern unsigned long get_oc_low_freq(void);
+extern unsigned long get_oc_high_freq(void);
 static unsigned long user_max = 1000000;
 static unsigned long user_min = 100000;
 static unsigned long sleep_freq;
@@ -217,6 +217,8 @@ int early_suspend = -1;
  */
 static void s5pv210_set_refresh(enum s5pv210_dmc_port ch, unsigned long freq)
 {
+int oc_value = get_oc_value();
+
 	unsigned long tmp, tmp1;
 	void __iomem *reg = NULL;
 
@@ -1183,6 +1185,8 @@ static ssize_t user_max_write(struct device * dev, struct device_attribute * att
 	    if (data >= s5pv210_freq_table[L7].frequency && data <= s5pv210_freq_table[L0].frequency)
 		{
 		    user_max = data;
+//	if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)
+//				user_max = user_max * get_oc_value() / 100;
 		}
 	    else
 		{
@@ -1197,6 +1201,8 @@ static ssize_t user_max_write(struct device * dev, struct device_attribute * att
 }
 unsigned long get_user_max(void)
 {
+//if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)
+//		user_max = user_max * get_oc_value() / 100;
     return user_max;
 }
 EXPORT_SYMBOL(get_user_max);
