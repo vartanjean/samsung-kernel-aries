@@ -264,6 +264,12 @@ inline static int target_freq(struct cpufreq_policy *policy, struct smartass_inf
 	new_freq = validate_freq(policy,new_freq);
 	if (new_freq == old_freq)
 		return 0;
+			/*	if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
+				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
+				new_freq = new_freq * get_oc_value() / 100;
+				pr_info("get_oc_value() after if, in target_freq: %u\n", get_oc_value());
+				pr_info("new_freq after if, in target_freq: %u\n", new_freq);
+				}*/
 
 	if (table &&
 	    !cpufreq_frequency_table_target(policy,table,new_freq,prefered_relation,&index))
@@ -281,7 +287,7 @@ inline static int target_freq(struct cpufreq_policy *policy, struct smartass_inf
 			else if (new_freq < old_freq && prefered_relation==CPUFREQ_RELATION_L
 				&& !cpufreq_frequency_table_target(policy,table,new_freq,
 								   CPUFREQ_RELATION_H,&index))
-				target = table[index].frequency;
+				target = table[index].frequency;			
 		}
 
 		if (target == old_freq) {
@@ -429,6 +435,11 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 			printk(KERN_WARNING "Smartass: frequency changed by 3rd party: %d to %d\n",
 			       old_freq,policy->cur);
 			new_freq = old_freq;
+				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
+				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
+				new_freq *= get_oc_value() / 100;
+				pr_info("new_freq after if %u\n", new_freq);
+				}*/
 		}
 		else if (ramp_dir > 0 && nr_running() > 1) {
 			// ramp up logic:
@@ -442,6 +453,11 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 				new_freq = policy->max;
 				relation = CPUFREQ_RELATION_H;
 			}
+				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
+				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
+				new_freq *= get_oc_value() / 100;
+				pr_info("new_freq after if %u\n", new_freq);
+				}*/
 			dprintk(SMARTASS_DEBUG_ALG,"smartassQ @ %d ramp up: ramp_dir=%d ideal=%d\n",
 				old_freq,ramp_dir,this_smartass->ideal_speed);
 		}
@@ -461,6 +477,11 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 				if (new_freq > old_freq) // min_cpu_load > max_cpu_load ?!
 					new_freq = old_freq -1;
 			}
+				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
+				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
+				new_freq *= get_oc_value() / 100;
+				pr_info("new_freq after if %u\n", new_freq);
+				}*/
 			dprintk(SMARTASS_DEBUG_ALG,"smartassQ @ %d ramp down: ramp_dir=%d ideal=%d\n",
 				old_freq,ramp_dir,this_smartass->ideal_speed);
 		}
@@ -468,6 +489,11 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 		       // before the work task gets to run?
 		       // This may also happen if we refused to ramp up because the nr_running()==1
 			new_freq = old_freq;
+				if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
+				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
+				new_freq *= get_oc_value() / 100;
+				pr_info("new_freq after if %u\n", new_freq);
+				}
 			dprintk(SMARTASS_DEBUG_ALG,"smartassQ @ %d nothing: ramp_dir=%d nr_running=%lu\n",
 				old_freq,ramp_dir,nr_running());
 		}
