@@ -7,13 +7,13 @@ mem="cm"
 
 handy="cappy"
 
-build="Devil2_0.2""$rom"_"$handy"
+build="Devil2_0.5""$rom"_"$handy"
 
 scheduler="CFS"
 
 color="CMC"
 
-light="LED"
+light="BLN"
 if [ "$mem" = "cm" ]
 then
 version="$build"_"$scheduler"_"$light"_"$color"
