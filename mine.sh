@@ -5,9 +5,9 @@ rom=""
 
 mem="cm"
 
-handy="i9000"
+handy="cappy"
 
-build="Devil2_0.83""$rom"_"$handy"
+build="Devil2_0.1""$rom"_"$handy"
 
 scheduler="CFS"
 
