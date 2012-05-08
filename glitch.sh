@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # CM9 repo path :
-repo=~/CM9
+repo=~/aokpsgs
 
 # Glitch kernel build-script parameters :
 #
@@ -93,7 +93,7 @@ cd release && {
 
 mkdir -p ${target} || exit 1
 
-REL=CM9-${target}-Glitch-$(date +%Y%m%d.%H%M).zip
+REL=SkunkWorks-${target}-Glitch-$(date +%Y%m%d.%H%M).zip
 
 	rm -r system 2> /dev/null
 	mkdir  -p system/lib/modules || exit 1
@@ -115,11 +115,11 @@ REL=CM9-${target}-Glitch-$(date +%Y%m%d.%H%M).zip
 	cp S99screenstate_scaling system/etc/init.d/ || exit 1
 	#cp S98rfkill_didle system/etc/init.d/ || exit 1
 
-if [ "$target" = fascinatemtd ] ; then
-	cp 90call_vol_fascinate system/etc/init.d/ || exit 1
-else
-	cp 90call_vol system/etc/init.d/ || exit 1
-fi
+#if [ "$target" = fascinatemtd ] ; then
+#	cp 90call_vol_fascinate system/etc/init.d/ || exit 1
+#else
+#	cp 90call_vol system/etc/init.d/ || exit 1
+#fi
 	cp logcat_module system/etc/init.d/ || exit 1
 	cp lights.aries.so.BLN system/lib/hw/lights.aries.so
 	mkdir -p system/bin

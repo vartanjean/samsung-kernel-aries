@@ -9,7 +9,7 @@ export USE_CCACHE=1
 
         CCACHE=ccache
         CCACHE_COMPRESS=1
-        CCACHE_DIR=~/CM9/kernel/samsung/.ramdisks-ccache
+        CCACHE_DIR=~/aokpsgs/kernel/samsung/.ramdisks-ccache
         export CCACHE_DIR CCACHE_COMPRESS
 
 declare -A phone
@@ -33,7 +33,7 @@ for i in ${!phones[@]}; do
 
 echo "========Building ramdisk.img and recovery.img for ${phone}========"
 echo ""
-. build/envsetup.sh && breakfast full_${phone}mtd-user && make bootimage
+. build/envsetup.sh && breakfast aokp_${phone}mtd-userdebug && make bootimage
 done
 
 echo "Done!"
