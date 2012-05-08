@@ -33,7 +33,7 @@ for i in ${!phones[@]}; do
 
 echo "========Building ramdisk.img and recovery.img for ${phone}========"
 echo ""
-. build/envsetup.sh && breakfast aokp_${phone}mtd-userdebug && make bootimage
+. build/envsetup.sh && breakfast aokp_${phone}mtd-userdebug && make bootimage -j12
 done
 
 echo "Done!"
