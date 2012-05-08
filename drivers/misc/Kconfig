@@ -609,4 +609,23 @@ config SAMSUNG_PARAM
 	help
 	  Driver for communication with Samsung's secondary bootloader
 
+config CUSTOM_VOLTAGE
+       bool "Support for Custom Voltage"
+       default n
+       help
+         Say Y here to enable Custom Voltage
+
+config LIVE_OC
+       bool "Support for Live OC"
+       default n
+       help
+         Say Y here to enable Live OC
+
+config DEVIL_TWEAKS
+       bool "Enables special Devil Kernel Tweaks"
+       default y
+       help
+         Say Y here to enable Devil Tweaks
+
+
 endif # MISC_DEVICES
