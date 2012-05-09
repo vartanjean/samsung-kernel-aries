@@ -1,7 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 1
 SUBLEVEL = 10
-EXTRAVERSION =_IcyGlitch_V14-B6
+EXTRAVERSION =_IcyGlitch_SkunkWorks
 NAME = Divemaster Edition
 
 # *DOCUMENTATION*
