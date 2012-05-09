@@ -3,11 +3,11 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-mem="cm"
+mem="XL"
 
 handy="cappy"
 
-build="Devil2_0.5""$rom"_"$handy"
+build="Devil2_0.55""$rom"_"$handy"
 
 scheduler="CFS"
 
