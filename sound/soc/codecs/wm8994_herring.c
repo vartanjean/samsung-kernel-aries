@@ -44,7 +44,7 @@
 // 3 (+18db = holy shit)
 unsigned short incall_boost_rcv  = (2 << WM8994_AIF2DAC_BOOST_SHIFT);
 unsigned short incall_boost_bt   = (2 << WM8994_AIF2DAC_BOOST_SHIFT);
-unsigned short incall_boost_spk  = (2 << WM8994_AIF2DAC_BOOST_SHIFT);
+unsigned short incall_boost_spk  = (1 << WM8994_AIF2DAC_BOOST_SHIFT);
 unsigned short incall_boost_hp   = (2 << WM8994_AIF2DAC_BOOST_SHIFT);
 
 
@@ -53,8 +53,8 @@ unsigned short incall_boost_hp   = (2 << WM8994_AIF2DAC_BOOST_SHIFT);
 // 0x0b means 0db
 // 0x1f means +30db
 unsigned short incall_mic_gain_rcv       = 0x13;
-unsigned short incall_mic_gain_spk       = 0x1f;
-unsigned short incall_mic_gain_hp        = 0x1d;
+unsigned short incall_mic_gain_spk       = 0x0c;
+unsigned short incall_mic_gain_hp        = 0x13;
 unsigned short incall_mic_gain_hp_no_mic = 0x12;
 
 void update_mic_gain(unsigned short gain);
