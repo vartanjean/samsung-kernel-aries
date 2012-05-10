@@ -21,7 +21,7 @@ extern void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsig
 
 static int oc_value = 100;
 static int oc_value_on = 100;
-static int selective_oc = 1;
+static int selective_oc = 0;
 extern bool bus_limit_automatic;
 
 /* Apply Live OC to 800MHz and above */
@@ -147,8 +147,8 @@ static ssize_t liveoc_selectiveoc_enable_write(struct device * dev, struct devic
 		oc_low_freq = 100000;
 		oc_high_freq = 1400000;
 		}
-		    oc_value = 100;	
-		    selective_oc = data;
+//		    oc_value = 100;	
+//		    selective_oc = data;
 	    
 		    liveoc_update(oc_value, oc_low_freq, oc_high_freq, selective_oc);
 
