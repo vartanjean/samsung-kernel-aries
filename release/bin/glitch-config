@@ -1,0 +1,124 @@
+#!/system/xbin/sh
+echo "Glitch config settings manager"
+echo "Idea + libs from KGB, dirty hax by Efpophis"
+echo ""
+# Includes
+. /system/bin/lib.sh
+
+# Abort conditions
+root_uid_check
+af $SCREENSCALE_ACTIVE $SLEEP_GOV || err_exit "Apparently not a Glitch kernel!"
+
+# Defines
+
+GLITCH_CFG=/system/etc/glitch-config
+SCREENSCALE_ACTIVE=${GLITCH_CFG}/screenstate_scaling
+SLEEP_GOV=${GLITCH_CFG}/sleep_governor
+
+REMOUNTED=0
+
+# Functions
+show_config()
+{
+G_SS=$(cat $SCREENSCALE_ACTIVE)
+G_SG=$(cat $SLEEP_GOV)
+echo "Displaying current Glitch-Config settings:
+
+Screenstate Scaling: $G_SS
+Sleep Governor:      $G_SG"
+}
+
+usage()
+{
+echo "USAGE:  glitch-config  [option]
+
+where [option] is one of:
+
+show - shows current configuration
+set  - modifies current configuration"
+exit 0
+}
+
+set_config()
+{
+echo $1 > $SCREENSCALE_ACTIVE &&
+echo $2 > $SLEEP_GOV &&
+echo "Setting screenstate scaling = $1, sleep governor = $2" || err_exit "Failed to set values!"
+}
+
+
+read_check_active()
+{
+while [ 1 ]; do
+	read -p "$1" i
+	if [ "$i" = "active" ] || [ "$i" = "inactive" ]; then
+      echo "$i"
+      break
+  fi
+done
+}
+
+read_check_gov()
+{
+while [ 1 ]; do
+	read -p "$1" i
+	
+	# neat way of finding if $i exists in $gov_list
+  case "$gov_list" in
+     *${i}*)
+        echo $i
+        break
+     ;;    
+  esac
+    
+done
+}
+
+
+# Script body
+if system_is_ro; then
+	system_rw
+	REMOUNTED=1
+fi
+
+gov_list=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors`
+
+if [ "$1" = "set" ]; then
+	show_config
+	echo ""
+	echo  "Screenstate Scaling:"
+	echo  "active"
+	echo  "inactive"
+	
+	G_A="$(read_check_active '    Which one?	')"
+
+	echo ""
+	
+	if [ "$G_A" = "active" ]; then
+
+	echo "Sleep Governor: "
+	for g in $gov_list
+	do
+		echo $g
+	done
+
+	G_G="$(read_check_gov '   Which one?      ')"
+	
+	else    
+    G_G=$(cat $SLEEP_GOV)
+  fi
+
+set_config $G_A $G_G
+
+elif [ "$1" = "show" ]; then
+	show_config
+elif [ $1 ]; then
+	echo "Unrecognized option: $1"; echo ""; usage
+else
+	usage
+fi
+
+[ "$REMOUNTED" = "1" ] && system_ro
+
+echo "
+Finished."
