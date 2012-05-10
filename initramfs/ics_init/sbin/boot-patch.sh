@@ -46,29 +46,92 @@ echo; echo "mount"
 #busybox mount -o remount,noatime,barrier=0,nobh /system
 #busybox mount -o remount,noatime,barrier=0,nobh /cache
 #busybox mount -o remount,noatime /data
-for i in $($BB mount | $BB grep relatime | $BB cut -d " " -f3);do
-    busybox mount -o remount,noatime $i
-done
-mount
+#for i in $($BB mount | $BB grep relatime | $BB cut -d " " -f3);do
+#    busybox mount -o remount,noatime $i
+#done
+#mount
 
-echo; echo "mount system rw"
-busybox mount -o rw,remount,noatime /system
+#echo; echo "mount system rw"
+busybox mount -o rw,remount /system
 
-# set cpu max freq
-echo; echo "cpu"
-bootspeed=`cat /etc/devil/bootspeed`
-if $BB [[ "$bootspeed" -eq 1400000 || "$bootspeed" -eq 1300000 || "$bootspeed" -eq 1200000 || "$bootspeed" -eq 1000000 || "$bootspeed" -eq 800000 ]];then
-    echo "CPU: found vaild bootspeed: <$bootspeed>"
-    echo $bootspeed > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+#copy init.d verify script to init.d
+if [ -e "/system/etc/init.d/00initd_verify" ];then
+	echo; echo "00initd_verify already present"
 else
-	echo "CPU: did not find vaild bootspeed: setting 1000"
-	echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+	echo; echo "creating 00initd_verify"
+	busybox cp /res/00initd_verify /system/etc/init.d
+	busybox chmod 777 /system/etc/init.d/00initd_verify
+	ls -l /system/etc/init.d/00initd_verify
+fi
+
+# load profile
+echo; echo "profile"
+	if [ -e "/data/local/devil/profile" ];then
+	profile=`cat /data/local/devil/profile`
+	echo "profile: found: <$profile>";
+		if [ "$profile" -eq 1 ]; then
+    			echo "profile: found vaild governor profile: <smooth>";
+      			echo 1 > /sys/class/misc/devil_tweaks/governors_profile;
+		elif [ "$profile" -eq 2 ]; then
+    			echo "profile: found vaild governor profile: <powersave>";
+      			echo 2 > /sys/class/misc/devil_tweaks/governors_profile;
+		else
+    			echo "profile: setting governor profile: <normal>";
+      			echo 0 > /sys/class/misc/devil_tweaks/governors_profile;
+    			echo 0 > /data/local/devil/profile;
+		fi
+	else
+    		echo "profile not found: setting governor profile: <normal>";
+      		echo 0 > /sys/class/misc/devil_tweaks/governors_profile;
+    		echo 0 > /data/local/devil/profile;
+	fi
+
+#set cpu max freq while screen off
+echo; echo "set cpu max freq while screen off"
+if [ -e "/data/local/devil/screen_off_max" ];then
+	screen_off_max=`cat /data/local/devil/screen_off_max`
+	if $BB [ "$screen_off_max" -eq 1400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
+	elif $BB [ "$screen_off_max" -eq 1300000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
+	elif $BB [ "$screen_off_max" -eq 1200000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
+	elif $BB [ "$screen_off_max" -eq 1000000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
+	elif $BB [ "$screen_off_max" -eq 800000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
+	elif $BB [ "$screen_off_max" -eq 400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"   		
+	else
+		echo "CPU: did not find vaild screen_off_max, setting 1000 Mhz as default"
+		screen_off_max=1000000
+	fi
+	echo $screen_off_max > /sys/class/misc/devil_idle/user_max
+else
+	echo "screen_off_max: did not find any screen_off_max, setting 1000 Mhz as default"
+	echo 1000000 > /sys/class/misc/devil_idle/user_max
+	echo 1000000 > /data/local/devil/screen_off_max
+fi
+
+#set cpu min freq while screen off
+echo; echo "set cpu min freq while screen off"
+if [ -e "/data/local/devil/screen_off_min" ];then
+	screen_off_min=`cat /data/local/devil/screen_off_min`
+	if $BB [ "$screen_off_min" -eq 100000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>"  
+	elif $BB [ "$screen_off_min" -eq 200000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
+	elif $BB [ "$screen_off_min" -eq 400000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
+	elif $BB [ "$screen_off_min" -eq 800000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
+		  		
+
+	else
+		echo "CPU: did not find vaild screen_off_min, setting 100 Mhz as default"
+		screen_off_min=100000
+	fi
+		echo $screen_off_min > /sys/class/misc/devil_idle/user_min
+else
+	echo "screen_off_min: did not find any screen_off_min, setting 100 Mhz as default"
+	echo 100000 > /sys/class/misc/devil_idle/user_min
+	echo 100000 > /data/local/devil/screen_off_min
 fi
 
 # set fsync
 echo; echo "fsync"
-if [ -e "/etc/devil/fsync" ];then
-	fsync=`cat /etc/devil/fsync`
+if [ -e "/data/local/devil/fsync" ];then
+	fsync=`cat /data/local/devil/fsync`
 	if [ "$fsync" -eq 0 ] || [ "$fsync" -eq 1 ];then
     		echo "fsync: found vaild fsync mode: <$fsync>"
     		echo $fsync > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
@@ -78,23 +141,24 @@ if [ -e "/etc/devil/fsync" ];then
 	fi
 else
 echo "fsync: did not find vaild fsync mode: setting default"
-echo 1 > /etc/devil/fsync
+echo 1 > /data/local/devil/fsync
 echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 fi
+
 
 # debug output
 cat_msg_sysfile "max           : " /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 cat_msg_sysfile "gov           : " /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-cat_msg_sysfile "UV_mv         : " /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-cat_msg_sysfile "states_enabled: " /sys/devices/system/cpu/cpu0/cpufreq/states_enabled_table
+#cat_msg_sysfile "UV_mv         : " /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+#cat_msg_sysfile "states_enabled: " /sys/devices/system/cpu/cpu0/cpufreq/states_enabled_table
 echo
-echo "freq/voltage  : ";cat /sys/devices/system/cpu/cpu0/cpufreq/frequency_voltage_table
+#echo "freq/voltage  : ";cat /sys/devices/system/cpu/cpu0/cpufreq/frequency_voltage_table
 
 
 # vm tweaks
 # just output of default values for now
 echo; echo "vm"
-echo "0" > /proc/sys/vm/swappiness                   # Not really needed as no /swap used...
+#echo "0" > /proc/sys/vm/swappiness                   # Not really needed as no /swap used...
 echo "2000" > /proc/sys/vm/dirty_writeback_centisecs # Flush after 20sec. (o:500)
 echo "2000" > /proc/sys/vm/dirty_expire_centisecs    # Pages expire after 20sec. (o:200)
 echo "10" > /proc/sys/vm/dirty_background_ratio      # flush pages later (default 5% active mem)
@@ -171,6 +235,10 @@ echo 16 > /sys/block/mtdblock2/queue/read_ahead_kb # system
 echo 16 > /sys/block/mtdblock3/queue/read_ahead_kb # cache
 echo 64 > /sys/block/mtdblock6/queue/read_ahead_kb # datadata
 
+echo; echo "$(date) io"
+MTD=`$BB ls -d /sys/block/mtdblock*`
+LOOP=`$BB ls -d /sys/block/loop*`
+MMC=`$BB ls -d /sys/block/mmc*`
       
 # general tweaks
 for i in $MTD $MMC $LOOP;do
@@ -201,25 +269,34 @@ echo;echo "bln"
 cat_msg_sysfile "/sys/class/misc/backlightnotification/enabled: " /sys/class/misc/backlightnotification/enabled
 
 
-# load profile
-echo; echo "profile"
-profile=`cat /etc/devil/profile`
-if [ $profile = "smooth" ]; then
-    $BB chmod +x /data/local/devil/smooth.sh;
-    logwrapper /system/bin/sh /data/local/devil/smooth.sh;
-fi
+
+# load bus_limit_settings
+echo; echo "bus_limit"
+	if [ -e "/data/local/devil/bus_limit" ];then
+	bus_limit=`cat /data/local/devil/bus_limit`
+	echo "profile: found: <$bus_limit>";
+		if [ "$bus_limit" -eq 1 ]; then
+    			echo "bus_limit: found vaild bus_limit profile: <automatic>";
+      			echo 1 > /sys/class/misc/devil_idle/bus_limit;
+		elif [ "$bus_limit" -eq 2 ]; then
+    			echo "bus_limit: found vaild bus_limit profile: <permanent>";
+      			echo 2 > /sys/class/misc/devil_idle/bus_limit;
+		else
+    			echo "bus_limit: setting bus_limit profile: <disabled>";
+      			echo 0 > /data/local/devil/bus_limit;
+    			echo 0 > /sys/class/misc/devil_idle/bus_limit;
+		fi
+	else
+    		echo "bus_limit not found: setting bus_limit profile: <disabled>";
+      		echo 0 > /data/local/devil/bus_limit;
+    		echo 0 > /sys/class/misc/devil_idle/bus_limit;
+	fi
 
 
-if [ $profile = "powersave" ]; then
-    $BB chmod +x /data/local/devil/powersave.sh;
-    logwrapper /system/bin/sh /data/local/devil/powersave.sh;
-fi
-
-
-# set cpu max freq
+# set vibrator value
 echo; echo "vibrator"
-if [ -e "/etc/devil/vibrator" ];then
-	vibrator=`cat /etc/devil/vibrator`
+if [ -e "/data/local/devil/vibrator" ];then
+	vibrator=`cat /data/local/devil/vibrator`
 	if [ "$vibrator" -le 43640 ] && [ "$vibrator" -ge 20000 ];then
     		echo "vibrator: found vaild vibrator intensity: <$vibrator>"
     		echo $vibrator > /sys/class/timed_output/vibrator/duty
@@ -227,12 +304,16 @@ if [ -e "/etc/devil/vibrator" ];then
 		echo "vibrator: did not find vaild vibrator intensity: setting default"
 		echo 40140 > /sys/class/timed_output/vibrator/duty
 	fi
+else
+	echo "vibrator: did not find vaild vibrator intensity: setting default"
+	echo 40140 > /data/local/devil/vibrator
+	echo 40140 > /sys/class/timed_output/vibrator/duty
 fi
 
 # set wifi
 echo; echo "wifi"
-if [ -e "/etc/devil/wifi" ];then
-	wifi=`cat /etc/devil/wifi`
+if [ -e "/data/local/devil/wifi" ];then
+	wifi=`cat /data/local/devil/wifi`
 	if [ "$wifi" -eq 0 ] || [ "$wifi" -eq 1 ];then
     		echo "wifi: found vaild wifi mode: <$wifi>"
     		echo $wifi > /sys/module/bcmdhd/parameters/uiFastWifi
@@ -242,43 +323,65 @@ if [ -e "/etc/devil/wifi" ];then
 	fi
 else
 	echo "wifi: did not find vaild wifi mode: setting default"
-	echo 0 > /etc/devil/wifi
+	echo 0 > /data/local/devil/wifi
 	echo 0 > /sys/module/bcmdhd/parameters/uiFastWifi
 fi
 
-# speed to default
-echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-echo "set max freq to default"
-
-# live_oc_mode
-echo; echo "live_oc_mode"
-if [ -e "/etc/devil/live_oc_mode" ];then
-    live_oc_mode=`cat /etc/devil/live_oc_mode`
-    echo $live_oc_mode > /sys/devices/virtual/misc/liveoc/selective_oc
-    echo "liveoc mode set to: $live_oc_mode"
+# smooth_ui
+echo; echo "smooth_ui"
+if [ -e "/data/local/devil/smooth_ui" ];then
+    smooth_ui=`cat /data/local/devil/smooth_ui`
+	if [ "$smooth_ui" -eq 0 ] || [ "$smooth_ui" -eq 1 ];then
+    		echo $smooth_ui > /sys/class/misc/devil_tweaks/smooth_ui_enabled
+    		echo "smooth_ui: $smooth_ui"
+	else
+    		echo "did not find vaild smooth_ui value: setting default (enabled)"
+    		echo 1 > /sys/class/misc/devil_tweaks/smooth_ui_enabled
+	fi
 else
-    echo "did not find vaild live_oc_mode: setting 1"
-    echo 0 > /sys/devices/virtual/misc/liveoc/selective_oc
-fi;
+    	echo "did not find any smooth_ui value: setting default (enabled)"
+    	echo 1 > /sys/class/misc/devil_tweaks/smooth_ui_enabled
+	echo 1 > /data/local/devil/smooth_ui
+fi
+
+
 
 # init.d support 
-# executes <E>scriptname, <S>scriptname, <0-9><0-9>scriptname
+# executes <0-9><0-9>scriptname, <E>scriptname, <S>scriptname 
 # in this order.
 echo; echo "init.d"
-echo "creating /system/etc/init.d..."
+#sleep 10
+if [ -e "/data/local/devil/initd" ];then
+	echo "init.d already executed"
+	/system/xbin/busybox rm /data/local/devil/initd
+else
 
-
-#if $BB [ "$initd" == "true" ];then
     echo "starting init.d script execution..."
+
+    echo $(date) USER INIT START from /system/etc/init.d
+    	if cd /system/etc/init.d >/dev/null 2>&1 ; then
+           for file in [0-9][0-9]* ; do
+		if [ "$file" != "00initd_verify" ]; then
+            		if ! ls "$file" >/dev/null 2>&1 ; then continue ; fi
+           	 	echo "init.d: START '$file'"
+            		/system/bin/sh "$file"
+            		echo "init.d: EXIT '$file' ($?)"
+		else
+			echo "do not execute 00initd_verify"
+		fi
+           done
+    	fi
+    echo $(date) USER INIT DONE from /system/etc/init.d
+
     echo $(date) USER EARLY INIT START from /system/etc/init.d
-    if cd /system/etc/init.d >/dev/null 2>&1 ; then
-        for file in E* ; do
-            if ! cat "$file" >/dev/null 2>&1 ; then continue ; fi
-            echo "init.d: START '$file'"
-            /system/bin/sh "$file"
-            echo "init.d: EXIT '$file' ($?)"
-        done
-    fi
+    	if cd /system/etc/init.d >/dev/null 2>&1 ; then
+            for file in E* ; do
+            	if ! cat "$file" >/dev/null 2>&1 ; then continue ; fi
+            	echo "init.d: START '$file'"
+            	/system/bin/sh "$file"
+            	echo "init.d: EXIT '$file' ($?)"
+            done
+    	fi
     echo $(date) USER EARLY INIT DONE from /system/etc/init.d
 
     echo $(date) USER INIT START from /system/etc/init.d
@@ -291,19 +394,23 @@ echo "creating /system/etc/init.d..."
         done
     fi
     echo $(date) USER INIT DONE from /system/etc/init.d
+fi
 
-    echo $(date) USER INIT START from /system/etc/init.d
-    if cd /system/etc/init.d >/dev/null 2>&1 ; then
-        for file in [0-9][0-9]* ; do
-            if ! ls "$file" >/dev/null 2>&1 ; then continue ; fi
-            echo "init.d: START '$file'"
-            /system/bin/sh "$file"
-            echo "init.d: EXIT '$file' ($?)"
-        done
-    fi
-    echo $(date) USER INIT DONE from /system/etc/init.d
+# governor specific settings:
+echo; echo "governor settings"
+    governor=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
+	if [ "$governor" = "conservative" ] || [ "$governor" = "ondemand" ];then
+		$responsiveness=`cat /data/local/devil/$governor/responsiveness`
+		$min_upthreshold=`cat /data/local/devil/$governor/min_upthreshold`
+		$sleep_multiplier=`cat /data/local/devil/$governor/sleep_multiplier`
+		echo $responsiveness > /sys/devices/system/cpu/cpufreq/$governor/responsiveness_freq
+		echo $min_upthreshold > /sys/devices/system/cpu/cpufreq/$governor/up_threshold_min_freq
+		echo $sleep_multiplier > /sys/devices/system/cpu/cpufreq/$governor/sleep_multiplier
+	else
+		echo "nothing to do"
+	fi
 
 echo; echo "mount system ro"
-busybox mount -o ro,remount,noatime /system
+busybox mount -o ro,remount /system
 
 

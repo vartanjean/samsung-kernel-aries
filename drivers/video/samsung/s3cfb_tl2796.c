@@ -525,19 +525,6 @@ static void seq_print_gamma_regs(struct seq_file *m, const u16 gamma_regs[])
 	const struct tl2796_gamma_reg_offsets *offset = &lcd->gamma_reg_offsets;
 
 	for (c = 0; c < 3; c++) {
-
-
-
-
-
-
-
-
-
-
-
-
-
 		u32 adj[6];
 		u32 vt[6];
 		u32 v[6];

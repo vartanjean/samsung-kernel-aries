@@ -1,0 +1,2 @@
+#!/system/xbin/sh
+touch /data/local/devil/initd

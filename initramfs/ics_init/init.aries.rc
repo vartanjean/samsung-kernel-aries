@@ -193,3 +193,9 @@ service tvouthack /system/bin/tvouthack
     user system
     group graphics
     disabled
+
+service runpa /system/bin/sysinit
+    class main
+    user root
+    group root
+    oneshot

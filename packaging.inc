@@ -10,7 +10,7 @@ mkdir  -p release/system/bin || exit 1
 mkdir  -p release/system/lib/modules || exit 1
 mkdir  -p release/system/lib/hw || exit 1
 mkdir  -p release/system/etc/init.d || exit 1
-mkdir  -p release/system/etc/devil || exit 1
+#mkdir  -p release/system/etc/devil || exit 1
 find . -name "*.ko" -exec cp {} release/system/lib/modules/ \; 2>/dev/null || exit 1
 
 cd release && {
@@ -35,10 +35,10 @@ fi
 #	cp S98oc_value system/etc/init.d/ || exit 1
 #	cp S99load_default system/etc/init.d/ || exit 1
 #	cp S80profiles system/etc/init.d/ || exit 1
-	cp profile system/etc/devil/ || exit 1
-	cp bootspeed system/etc/devil/ || exit 1
-	cp live_oc_mode system/etc/devil/ || exit 1
-	cp vibrator system/etc/devil/ || exit 1
+#	cp profile system/etc/devil/ || exit 1
+#	cp bootspeed system/etc/devil/ || exit 1
+#	cp live_oc_mode system/etc/devil/ || exit 1
+#	cp vibrator system/etc/devil/ || exit 1
 
 	mkdir -p system/bin
 	zip -q -r "${REL}.zip" system data backup boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
