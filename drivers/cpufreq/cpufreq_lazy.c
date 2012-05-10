@@ -42,6 +42,11 @@
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 
+#ifdef CONFIG_DEVIL_TWEAKS
+extern unsigned int touch_state_val;
+extern bool smooth_ui();
+#endif
+
 /*
  * The polling frequency of this governor depends on the capability of
  * the processor. Default polling frequency is 1000 times the transition
@@ -554,7 +559,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
     }
 
     /* Check for frequency increase */
+#ifdef CONFIG_DEVIL_TWEAKS
+	if ((smooth_ui() && touch_state_val) || max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+#else
     if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+#endif
 	/* if we are already at full speed then break out early */
 	if (!dbs_tuners_ins.powersave_bias) {
 	    if (policy->cur == policy->max)
@@ -574,7 +583,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
     /* Check for frequency decrease */
     /* if we cannot reduce the frequency anymore, break out early */
-    if (policy->cur == policy->min)
+#ifdef CONFIG_DEVIL_TWEAKS
+	if (smooth_ui() && touch_state_val)
+	return;
+#endif 
+    	if (policy->cur == policy->min)
 	return;
 
     /*

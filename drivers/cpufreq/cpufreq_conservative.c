@@ -62,6 +62,16 @@ static unsigned int down_threshold_awake;
 #define UP_THRESHOLD_AT_MIN_FREQ    (100)
 #define FREQ_FOR_RESPONSIVENESS      (400000)
 
+#ifdef CONFIG_DEVIL_TWEAKS
+extern unsigned int touch_state_val;
+extern bool smooth_ui();
+extern unsigned long cpuL3freq();
+extern bool smooth_governors();
+extern bool powersave_governors();
+static int status;
+static int status_old;
+#endif
+
 static void do_dbs_timer(struct work_struct *work);
 
 struct cpu_dbs_info_s {
@@ -110,7 +120,7 @@ static struct dbs_tuners {
 	.ignore_nice = 0,
 	.freq_step = 5,
 	.up_threshold_min_freq= UP_THRESHOLD_AT_MIN_FREQ,
-	.responsiveness_freq= FREQ_FOR_RESPONSIVENESS, 
+	.responsiveness_freq = FREQ_FOR_RESPONSIVENESS, 
 	.early_suspend = -1,
 };
 
@@ -401,7 +411,52 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	struct cpufreq_policy *policy;
 	unsigned int j;
-	int up_threshold = dbs_tuners_ins.up_threshold;
+
+#ifdef CONFIG_DEVIL_TWEAKS
+/*
+* change governor settings (only once), if governor mode got changed
+*/
+if(smooth_governors()){
+	status = 1;
+	if(status != status_old){
+	dbs_tuners_ins.sleep_multiplier = 5;
+	dbs_tuners_ins.up_threshold = 70;
+	dbs_tuners_ins.down_threshold = 25;
+	dbs_tuners_ins.sampling_down_factor = 5;
+	dbs_tuners_ins.freq_step = 25;
+	dbs_tuners_ins.up_threshold_min_freq = 60;
+	dbs_tuners_ins.responsiveness_freq = 400000;
+	}
+}
+else if(powersave_governors()){
+	status = 2;
+	if(status != status_old){
+	dbs_tuners_ins.sleep_multiplier = 5;
+	dbs_tuners_ins.up_threshold = 95;
+	dbs_tuners_ins.down_threshold = 40;
+	dbs_tuners_ins.sampling_down_factor = 1;
+	dbs_tuners_ins.freq_step = 10;
+	dbs_tuners_ins.up_threshold_min_freq = 100;
+	dbs_tuners_ins.responsiveness_freq = 400000;
+	}
+}
+else{
+	status = 0;
+	if(status != status_old){
+	dbs_tuners_ins.sleep_multiplier = SAMPLING_RATE_SLEEP_MULTIPLIER;
+	dbs_tuners_ins.up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
+	dbs_tuners_ins.down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD;
+	dbs_tuners_ins.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
+	dbs_tuners_ins.ignore_nice = 0;
+	dbs_tuners_ins.freq_step = 5;
+	dbs_tuners_ins.up_threshold_min_freq = UP_THRESHOLD_AT_MIN_FREQ;
+	dbs_tuners_ins.responsiveness_freq = FREQ_FOR_RESPONSIVENESS;
+	}
+}
+status_old = status;
+#endif
+
+int up_threshold = dbs_tuners_ins.up_threshold;
 
 	policy = this_dbs_info->cur_policy;
 
@@ -474,8 +529,28 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
   		if (policy->cur < dbs_tuners_ins.responsiveness_freq && dbs_tuners_ins.early_suspend == -1)
 	     		up_threshold = dbs_tuners_ins.up_threshold_min_freq;
 	}
+#ifdef CONFIG_DEVIL_TWEAKS
+	if (max_load > 75 && smooth_ui() && touch_state_val && policy->cur >= cpuL3freq()){
+		this_dbs_info->requested_freq = policy->max;
+	__cpufreq_driver_target(policy, this_dbs_info->requested_freq, CPUFREQ_RELATION_H);
+		return;
+	}
+	else if(smooth_ui() && touch_state_val) {
+		this_dbs_info->down_skip = 0;
+		if(policy->cur < cpuL3freq() && cpuL3freq() <= policy->max)
+			this_dbs_info->requested_freq = cpuL3freq();
+		else if(cpuL3freq() > policy->max)
+			this_dbs_info->requested_freq = policy->max;
+		else
+			this_dbs_info->requested_freq = cpuL3freq();
+	__cpufreq_driver_target(policy, this_dbs_info->requested_freq, CPUFREQ_RELATION_H);
+		return;
+	}
 
+	else if (max_load > up_threshold) {
+#else
 	if (max_load > up_threshold) {
+#endif
 			this_dbs_info->down_skip = 0;
 
 		/* if we are already at full speed then break out early */
@@ -491,7 +566,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		this_dbs_info->requested_freq += freq_target;
 		if (this_dbs_info->requested_freq > policy->max)
 			this_dbs_info->requested_freq = policy->max;
-
+	
 		__cpufreq_driver_target(policy, this_dbs_info->requested_freq,
 			CPUFREQ_RELATION_H);
 		return;
@@ -502,7 +577,16 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	 * can support the current CPU usage without triggering the up
 	 * policy. To be safe, we focus 10 points under the threshold.
 	 */
+#ifdef CONFIG_DEVIL_TWEAKS
+	/*
+	* if touchscreen still pressed, don't reduce frequency
+	*/
+	if(smooth_ui() && touch_state_val)
+			return;
+	else if (max_load < (dbs_tuners_ins.down_threshold - 10)) {
+#else
 	if (max_load < (dbs_tuners_ins.down_threshold - 10)) {
+#endif
 		freq_target = (dbs_tuners_ins.freq_step * policy->max) / 100;
 
 		this_dbs_info->requested_freq -= freq_target;

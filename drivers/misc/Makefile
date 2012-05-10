@@ -65,3 +65,4 @@ obj-$(CONFIG_CPU_DIDLE)		+= deep_idle.o
 obj-$(CONFIG_TOUCH_WAKE)	+= touch_wake.o
 obj-$(CONFIG_GENERIC_BLN)  += bln.o
 obj-$(CONFIG_FSYNC_CONTROL)	+= fsync_control.o
+obj-$(CONFIG_DEVIL_TWEAKS)	+= devil.o

@@ -36,7 +36,7 @@
 #define LULZACTIVE_AUTHOR	"tegrak"
 
 // if you changed some codes for optimization, just write your name here.
-#define LULZACTIVE_TUNER "DerTeufel1980, simone201"
+#define LULZACTIVE_TUNER "DerTeufel1980"
 
 #define LOGI(fmt...) printk(KERN_INFO "[lulzactive] " fmt)
 #define LOGW(fmt...) printk(KERN_WARNING "[lulzactive] " fmt)
@@ -44,7 +44,15 @@
 
 static void (*pm_idle_old)(void);
 static atomic_t active_count = ATOMIC_INIT(0);
+#ifdef CONFIG_DEVIL_TWEAKS
 extern unsigned int touch_state_val;
+extern bool smooth_ui();
+extern unsigned long cpuL3freq();
+extern bool smooth_governors();
+extern bool powersave_governors();
+static int status;
+static int status_old;
+#endif
 
 struct cpufreq_lulzactive_cpuinfo {
 	struct timer_list cpu_timer;
@@ -91,9 +99,6 @@ static unsigned long down_sample_time;
 #define DEFAULT_DOWN_SAMPLE_TIME_SLEEP 40000
 static unsigned long down_sample_time_awake;
 
-#define DEF_SMOOTH_UI        (1)
-unsigned int smooth_ui;
-
 /*
  * DEBUG print flags
  */
@@ -110,10 +115,10 @@ enum {
 /*
  * CPU freq will be increased if measured load > inc_cpu_load;
  */
-#define DEFAULT_INC_CPU_LOAD 60
+#define DEFAULT_INC_CPU_LOAD 70
 static unsigned long inc_cpu_load;
 
-#define DEFAULT_INC_CPU_LOAD_SLEEP 90
+#define DEFAULT_INC_CPU_LOAD_SLEEP 95
 static unsigned long inc_cpu_load_awake;
 
 /*
@@ -122,6 +127,7 @@ static unsigned long inc_cpu_load_awake;
  */
 #define DEFAULT_DEC_CPU_LOAD 30
 static unsigned long dec_cpu_load;
+static unsigned long dec_cpu_load_awake;
 
 /*
  * Increasing frequency table index
@@ -144,7 +150,8 @@ static unsigned int suspending;
 static unsigned int early_suspended;
 
 #define SCREEN_OFF_LOWEST_STEP 		(0xffffffff)
-#define DEFAULT_SCREEN_OFF_MIN_STEP	(SCREEN_OFF_LOWEST_STEP)
+//#define DEFAULT_SCREEN_OFF_MIN_STEP	(SCREEN_OFF_LOWEST_STEP)
+#define DEFAULT_SCREEN_OFF_MIN_STEP	-4
 static unsigned long screen_off_min_step;
 
 #define DEBUG 0
@@ -260,10 +267,10 @@ static inline void fix_screen_off_min_step(struct cpufreq_lulzactive_cpuinfo *pc
 	}
     
 	if (DEFAULT_SCREEN_OFF_MIN_STEP == screen_off_min_step) 
-		screen_off_min_step = pcpu->freq_table_size - 3;
+		screen_off_min_step = pcpu->freq_table_size - 4;
     
 	if (screen_off_min_step >= pcpu->freq_table_size)
-		screen_off_min_step = pcpu->freq_table_size - 3;
+		screen_off_min_step = pcpu->freq_table_size - 4;
 }
 
 static inline unsigned int adjust_screen_off_freq(
@@ -296,6 +303,47 @@ static void cpufreq_lulzactive_timer(unsigned long data)
 	unsigned int new_freq;
 	int index;
 	int ret;
+
+#ifdef CONFIG_DEVIL_TWEAKS
+/*
+* change governor settings (only once), if governor mode got changed
+*/
+if(smooth_governors()){
+	status= 1;
+	if(status != status_old){
+	up_sample_time = 15000;
+	down_sample_time = 50000;
+	inc_cpu_load = 60;
+	dec_cpu_load = 20;	
+	pump_up_step = 1;
+	pump_down_step = 1;
+	}
+}
+else if(powersave_governors()){
+	status= 2;
+	if(status != status_old){
+	up_sample_time = 40000;
+	down_sample_time = 40000;
+	inc_cpu_load = 90;
+	dec_cpu_load = 100;
+	pump_up_step = 1;
+	pump_down_step = 2;
+	}
+}
+else{
+	status= 0;
+	if(status != status_old){
+	up_sample_time = DEFAULT_UP_SAMPLE_TIME;
+	down_sample_time = DEFAULT_DOWN_SAMPLE_TIME;
+	inc_cpu_load = DEFAULT_INC_CPU_LOAD;
+	dec_cpu_load = DEFAULT_DEC_CPU_LOAD;
+	pump_up_step = DEFAULT_PUMP_UP_STEP;
+	pump_down_step = DEFAULT_PUMP_DOWN_STEP;
+	}
+}
+status_old = status;
+#endif
+	
     
 	/*
 	 * Once pcpu->timer_run_time is updated to >= pcpu->idle_exit_time,
@@ -368,10 +416,22 @@ static void cpufreq_lulzactive_timer(unsigned long data)
 	/* 
 	 * START lulzactive algorithm section
 	 */
-	if(smooth_ui && touch_state_val)
+#ifdef CONFIG_DEVIL_TWEAKS
+	if (smooth_ui() && touch_state_val){
+		if(pcpu->policy->max <= cpuL3freq())
 		new_freq = pcpu->policy->max;
+		else if(pcpu->policy->cur < cpuL3freq())
+			new_freq = cpuL3freq();
+		else if(cpu_load >= 75)
+			new_freq = pcpu->policy->max;
+		else
+			new_freq = cpuL3freq();
+	}
 
 	else if (cpu_load >= inc_cpu_load) {
+#else
+	if (cpu_load >= inc_cpu_load) {
+#endif
 		if (pump_up_step && pcpu->policy->cur < pcpu->policy->max) {
 			ret = cpufreq_frequency_table_target(
                                                  pcpu->policy, pcpu->freq_table,
@@ -385,14 +445,25 @@ static void cpufreq_lulzactive_timer(unsigned long data)
 			index -= pump_up_step;
 			if (index < 0)
 				index = 0;
-            
 			new_freq = pcpu->freq_table[index].frequency;
 		}
 		else {
 			new_freq = pcpu->policy->max;
 		}
 	}
-	else {		
+	else if (cpu_load > dec_cpu_load && pcpu->policy->cur !=pcpu->policy->max){
+			new_freq = pcpu->policy->cur;
+			ret = cpufreq_frequency_table_target(
+                                                 pcpu->policy, pcpu->freq_table,
+                                                 new_freq, CPUFREQ_RELATION_H,
+                                                 &index);
+			if (ret < 0) {
+				goto rearm;
+			}
+			new_freq = pcpu->freq_table[index].frequency;
+
+		}
+	else {  
 		if (pump_down_step) {
 			ret = cpufreq_frequency_table_target(
                                                  pcpu->policy, pcpu->freq_table,
@@ -401,7 +472,6 @@ static void cpufreq_lulzactive_timer(unsigned long data)
 			if (ret < 0) {
 				goto rearm;
 			}
-            
 			// apply pump_down_step by tegrak
 			index += pump_down_step;
 			if (index >= pcpu->freq_table_size) {
@@ -723,6 +793,35 @@ static ssize_t store_inc_cpu_load(struct kobject *kobj,
 static struct global_attr inc_cpu_load_attr = __ATTR(inc_cpu_load, 0666,
                                                      show_inc_cpu_load, store_inc_cpu_load);
 
+// dec_cpu_load
+static ssize_t show_dec_cpu_load(struct kobject *kobj,
+                                 struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%lu\n", dec_cpu_load);
+}
+
+static ssize_t store_dec_cpu_load(struct kobject *kobj,
+                                  struct attribute *attr, const char *buf, size_t count)
+{
+	ssize_t ret;
+	if(strict_strtoul(buf, 0, &dec_cpu_load)==-EINVAL) return -EINVAL;
+
+	if (dec_cpu_load >= 100) {
+		dec_cpu_load = 100;
+	}    
+	else if (dec_cpu_load > inc_cpu_load) {
+		dec_cpu_load = inc_cpu_load;
+	}
+
+	else if (dec_cpu_load < 0) {
+		dec_cpu_load = 0;
+	}
+	return count;
+}
+
+static struct global_attr dec_cpu_load_attr = __ATTR(dec_cpu_load, 0666,
+                                                     show_dec_cpu_load, store_dec_cpu_load);
+
 // down_sample_time
 static ssize_t show_down_sample_time(struct kobject *kobj,
                                      struct attribute *attr, char *buf)
@@ -846,31 +945,6 @@ static ssize_t store_screen_off_min_step(struct kobject *kobj,
 static struct global_attr screen_off_min_step_attr = __ATTR(screen_off_min_step, 0666,
                                                             show_screen_off_min_step, store_screen_off_min_step);
 
-//smooth_ui
-
-static ssize_t show_smooth_ui(struct kobject *kobj,
-                                   struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%lu\n", smooth_ui);
-}
-
-static ssize_t store_smooth_ui(struct kobject *kobj,
-                                    struct attribute *attr, const char *buf, size_t count)
-{
-  unsigned int input;
-  int ret;
-
-  ret = sscanf(buf, "%u", &input);
-  if (ret != 1)
-    return -EINVAL;
-  smooth_ui = !!input;
-  return count;
-}
-
-static struct global_attr smooth_ui_attr = __ATTR(smooth_ui, 0666,
-                                                       show_smooth_ui, store_smooth_ui);
-
-
 
 // author
 static ssize_t show_author(struct kobject *kobj,
@@ -925,6 +999,7 @@ static struct global_attr freq_table_attr = __ATTR(freq_table, 0444,
 
 static struct attribute *lulzactive_attributes[] = {
 	&inc_cpu_load_attr.attr,
+	&dec_cpu_load_attr.attr,
 	&up_sample_time_attr.attr,
 	&down_sample_time_attr.attr,
 	&pump_up_step_attr.attr,
@@ -935,7 +1010,6 @@ static struct attribute *lulzactive_attributes[] = {
 	&tuner_attr.attr,
 	&version_attr.attr,
 	&freq_table_attr.attr,
-	&smooth_ui_attr.attr,
 	NULL,
 };
 
@@ -1030,7 +1104,9 @@ static void lulzactive_early_suspend(struct early_suspend *handler) {
 	down_sample_time = DEFAULT_DOWN_SAMPLE_TIME_SLEEP;
 	inc_cpu_load_awake = inc_cpu_load;
 	inc_cpu_load = DEFAULT_INC_CPU_LOAD_SLEEP;
-    
+	dec_cpu_load_awake = dec_cpu_load;
+	dec_cpu_load = 100;
+   
 	if (debug_mode & LULZACTIVE_DEBUG_EARLY_SUSPEND) {
 		LOGI("%s\n", __func__);
         
@@ -1050,6 +1126,7 @@ static void lulzactive_late_resume(struct early_suspend *handler) {
 	up_sample_time = up_sample_time_awake;
 	down_sample_time = down_sample_time_awake;
 	inc_cpu_load = 	inc_cpu_load_awake;
+	dec_cpu_load = 	dec_cpu_load_awake;
 
 	if (debug_mode & LULZACTIVE_DEBUG_EARLY_SUSPEND) {
 		LOGI("%s\n", __func__);
@@ -1121,15 +1198,13 @@ static int __init cpufreq_lulzactive_init(void)
 	unsigned int i;
 	struct cpufreq_lulzactive_cpuinfo *pcpu;
 	struct sched_param param = { .sched_priority = MAX_RT_PRIO-1 };
-    
 	up_sample_time = DEFAULT_UP_SAMPLE_TIME;
 	down_sample_time = DEFAULT_DOWN_SAMPLE_TIME;
-	debug_mode = DEFAULT_DEBUG_MODE;
 	inc_cpu_load = DEFAULT_INC_CPU_LOAD;
 	dec_cpu_load = DEFAULT_DEC_CPU_LOAD;
 	pump_up_step = DEFAULT_PUMP_UP_STEP;
-	smooth_ui = DEF_SMOOTH_UI;
 	pump_down_step = DEFAULT_PUMP_DOWN_STEP;
+	debug_mode = DEFAULT_DEBUG_MODE;
 	early_suspended = 0;
 	suspending = 0;
 	screen_off_min_step = DEFAULT_SCREEN_OFF_MIN_STEP;

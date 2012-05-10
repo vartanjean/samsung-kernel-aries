@@ -35,12 +35,16 @@
  * It helps to keep variable names smaller, simpler
  */
 
-#define DEF_FREQUENCY_UP_THRESHOLD			(50)
-#define DEF_FREQUENCY_DOWN_THRESHOLD		(15)
-#define FREQ_STEP_DOWN 						(160000)
-#define FREQ_SLEEP_MAX 						(320000)
-#define FREQ_AWAKE_MIN 						(480000)
+#define DEF_FREQUENCY_UP_THRESHOLD			(65)
+#define DEF_FREQUENCY_DOWN_THRESHOLD		(25)
+#define FREQ_STEP_DOWN 						(100000)
+#define FREQ_SLEEP_MAX 						(800000)
+#define FREQ_AWAKE_MIN 						(200000)
 #define FREQ_STEP_UP_SLEEP_PERCENT 			(20)
+unsigned int step_down = FREQ_STEP_DOWN;
+unsigned int sleep_max = FREQ_SLEEP_MAX;
+unsigned int awake_min = FREQ_AWAKE_MIN;
+unsigned int sleep_percent = FREQ_STEP_UP_SLEEP_PERCENT;
 
 /*
  * The polling frequency of this governor depends on the capability of
@@ -54,6 +58,16 @@
  */
 static unsigned int def_sampling_rate;
 unsigned int suspended = 0;
+#ifdef CONFIG_DEVIL_TWEAKS
+extern unsigned int touch_state_val;
+extern bool smooth_ui();
+extern unsigned long cpuL3freq();
+extern bool smooth_governors();
+extern bool powersave_governors();
+static int status;
+static int status_old;
+#endif
+
 #define MIN_SAMPLING_RATE_RATIO			(2)
 /* for correct statistics, we need at least 10 ticks between each measure */
 #define MIN_STAT_SAMPLING_RATE			\
@@ -347,6 +361,45 @@ static void dbs_check_cpu(int cpu)
 		return;
 
 	policy = this_dbs_info->cur_policy;
+#ifdef CONFIG_DEVIL_TWEAKS
+/*
+* change governor settings (only once), if governor mode got changed
+*/
+if(smooth_governors()){
+	status= 1;
+	if(status != status_old){
+dbs_tuners_ins.up_threshold = 60;
+dbs_tuners_ins.down_threshold = 25;
+step_down = 100000;
+sleep_max = 800000;
+awake_min = 200000;
+sleep_percent = 25;
+	}
+}
+else if(powersave_governors()){
+	status= 2;
+	if(status != status_old){
+dbs_tuners_ins.up_threshold = 90;
+dbs_tuners_ins.down_threshold = 40;
+step_down = 200000;
+sleep_max = 800000;
+awake_min = 100000;
+sleep_percent = 10;
+	}
+}
+else{
+	status= 0;
+	if(status != status_old){
+dbs_tuners_ins.up_threshold = 70;
+dbs_tuners_ins.down_threshold = 30;
+step_down = 100000;
+sleep_max = 800000;
+awake_min = 200000;
+sleep_percent = 20;
+	}
+}
+status_old = status;
+#endif
 
 	/*
 	 * The default safe range is 20% to 80%
@@ -379,7 +432,31 @@ static void dbs_check_cpu(int cpu)
 	up_idle_ticks = (100 - dbs_tuners_ins.up_threshold) *
 			usecs_to_jiffies(dbs_tuners_ins.sampling_rate);
 
+#ifdef CONFIG_DEVIL_TWEAKS
+	if(idle_ticks < up_idle_ticks && smooth_ui() && touch_state_val){
+		this_dbs_info->down_skip = 0;
+		this_dbs_info->requested_freq = policy->max;
+		__cpufreq_driver_target(policy, this_dbs_info->requested_freq,
+			CPUFREQ_RELATION_H);
+		return;
+	}
+	else if(smooth_ui() && touch_state_val) {
+		this_dbs_info->down_skip = 0;
+		if(policy->cur < cpuL3freq() && cpuL3freq() <= policy->max)
+		this_dbs_info->requested_freq = cpuL3freq();
+		else if(cpuL3freq() > policy->max)
+		this_dbs_info->requested_freq = policy->max;
+		else
+		this_dbs_info->requested_freq = cpuL3freq();
+		
+	__cpufreq_driver_target(policy, this_dbs_info->requested_freq,
+			CPUFREQ_RELATION_H);
+		return;
+	}
+	else if (idle_ticks < up_idle_ticks) {
+#else
 	if (idle_ticks < up_idle_ticks) {
+#endif
 		this_dbs_info->down_skip = 0;
 		this_dbs_info->prev_cpu_idle_down =
 			this_dbs_info->prev_cpu_idle_up;
@@ -390,7 +467,7 @@ static void dbs_check_cpu(int cpu)
 
 		//freq_target = (dbs_tuners_ins.freq_step * policy->max) / 100;
 		if (suspended)
-			freq_target = (FREQ_STEP_UP_SLEEP_PERCENT * policy->max) / 100;
+			freq_target = (sleep_percent * policy->max) / 100;
 		else
 			freq_target = policy->max;
 
@@ -403,12 +480,12 @@ static void dbs_check_cpu(int cpu)
 			this_dbs_info->requested_freq = policy->max;
 
 		//Screen off mode
-		if (suspended && this_dbs_info->requested_freq > FREQ_SLEEP_MAX)
-		    this_dbs_info->requested_freq = FREQ_SLEEP_MAX;
+		if (suspended && this_dbs_info->requested_freq > sleep_max)
+		    this_dbs_info->requested_freq = sleep_max;
 
-		//Screen off mode
-		if (!suspended && this_dbs_info->requested_freq < FREQ_AWAKE_MIN)
-		    this_dbs_info->requested_freq = FREQ_AWAKE_MIN;
+		//Screen on mode
+		if (!suspended && this_dbs_info->requested_freq < awake_min)
+		    this_dbs_info->requested_freq = awake_min;
 
 		__cpufreq_driver_target(policy, this_dbs_info->requested_freq,
 			CPUFREQ_RELATION_H);
@@ -438,7 +515,13 @@ static void dbs_check_cpu(int cpu)
 	down_idle_ticks = (100 - dbs_tuners_ins.down_threshold) *
 		usecs_to_jiffies(freq_down_sampling_rate);
 
+#ifdef CONFIG_DEVIL_TWEAKS
+	if(smooth_ui() && touch_state_val)
+	return;
+	else if (idle_ticks > down_idle_ticks) {
+#else
 	if (idle_ticks > down_idle_ticks) {
+#endif
 		/*
 		 * if we are already at the lowest speed then break out early
 		 * or if we 'cannot' reduce the speed as the user might want
@@ -449,7 +532,7 @@ static void dbs_check_cpu(int cpu)
 			return;
 
 		//freq_target = (dbs_tuners_ins.freq_step * policy->max) / 100;
-		freq_target = FREQ_STEP_DOWN; //policy->max;
+		freq_target = step_down; //policy->max;
 
 		/* max freq cannot be less than 100. But who knows.... */
 		if (unlikely(freq_target == 0))
@@ -465,12 +548,12 @@ static void dbs_check_cpu(int cpu)
 			this_dbs_info->requested_freq = policy->min;
 
 		//Screen on mode
-		if (!suspended && this_dbs_info->requested_freq < FREQ_AWAKE_MIN)
-		    this_dbs_info->requested_freq = FREQ_AWAKE_MIN;
+		if (!suspended && this_dbs_info->requested_freq < awake_min)
+		    this_dbs_info->requested_freq = awake_min;
 
 		//Screen off mode
-		if (suspended && this_dbs_info->requested_freq > FREQ_SLEEP_MAX)
-		    this_dbs_info->requested_freq = FREQ_SLEEP_MAX;
+		if (suspended && this_dbs_info->requested_freq > sleep_max)
+		    this_dbs_info->requested_freq = sleep_max;
 
 		__cpufreq_driver_target(policy, this_dbs_info->requested_freq,
 				CPUFREQ_RELATION_H);

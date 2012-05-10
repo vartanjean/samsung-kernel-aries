@@ -45,6 +45,15 @@ extern unsigned long cpuL5freq(void);
 extern unsigned long cpuL6freq(void);
 extern unsigned long cpuL7freq(void);
 #endif
+#ifdef CONFIG_DEVIL_TWEAKS
+extern unsigned int touch_state_val;
+extern bool smooth_ui();
+extern unsigned long cpuL3freq();
+extern bool smooth_governors();
+extern bool powersave_governors();
+static int status;
+static int status_old;
+#endif
 
 /******************** Tunable parameters: ********************/
 
@@ -181,30 +190,7 @@ struct cpufreq_governor cpufreq_gov_smartass2 = {
 	.owner = THIS_MODULE,
 };
 
-inline static void smartass_update_min_max(struct smartass_info_s *this_smartass, struct cpufreq_policy *policy, int suspend) {/*
-#ifdef CONFIG_LIVE_OC
-if(sleep_ideal_freq <= cpuL9freq())
-sleep_ideal_freq = cpuL9freq();
-if(sleep_ideal_freq > cpuL9freq() && sleep_ideal_freq <= cpuL8freq())
-sleep_ideal_freq = cpuL8freq();
-else if(sleep_ideal_freq > cpuL8freq() && sleep_ideal_freq <= cpuL7freq())
-sleep_ideal_freq = cpuL7freq();
-else if(sleep_ideal_freq > cpuL7freq() && sleep_ideal_freq <= cpuL6freq())
-sleep_ideal_freq = cpuL6freq();
-else sleep_ideal_freq = cpuL8freq();
-
-if(awake_ideal_freq > cpuL3freq() && awake_ideal_freq <= cpuL2freq())
-awake_ideal_freq = cpuL2freq();
-else if(awake_ideal_freq > cpuL4freq() && awake_ideal_freq <= cpuL3freq())
-awake_ideal_freq = cpuL3freq();
-else if(awake_ideal_freq > cpuL5freq() && awake_ideal_freq <= cpuL4freq())
-awake_ideal_freq = cpuL4freq();
-else if(awake_ideal_freq > cpuL6freq() && awake_ideal_freq <= cpuL5freq())
-awake_ideal_freq = cpuL5freq();
-else if(awake_ideal_freq > cpuL7freq() && awake_ideal_freq <= cpuL6freq())
-awake_ideal_freq = cpuL6freq();
-else awake_ideal_freq = cpuL6freq();
-#endif*/
+inline static void smartass_update_min_max(struct smartass_info_s *this_smartass, struct cpufreq_policy *policy, int suspend) {
 	if (suspend) {
 		this_smartass->ideal_speed = // sleep_ideal_freq; but make sure it obeys the policy min/max
 			policy->max > sleep_ideal_freq ?
@@ -264,13 +250,6 @@ inline static int target_freq(struct cpufreq_policy *policy, struct smartass_inf
 	new_freq = validate_freq(policy,new_freq);
 	if (new_freq == old_freq)
 		return 0;
-			/*	if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
-				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
-				new_freq = new_freq * get_oc_value() / 100;
-				pr_info("get_oc_value() after if, in target_freq: %u\n", get_oc_value());
-				pr_info("new_freq after if, in target_freq: %u\n", new_freq);
-				}*/
-
 	if (table &&
 	    !cpufreq_frequency_table_target(policy,table,new_freq,prefered_relation,&index))
 	{
@@ -419,6 +398,85 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 	struct smartass_info_s *this_smartass;
 	struct cpufreq_policy *policy;
 	unsigned int relation = CPUFREQ_RELATION_L;
+
+#ifdef CONFIG_DEVIL_TWEAKS
+/*
+* change governor settings (only once), if governor mode got changed
+*/
+#ifdef CONFIG_LIVE_OC
+	unsigned long low_freq;
+	low_freq = cpuL7freq();
+#endif
+if(smooth_governors()){
+	status = 1;
+	if(status != status_old){
+	up_rate_us = 24000;
+	down_rate_us = 72000;
+#ifdef CONFIG_LIVE_OC	
+	sleep_ideal_freq = low_freq * 2 ;
+	sleep_wakeup_freq = cpuL4freq();
+	awake_ideal_freq = cpuL4freq();
+	ramp_up_step = low_freq * 2;
+	ramp_down_step = low_freq * 2;
+#else
+ 	sleep_ideal_freq = 200000;
+	sleep_wakeup_freq = 800000;
+	awake_ideal_freq = 800000; 
+	ramp_up_step = 0;
+	ramp_down_step = 0;
+#endif
+	max_cpu_load = 75;
+	min_cpu_load = 45;
+	}
+}
+
+else if(powersave_governors()){
+	status = 2;
+	if(status != status_old){
+	up_rate_us = 48000;
+	down_rate_us = 49000;
+#ifdef CONFIG_LIVE_OC	
+	sleep_ideal_freq = low_freq;
+	sleep_wakeup_freq = cpuL4freq();
+	awake_ideal_freq = cpuL5freq();
+	ramp_up_step = low_freq * 2;
+	ramp_down_step = low_freq * 2;
+#else
+ 	sleep_ideal_freq = DEFAULT_SLEEP_IDEAL_FREQ;
+	sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
+	awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ; 
+	ramp_up_step = DEFAULT_RAMP_UP_STEP;
+	ramp_down_step = DEFAULT_RAMP_DOWN_STEP;
+#endif
+	max_cpu_load = 90;
+	min_cpu_load = 70;
+	}
+}
+else{
+	status = 0;
+	if(status != status_old){
+	up_rate_us = DEFAULT_UP_RATE_US;
+	down_rate_us = DEFAULT_DOWN_RATE_US;
+#ifdef CONFIG_LIVE_OC	
+	sleep_ideal_freq = low_freq;
+	sleep_wakeup_freq = cpuL4freq();
+	awake_ideal_freq = cpuL5freq();
+	ramp_up_step = low_freq * 2;
+	ramp_down_step = low_freq * 2;
+#else
+ 	sleep_ideal_freq = DEFAULT_SLEEP_IDEAL_FREQ;
+	sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
+	awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ; 
+	ramp_up_step = DEFAULT_RAMP_UP_STEP;
+	ramp_down_step = DEFAULT_RAMP_DOWN_STEP;
+#endif
+	sample_rate_jiffies = DEFAULT_SAMPLE_RATE_JIFFIES;
+	max_cpu_load = DEFAULT_MAX_CPU_LOAD;
+	min_cpu_load = DEFAULT_MIN_CPU_LOAD;
+	}
+}
+status_old = status;
+#endif
 	for_each_possible_cpu(cpu) {
 		this_smartass = &per_cpu(smartass_info, cpu);
 		if (!work_cpumask_test_and_clear(cpu))
@@ -430,16 +488,26 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 		old_freq = this_smartass->old_freq;
 		policy = this_smartass->cur_policy;
 
+#ifdef CONFIG_DEVIL_TWEAKS
+	if(ramp_dir > 0 && smooth_ui() && touch_state_val) {
+		new_freq = policy->max;
+		relation = CPUFREQ_RELATION_H;
+	}
+	else if(smooth_ui() && touch_state_val) {
+		if(policy->cur < cpuL3freq() && cpuL3freq() <= policy->max)
+			new_freq = cpuL3freq();
+		else if(cpuL3freq() > policy->max)
+			new_freq = policy->max;
+		relation = CPUFREQ_RELATION_H;
+	}
+		else if (old_freq != policy->cur) {
+#else
 		if (old_freq != policy->cur) {
+#endif
 			// frequency was changed by someone else?
 			printk(KERN_WARNING "Smartass: frequency changed by 3rd party: %d to %d\n",
 			       old_freq,policy->cur);
 			new_freq = old_freq;
-				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
-				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
-				new_freq *= get_oc_value() / 100;
-				pr_info("new_freq after if %u\n", new_freq);
-				}*/
 		}
 		else if (ramp_dir > 0 && nr_running() > 1) {
 			// ramp up logic:
@@ -453,15 +521,15 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 				new_freq = policy->max;
 				relation = CPUFREQ_RELATION_H;
 			}
-				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
-				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
-				new_freq *= get_oc_value() / 100;
-				pr_info("new_freq after if %u\n", new_freq);
-				}*/
+
 			dprintk(SMARTASS_DEBUG_ALG,"smartassQ @ %d ramp up: ramp_dir=%d ideal=%d\n",
 				old_freq,ramp_dir,this_smartass->ideal_speed);
 		}
+#ifdef CONFIG_DEVIL_TWEAKS
+		else if (ramp_dir < 0 && !(smooth_ui() && touch_state_val)) {
+#else
 		else if (ramp_dir < 0) {
+#endif
 			// ramp down logic:
 			if (old_freq > this_smartass->ideal_speed) {
 				new_freq = this_smartass->ideal_speed;
@@ -477,11 +545,7 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 				if (new_freq > old_freq) // min_cpu_load > max_cpu_load ?!
 					new_freq = old_freq -1;
 			}
-				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
-				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
-				new_freq *= get_oc_value() / 100;
-				pr_info("new_freq after if %u\n", new_freq);
-				}*/
+				
 			dprintk(SMARTASS_DEBUG_ALG,"smartassQ @ %d ramp down: ramp_dir=%d ideal=%d\n",
 				old_freq,ramp_dir,this_smartass->ideal_speed);
 		}
@@ -489,11 +553,6 @@ static void cpufreq_smartass_freq_change_time_work(struct work_struct *work)
 		       // before the work task gets to run?
 		       // This may also happen if we refused to ramp up because the nr_running()==1
 			new_freq = old_freq;
-				/*if(new_freq % 100000 == 0 && new_freq >= get_oc_low_freq() 
-				&& new_freq <= get_oc_high_freq() && get_oc_value() != 100){
-				new_freq *= get_oc_value() / 100;
-				pr_info("new_freq after if %u\n", new_freq);
-				}*/
 			dprintk(SMARTASS_DEBUG_ALG,"smartassQ @ %d nothing: ramp_dir=%d nr_running=%lu\n",
 				old_freq,ramp_dir,nr_running());
 		}
@@ -907,12 +966,13 @@ static int __init cpufreq_smartass_init(void)
 {
 	unsigned int i;
 
-	unsigned long low_freq;
 	struct smartass_info_s *this_smartass;
 	
 #ifdef CONFIG_LIVE_OC
+	unsigned long low_freq;
 	low_freq = cpuL7freq();
 #endif
+
 	debug_mask = 0;
 	up_rate_us = DEFAULT_UP_RATE_US;
 	down_rate_us = DEFAULT_DOWN_RATE_US;
