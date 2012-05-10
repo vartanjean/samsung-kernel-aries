@@ -354,10 +354,41 @@ config DVFS_LIMIT
 	depends on CPU_FREQ
 	default n
 
+config S5PV210_XL
+bool "Enable XL_MEM (more free RAM)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_XL_BIGMEM
+bool "Enable XL_BIGMEM (breaks 720p recording)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_XL_HUGHMEM
+bool "Enable XL_HUGHMEM (breaks cam)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_TESTMEM
+bool "Enable TESTMEM (more free RAM)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+
 config CPU_DIDLE
-	bool "DEEP Idle"
-	depends on CPU_IDLE
-	default n
+        bool "Enable DEEP IDLE support for S5PV210 CPU"
+        depends on CPU_IDLE
+        default y
+        help
+          Enable DEEP IDLE support for S5PV210 CPU.
 
 config WIFI_CONTROL_FUNC
        bool "Enable WiFi control function abstraction"
