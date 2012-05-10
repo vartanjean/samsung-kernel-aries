@@ -36,6 +36,7 @@ static DEFINE_MUTEX(set_freq_lock);
 
 bool bus_limit_enable = false;
 bool bus_limit_automatic = false;
+static int bus_limit = 0;
 
 /* APLL M,P,S values for 1.4GHz/1.3GHz/1.2GHz/1.0GHz/800MHz */
 #define APLL_VAL_1400	((1 << 31) | (175 << 16) | (3 << 8) | 1)
@@ -729,8 +730,6 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
     unsigned long fclk;
 
-	pr_info("LIVEOC oc-value set to %u\n", oc_value);	
-
     struct cpufreq_policy * policy = cpufreq_cpu_get(0);
 
     mutex_lock(&set_freq_lock);
@@ -746,10 +745,10 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
 	if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
 	    index_max = index;
-if(selective_oc == 0)
-	fclk = (original_fclk[index] * oc_value) / 100;
+//if(selective_oc == 0)
+//	fclk = (original_fclk[index] * oc_value) / 100;
 
-else{
+//else{
 
 	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)
 	fclk = original_fclk[index];
@@ -757,7 +756,7 @@ else{
 	fclk = original_fclk[index];
 	else
 	fclk = (original_fclk[index] * oc_value) / 100;	
-}
+//}
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
 	if (original_fclk[index] / (clkdiv_val[index][0] + 1) == SLEEP_FREQ)
@@ -1131,7 +1130,53 @@ static struct platform_driver s5pv210_cpufreq_drv = {
 	},
 };
 
+static ssize_t bus_limit_show(struct device * dev, struct device_attribute * attr, char * buf)
+{
+    return sprintf(buf, "%u\n", bus_limit);
+}
 
+
+static ssize_t bus_limit_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+    unsigned int data;
+
+    if(sscanf(buf, "%u\n", &data) == 1) 
+	{
+	    if (data == 1) 
+		{
+		    pr_info("%s: bus_limit automatic enabled\n", __FUNCTION__);
+    		    bus_limit_automatic = true;
+    		    bus_limit_enable = false;
+		    bus_limit = data;
+		} 
+	    else if (data == 2) 
+		{
+		    pr_info("%s: bus_limit permanent enabled\n", __FUNCTION__);
+    		    bus_limit_automatic = false;
+    		    bus_limit_enable = true;
+		    bus_limit = data;
+		} 
+	    else 
+		{
+		    pr_info("%s: bus_limit disabled\n", __FUNCTION__);
+    		    bus_limit_automatic = false;
+    		    bus_limit_enable = false;
+		    bus_limit = 0;
+		}
+    		if (bus_limit_enable && !bus_limit_automatic) {
+      			s5pv210_bus_limit_true();
+    		} else if(!bus_limit_enable && !bus_limit_automatic) {
+      			s5pv210_bus_limit_false();
+    		} 
+	} 
+    else 
+	{
+	    pr_info("%s: invalid input\n", __FUNCTION__);
+	}
+
+    return size;
+}
+/*
 static ssize_t bus_limit_automatic_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
   return sprintf(buf,"%u\n",(bus_limit_automatic ? 1 : 0));
@@ -1170,6 +1215,7 @@ static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribut
   }
   return size;
 }
+*/
 
 static ssize_t user_max_read(struct device * dev, struct device_attribute * attr, char * buf)
 {
@@ -1195,7 +1241,7 @@ static ssize_t user_max_write(struct device * dev, struct device_attribute * att
 		}
 	    else
 		{
-		    pr_info("%s: invalid input range %u\n", __FUNCTION__, user_max);
+		    pr_info("%s: invalid input range %lu\n", __FUNCTION__, user_max);
 		}
 	}
     else
@@ -1235,7 +1281,7 @@ static ssize_t user_min_write(struct device * dev, struct device_attribute * att
 		}
 	    else
 		{
-		    pr_info("%s: invalid input range %u\n", __FUNCTION__, user_min);
+		    pr_info("%s: invalid input range %lu\n", __FUNCTION__, user_min);
 		}
 	}
     else
@@ -1251,15 +1297,15 @@ unsigned long get_user_min(void)
 EXPORT_SYMBOL(get_user_min);
 
  
-static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
-static DEVICE_ATTR(bus_limit_automatic, S_IRUGO | S_IWUGO , bus_limit_automatic_show, bus_limit_automatic_store);
+//static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
+static DEVICE_ATTR(bus_limit, S_IRUGO | S_IWUGO , bus_limit_show, bus_limit_store);
 static DEVICE_ATTR(user_max, S_IRUGO | S_IWUGO , user_max_read, user_max_write);
 static DEVICE_ATTR(user_min, S_IRUGO | S_IWUGO , user_min_read, user_min_write);
 
  
 static struct attribute *devil_idle_attributes[] = {
-    &dev_attr_bus_limit_enable.attr,
-    &dev_attr_bus_limit_automatic.attr,
+//    &dev_attr_bus_limit_enable.attr,
+    &dev_attr_bus_limit.attr,
     &dev_attr_user_max.attr,
     &dev_attr_user_min.attr,
     NULL
@@ -1313,11 +1359,12 @@ void s5pv210_bus_limit_true(void)
   dvs_conf[4].int_volt = L4_int_volt - 50000;
   dvs_conf[5].int_volt = L5_int_volt - 50000;
   dvs_conf[6].int_volt = L6_int_volt - 50000;
+pr_info("lowered int_volt");
   if (bus_limit_automatic){
     for (i = 0; i < num_freqs; i++) {
 	dvs_conf[i].arm_screenon_volt = dvs_conf[i].arm_volt;
 	dvs_conf[i].arm_volt = dvs_conf[i].arm_screenoff_volt;
-	pr_info("dvs_conf[i].arm_volt while screen off, set to %u\n", dvs_conf[i].arm_volt);
+	pr_info("dvs_conf[i].arm_volt while screen off, set to %lu\n", dvs_conf[i].arm_volt);
     	}
   }
   bus_speed_old = 0;
@@ -1341,7 +1388,7 @@ int i;
   if (bus_limit_automatic){
     for (i = 0; i < num_freqs; i++) {
 	dvs_conf[i].arm_volt = dvs_conf[i].arm_screenon_volt;
-	pr_info("dvs_conf[i].arm_volt set to %u\n", dvs_conf[i].arm_volt);
+	pr_info("dvs_conf[i].arm_volt set to %lu\n", dvs_conf[i].arm_volt);
     	}
   }
   bus_speed_old = 0;
