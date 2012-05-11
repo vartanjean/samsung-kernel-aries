@@ -45,6 +45,7 @@ extern int get_oc_value(void);
 extern unsigned long get_oc_low_freq(void);
 extern unsigned long get_oc_high_freq(void);
 extern bool proximity_active();
+extern bool min_max_enable();
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -1874,7 +1875,7 @@ static void powersave_early_suspend(struct early_suspend *handler)
 			goto out;
 		orig_user_max = new_policy.max;
 		orig_user_min = new_policy.min;
-	if(!proximity_active()){
+	if(!proximity_active() && min_max_enable()){
 		user_max = get_user_max();
 		user_min = get_user_min();
 if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)

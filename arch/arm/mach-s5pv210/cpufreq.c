@@ -36,6 +36,7 @@ static DEFINE_MUTEX(set_freq_lock);
 
 bool bus_limit_enable = false;
 bool bus_limit_automatic = false;
+bool user_min_max_enable = false;
 static int bus_limit = 0;
 extern bool proximity_active();
 
@@ -1297,15 +1298,37 @@ unsigned long get_user_min(void)
 }
 EXPORT_SYMBOL(get_user_min);
 
+
+static ssize_t user_min_max_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf,"%u\n",(user_min_max_enable ? 1 : 0));
+}
+
+static ssize_t user_min_max_enable_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned short state;
+  if (sscanf(buf, "%hu", &state) == 1)
+  {
+    user_min_max_enable = state == 0 ? false : true;
+  }
+  return size;
+}
+
+unsigned long min_max_enable(void)
+{
+    return user_min_max_enable;
+}
+EXPORT_SYMBOL(min_max_enable);
+
  
-//static DEVICE_ATTR(bus_limit_enable, S_IRUGO | S_IWUGO , bus_limit_enable_show, bus_limit_enable_store);
+static DEVICE_ATTR(user_min_max_enable, S_IRUGO | S_IWUGO , user_min_max_enable_show, user_min_max_enable_store);
 static DEVICE_ATTR(bus_limit, S_IRUGO | S_IWUGO , bus_limit_show, bus_limit_store);
 static DEVICE_ATTR(user_max, S_IRUGO | S_IWUGO , user_max_read, user_max_write);
 static DEVICE_ATTR(user_min, S_IRUGO | S_IWUGO , user_min_read, user_min_write);
 
  
 static struct attribute *devil_idle_attributes[] = {
-//    &dev_attr_bus_limit_enable.attr,
+    &dev_attr_user_min_max_enable.attr,
     &dev_attr_bus_limit.attr,
     &dev_attr_user_max.attr,
     &dev_attr_user_min.attr,
