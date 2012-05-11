@@ -37,6 +37,7 @@ static DEFINE_MUTEX(set_freq_lock);
 bool bus_limit_enable = false;
 bool bus_limit_automatic = false;
 static int bus_limit = 0;
+extern bool proximity_active();
 
 /* APLL M,P,S values for 1.4GHz/1.3GHz/1.2GHz/1.0GHz/800MHz */
 #define APLL_VAL_1400	((1 << 31) | (175 << 16) | (3 << 8) | 1)
@@ -1346,6 +1347,17 @@ static struct early_suspend _powersave_early_suspend = {
 void s5pv210_bus_limit_true(void)
 {
  int i; 
+if(proximity_active() && bus_limit_automatic){
+// only save the actual voltages
+  L4_int_volt = dvs_conf[4].int_volt;
+  L5_int_volt = dvs_conf[5].int_volt;
+  L6_int_volt = dvs_conf[6].int_volt;
+
+    for (i = 0; i < num_freqs; i++) {
+	dvs_conf[i].arm_screenon_volt = dvs_conf[i].arm_volt;
+    	}
+
+} else {
   mutex_lock(&set_freq_lock);
   clkdiv_val[4][2] = 7;
   clkdiv_val[5][2] = 3;
@@ -1369,6 +1381,7 @@ pr_info("lowered int_volt");
   }
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
+}
 }
 
 void s5pv210_bus_limit_false(void)

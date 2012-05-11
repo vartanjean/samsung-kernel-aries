@@ -52,6 +52,7 @@
  *  input device framework and control via sysfs attributes.
  */
 
+static bool proximity;
 
 #define gp2a_dbgmsg(str, args...) pr_debug("%s: " str, __func__, ##args)
 
@@ -364,6 +365,15 @@ irqreturn_t gp2a_irq_handler(int irq, void *data)
 	ip->val_state = val;
 	pr_err("gp2a: proximity val = %d\n", val);
 
+	if (!val) {
+		proximity = true;
+
+	}
+	else {
+		proximity = false;
+	}
+pr_info("proximity %u\n", proximity);
+
 #ifdef CONFIG_TOUCH_WAKE
 	/*if (!val) {
 		proximity_detected();
@@ -380,6 +390,11 @@ irqreturn_t gp2a_irq_handler(int irq, void *data)
 	wake_lock_timeout(&ip->prx_wake_lock, 3*HZ);
 	return IRQ_HANDLED;
 }
+bool proximity_active()
+{
+    return proximity;
+}
+EXPORT_SYMBOL(proximity_active);
 
 static int gp2a_setup_irq(struct gp2a_data *gp2a)
 {
