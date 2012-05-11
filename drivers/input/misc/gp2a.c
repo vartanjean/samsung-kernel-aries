@@ -363,8 +363,6 @@ irqreturn_t gp2a_irq_handler(int irq, void *data)
 	}
 
 	ip->val_state = val;
-	pr_err("gp2a: proximity val = %d\n", val);
-
 	if (!val) {
 		proximity = true;
 
@@ -372,7 +370,6 @@ irqreturn_t gp2a_irq_handler(int irq, void *data)
 	else {
 		proximity = false;
 	}
-pr_info("proximity %u\n", proximity);
 
 #ifdef CONFIG_TOUCH_WAKE
 	/*if (!val) {
