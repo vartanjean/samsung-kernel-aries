@@ -1,6 +1,6 @@
-/* drivers/misc/fsync_control.c
+/* drivers/misc/devil.c
  *
- * Copyright 2012  Ezekeel
+ * Copyright 2012  DerTeufel
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -111,44 +111,6 @@ static ssize_t governors_profile_write(struct device * dev, struct device_attrib
 
     return size;
 }
-/*
-static ssize_t smooth_governors_status_read(struct device * dev, struct device_attribute * attr, char * buf)
-{
-    return sprintf(buf, "%u\n", (smooth_governors_enabled ? 1 : 0));
-}
-
-static ssize_t smooth_governors_status_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
-{
-    unsigned int data;
-
-    if(sscanf(buf, "%u\n", &data) == 1) 
-	{
-	    if (data == 1) 
-		{
-		    pr_info("%s: smooth_governors enabled\n", __FUNCTION__);
-
-		    smooth_governors_enabled = true;
-		    powersave_governors_enabled = false;
-		} 
-	    else if (data == 0) 
-		{
-		    pr_info("%s: smooth_governors disabled\n", __FUNCTION__);
-
-		    smooth_governors_enabled = false;
-		} 
-	    else 
-		{
-		    pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
-		}
-	} 
-    else 
-	{
-	    pr_info("%s: invalid input\n", __FUNCTION__);
-	}
-
-    return size;
-}
-*/
 
 
 bool powersave_governors()
@@ -156,44 +118,7 @@ bool powersave_governors()
     return powersave_governors_enabled;
 }
 EXPORT_SYMBOL(powersave_governors);
-/*
-static ssize_t powersave_governors_status_read(struct device * dev, struct device_attribute * attr, char * buf)
-{
-    return sprintf(buf, "%u\n", (powersave_governors_enabled ? 1 : 0));
-}
 
-static ssize_t powersave_governors_status_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
-{
-    unsigned int data;
-
-    if(sscanf(buf, "%u\n", &data) == 1) 
-	{
-	    if (data == 1) 
-		{
-		    pr_info("%s: powersave_governors enabled\n", __FUNCTION__);
-
-		    powersave_governors_enabled = true;
-		    smooth_governors_enabled = false;	
-		} 
-	    else if (data == 0) 
-		{
-		    pr_info("%s: powersave_governors disabled\n", __FUNCTION__);
-
-		    powersave_governors_enabled = false;
-		} 
-	    else 
-		{
-		    pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
-		}
-	} 
-    else 
-	{
-	    pr_info("%s: invalid input\n", __FUNCTION__);
-	}
-
-    return size;
-}
-*/
 
 static ssize_t devil_tweaks_version(struct device * dev, struct device_attribute * attr, char * buf)
 {
@@ -202,15 +127,11 @@ static ssize_t devil_tweaks_version(struct device * dev, struct device_attribute
 
 static DEVICE_ATTR(smooth_ui_enabled, S_IRUGO | S_IWUGO, smooth_ui_status_read, smooth_ui_status_write);
 static DEVICE_ATTR(governors_profile, S_IRUGO | S_IWUGO, governors_profile_read, governors_profile_write);
-//static DEVICE_ATTR(smooth_governors_enabled, S_IRUGO | S_IWUGO, smooth_governors_status_read, smooth_governors_status_write);
-//static DEVICE_ATTR(powersave_governors_enabled, S_IRUGO | S_IWUGO, powersave_governors_status_read, powersave_governors_status_write);
 static DEVICE_ATTR(version, S_IRUGO , devil_tweaks_version, NULL);
 
 static struct attribute *devil_tweaks_attributes[] = 
     {
 	&dev_attr_smooth_ui_enabled.attr,
-//	&dev_attr_smooth_governors_enabled.attr,
-//	&dev_attr_powersave_governors_enabled.attr,
 	&dev_attr_governors_profile.attr,
 	&dev_attr_version.attr,
 	NULL
