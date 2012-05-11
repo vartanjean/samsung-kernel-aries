@@ -55,14 +55,14 @@ echo; echo "mount"
 busybox mount -o rw,remount /system
 
 #copy init.d verify script to init.d
-if [ -e "/system/etc/init.d/00initd_verify" ];then
-	echo; echo "00initd_verify already present"
-else
-	echo; echo "creating 00initd_verify"
-	busybox cp /res/00initd_verify /system/etc/init.d
-	busybox chmod 777 /system/etc/init.d/00initd_verify
-	ls -l /system/etc/init.d/00initd_verify
-fi
+#if [ -e "/system/etc/init.d/00initd_verify" ];then
+#	echo; echo "00initd_verify already present"
+#else
+	#echo; echo "creating 00initd_verify"
+	#busybox cp /res/00initd_verify /system/etc/init.d
+	#busybox chmod 777 /system/etc/init.d/00initd_verify
+	#ls -l /system/etc/init.d/00initd_verify
+#fi
 
 # load profile
 echo; echo "profile"
@@ -81,7 +81,7 @@ echo; echo "profile"
     			echo 0 > /data/local/devil/profile;
 		fi
 	else
-    		echo "profile not found: setting governor profile: <normal>";
+    		echo "profile not found: doing nothing";
       		echo 0 > /sys/class/misc/devil_tweaks/governors_profile;
     		echo 0 > /data/local/devil/profile;
 	fi
@@ -240,12 +240,6 @@ MTD=`$BB ls -d /sys/block/mtdblock*`
 LOOP=`$BB ls -d /sys/block/loop*`
 MMC=`$BB ls -d /sys/block/mmc*`
       
-# general tweaks
-for i in $MTD $MMC $LOOP;do
-    echo "$iosched" > $i/queue/scheduler
-    echo 0 > $i/queue/rotational
-    echo 0 > $i/queue/iostats
-done
 
 # mtd/mmc only tweaks
 for i in $MTD $MMC;do
