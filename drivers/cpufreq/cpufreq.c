@@ -1865,6 +1865,8 @@ static void powersave_early_suspend(struct early_suspend *handler)
 {
 	int cpu, user_max, user_min;
 
+if(min_max_enable()){
+
 	for_each_online_cpu(cpu) {
 		struct cpufreq_policy *cpu_policy, new_policy;
 
@@ -1875,7 +1877,7 @@ static void powersave_early_suspend(struct early_suspend *handler)
 			goto out;
 		orig_user_max = new_policy.max;
 		orig_user_min = new_policy.min;
-	if(!proximity_active() && min_max_enable()){
+	if(!proximity_active()){
 		user_max = get_user_max();
 		user_min = get_user_min();
 if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)
@@ -1898,11 +1900,12 @@ if(user_min % 100000 == 0 && user_min >= get_oc_low_freq() && user_min <= get_oc
 		cpufreq_cpu_put(cpu_policy);
 	}
 }
+}
 
 static void powersave_late_resume(struct early_suspend *handler)
 {
 	int cpu;
-
+if(min_max_enable()){
 	for_each_online_cpu(cpu) {
 		struct cpufreq_policy *cpu_policy, new_policy;
 
@@ -1921,6 +1924,7 @@ static void powersave_late_resume(struct early_suspend *handler)
 	out:
 		cpufreq_cpu_put(cpu_policy);
 	}
+}
 }
 
 static struct early_suspend _powersave_early_suspend = {
