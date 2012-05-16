@@ -54,15 +54,57 @@ echo; echo "mount"
 #echo; echo "mount system rw"
 busybox mount -o rw,remount /system
 
-#copy init.d verify script to init.d
-#if [ -e "/system/etc/init.d/00initd_verify" ];then
-#	echo; echo "00initd_verify already present"
-#else
-	#echo; echo "creating 00initd_verify"
-	#busybox cp /res/00initd_verify /system/etc/init.d
-	#busybox chmod 777 /system/etc/init.d/00initd_verify
-	#ls -l /system/etc/init.d/00initd_verify
-#fi
+#copy use normal swap or zram:
+if [ -e "/data/local/devil/swap_use" ]; then
+swap_use=`cat /data/local/devil/swap_use`
+	if [ "$swap_use" -eq 1 ]; then
+
+	# Detect the swap partition
+	SWAP_PART=`fdisk -l /dev/block/mmcblk1 | grep swap | sed 's/\(mmcblk1p[0-9]*\).*/\1/'`
+
+		if [ -n "$SWAP_PART" ]; then
+    			# If exists a swap partition activate it and create the fstab file
+    			echo "Found swap partition at $SWAP_PART"
+    			SWAP_RESULT=`swapon $SWAP_PART 2>&1 | grep "not implemented"` 
+    			if [ -z "$SWAP_RESULT" ]; then
+        			echo "#!/system/bin/sh" > /system/etc/init.d/S05swap
+        			echo "swapon -a" >> /system/etc/init.d/S05swap
+        			echo "echo 60 > /proc/sys/vm/swappiness" >> /system/etc/init.d/S05swap
+        			chmod 750 /system/etc/init.d/S05swap
+        			echo "$SWAP_PART swap swap" > /system/etc/fstab
+        			echo "Swap partition activated successfully!"
+    			else
+        			echo "Current kernel does not support swap!"
+    			fi
+		else
+    			echo "Swap partition not found!"
+		fi
+
+	elif [ "$swap_use" -eq 2 ]; then
+	rm /system/etc/fstab
+	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
+	ZRAMSIZE=$(($RAMSIZE*200))
+	echo "#!/sbin/bb/busybox ash" > /etc/init.d/05zram
+	echo "insmod /system/lib/modules/zram.ko" >> /etc/init.d/05zram
+	echo "echo 1 > /sys/block/zram0/reset" >> /etc/init.d/05zram
+	echo "echo $ZRAMSIZE > /sys/block/zram0/disksize" >> /etc/init.d/05zram
+	echo "mkswap /dev/block/zram0" >> /etc/init.d/05zram
+	echo "swapon /dev/block/zram0" >> /etc/init.d/05zram
+	echo "echo 60 > /proc/sys/vm/swappiness" >> /system/etc/init.d/05zram
+	echo 'echo "500,1000,20000,20000,20000,25000" > /sys/module/lowmemorykiller/parameters/minfree'  >> /etc/init.d/05zram
+	chmod 555 /etc/init.d/05zram
+	echo 60 > /proc/sys/vm/swappiness
+	echo "zram enabled and activated"
+	else
+	echo "zram and swap not activated"	
+	echo 0 > /data/local/devil/swap_use
+	echo 0 > /proc/sys/vm/swappiness	
+	fi
+else
+echo "zram and swap settings not found --> do not activate"	
+echo 0 > /data/local/devil/swap_use
+echo 0 > /proc/sys/vm/swappiness	
+fi
 
 # load profile
 echo; echo "profile"
@@ -88,7 +130,10 @@ echo; echo "profile"
 
 #set cpu max freq while screen off
 echo; echo "set cpu max freq while screen off"
-if [ -e "/data/local/devil/screen_off_max" ];then
+if [ -e "/data/local/devil/user_min_max_enable" ];then
+   min_max_enable=`cat /data/local/devil/user_min_max_enable`
+   if [ "$min_max_enable" -eq 1 ]; then
+   	if [ -e "/data/local/devil/screen_off_max" ];then
 	screen_off_max=`cat /data/local/devil/screen_off_max`
 	if $BB [ "$screen_off_max" -eq 1400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
 	elif $BB [ "$screen_off_max" -eq 1300000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
@@ -101,10 +146,14 @@ if [ -e "/data/local/devil/screen_off_max" ];then
 		screen_off_max=1000000
 	fi
 	echo $screen_off_max > /sys/class/misc/devil_idle/user_max
-else
+    	else
 	echo "screen_off_max: did not find any screen_off_max, setting 1000 Mhz as default"
 	echo 1000000 > /sys/class/misc/devil_idle/user_max
 	echo 1000000 > /data/local/devil/screen_off_max
+   	fi
+   else
+	echo "screen_off_user_min_max not enabled...nothing to do"
+   fi
 fi
 
 #set cpu min freq while screen off
@@ -404,6 +453,8 @@ echo; echo "governor settings"
 		echo "nothing to do"
 	fi
 
+rm /etc/init.d/05zram
+rm /etc/init.d/S05swap
 echo; echo "mount system ro"
 busybox mount -o ro,remount /system
 

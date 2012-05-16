@@ -7,7 +7,7 @@ mem="cm"
 
 handy="i9000"
 
-build="Devil2_0.84""$rom"_"$handy"
+build="Devil2_0.85""$rom"_"$handy"
 
 scheduler="CFS"
 
@@ -44,6 +44,8 @@ fi
 make -j4
 
 echo "creating boot.img"
+# find . -name "*.ko" -exec cp {} initramfs/files/modules/ \; 2>/dev/null || exit 1
+
 if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
 then
 release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img

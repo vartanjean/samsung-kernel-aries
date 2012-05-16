@@ -51,6 +51,7 @@ rm system/lib/modules/*
 rm system/lib/hw/* 
 rm system/etc/init.d/* 
 rm system/bin/*
+rm arch/arm/boot/compressed/piggy.xzkern
 cd ..
 return 0
 }
