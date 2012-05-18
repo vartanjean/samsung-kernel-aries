@@ -54,6 +54,7 @@ setup ()
 build ()
 {
 
+THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
 formodules=$repo/kernel/samsung/glitch-build/kernel/$target
 
     local target=$target
@@ -65,8 +66,9 @@ formodules=$repo/kernel/samsung/glitch-build/kernel/$target
     cp "$KERNEL_DIR/usr/"*.list "$target_dir/usr"
 
     sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
-    mka -C "$KERNEL_DIR" O="$target_dir" cyanogenmod_${target}_defconfig HOSTCC="$CCACHE gcc"
-    mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
+
+    mka -j${THREADS} -C "$KERNEL_DIR" O="$target_dir" cyanogenmod_${target}_defconfig HOSTCC="$CCACHE gcc"
+    mka -j${THREADS} -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
 
 [[ -d release ]] || {
 	echo "must be in kernel root dir"
@@ -77,15 +79,15 @@ echo "creating boot.img"
 
 # CM9 repo as target for ramdisk and recovery
 
-$repo/device/samsung/aries-common/mkshbootimg.py $KERNEL_DIR/release/boot.img "$target_dir"/arch/arm/boot/zImage $repo/out/target/product/$target/ramdisk.img $repo/out/target/product/$target/ramdisk-recovery.img
+#$repo/device/samsung/aries-common/mkshbootimg.py $KERNEL_DIR/release/boot.img "$target_dir"/arch/arm/boot/zImage $repo/out/target/product/$target/ramdisk.img $KERNEL_DIR/release/Glitch-Ramdisks/$target/ramdisk-recovery.img
 
 # CM9 repo as target for ramdisk, backup for recovery
 
-#$repo/device/samsung/aries-common/mkshbootimg.py $KERNEL_DIR/release/boot.img "$target_dir"/arch/arm/boot/zImage $repo/out/target/product/$target/ramdisk.img $KERNEL_DIR/release/auto/Glitch-Ramdisks/$target/ramdisk-recovery.img
+$repo/device/samsung/aries-common/mkshbootimg.py $KERNEL_DIR/release/boot.img "$target_dir"/arch/arm/boot/zImage $repo/out/target/product/$target/ramdisk.img $KERNEL_DIR/release/Glitch-Ramdisks/$target/ramdisk-recovery.img
 
 # Backup as target for ramdisk and recovery
 
-#$repo/device/samsung/aries-common/mkshbootimg.py $KERNEL_DIR/release/boot.img "$target_dir"/arch/arm/boot/zImage $KERNEL_DIR/release/auto/Glitch-Ramdisks/$target/ramdisk.img $KERNEL_DIR/release/auto/Glitch-Ramdisks/$target/ramdisk-recovery.img
+#$repo/device/samsung/aries-common/mkshbootimg.py $KERNEL_DIR/release/boot.img "$target_dir"/arch/arm/boot/zImage $KERNEL_DIR/release/auto/Glitch-Ramdisks/$target/ramdisk.img $KERNEL_DIR/release/Glitch-Ramdisks/$target/ramdisk-recovery.img
 
 echo "packaging it up"
 

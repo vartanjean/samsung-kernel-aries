@@ -12,6 +12,8 @@ export USE_CCACHE=1
         CCACHE_DIR=~/aokpsgs/kernel/samsung/.ramdisks-ccache
         export CCACHE_DIR CCACHE_COMPRESS
 
+THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
+
 declare -A phone
 
 if [[ $# -gt 0 ]]; then
@@ -28,12 +30,15 @@ fi
 
 cd ../../../
 
+time {
 for i in ${!phones[@]}; do
 	phone=${phones[$i]}
 
 echo "========Building ramdisk.img and recovery.img for ${phone}========"
 echo ""
-. build/envsetup.sh && breakfast aokp_${phone}mtd-userdebug && make bootimage -j12
+
+. build/envsetup.sh && breakfast aokp_${phone}mtd-userdebug && make -j${THREADS} bootimage
 done
+}
 
 echo "Done!"
