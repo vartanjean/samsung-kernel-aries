@@ -150,6 +150,8 @@ struct wifi_mem_prealloc {
 
 bool bigmem;
 EXPORT_SYMBOL(bigmem);
+bool xlmem;
+EXPORT_SYMBOL(xlmem);
 
 static int aries_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
@@ -157,15 +159,21 @@ static int aries_notifier_call(struct notifier_block *this,
 	int mode = REBOOT_MODE_NONE;
 	if (bigmem)
 		mode = 7;
+	else if (xlmem)
+		mode = 3;
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
 			if (bigmem)
 				mode = 9;
+			else if (xlmem)
+				mode = 5;
 			else
 				mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
 		else {
 			if (bigmem)
 				mode = 7;
+			else if (xlmem)
+				mode = 3;
 			else
 				mode = REBOOT_MODE_NONE;
 		}
@@ -329,6 +337,12 @@ static struct s3cfb_lcd s6e63m0 = {
 		.inv_vden = 1,
 	},
 };
+
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM (5000 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2_BM (5000 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0_XL (11264 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1_XL (11264 * SZ_1K)
+
 #ifdef CONFIG_S5PV210_XL
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (11264 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (11264 * SZ_1K)
@@ -341,22 +355,9 @@ static struct s3cfb_lcd s6e63m0 = {
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (13312 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (21504 * SZ_1K)
 
-<<<<<<< HEAD
 #elif defined CONFIG_S5PV210_XL_BIGMEM
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (5000 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (5000 * SZ_1K)
-=======
-//#ifdef CONFIG_S5P_BIGMEM
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM (5000 * SZ_1K)
-//#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (5000 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2_BM (5000 * SZ_1K)
-//#else
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (11264 * SZ_1K)
-//#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (5000 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (11264 * SZ_1K)
-//#endif
-#ifdef CONFIG_S5P_HUGEMEM
->>>>>>> 9b2a2eb... Bigmem selectable through sysfs
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (11264 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (11264 * SZ_1K)
 
@@ -5310,11 +5311,23 @@ static void check_bigmem(void) {
 		bigmem = true;
 		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM;
 		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM;
+		aries_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0_XL; 
+		aries_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1_XL;
+	}
+	else if ((bootmode == 3) || (bootmode == 5)) {
+		xlmem = true;
+		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
+		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
+		aries_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0_XL; 
+		aries_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1_XL;
 	}
 	else {
 		bigmem = false;
+		xlmem = false;
 		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
 		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
+		aries_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0; 
+		aries_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1;
 	}
 }
 
