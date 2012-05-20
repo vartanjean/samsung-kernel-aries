@@ -11,19 +11,39 @@
 #include <linux/sysfs.h>
 
 extern bool bigmem;
+extern bool xlmem;
+static int  mem = 0;
 
 /* sysfs interface */
 static ssize_t enable_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%d\n", bigmem?1:0);
+	return sprintf(buf, "%d\n", mem);
 }
 
 static ssize_t enable_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
 	int input;
 	sscanf(buf, "%du", &input);
-	bigmem = input;
-	return count;
+	    if (input == 1) 
+		{
+		mem = input;
+		xlmem = true;
+		bigmem = false;
+		}
+	    else if (input == 2) 
+		{
+		mem = input;
+		xlmem = false;
+		bigmem = true;
+		}
+	    else
+		{
+		mem = 0;
+		xlmem = false;
+		bigmem = false;
+		}
+
+		return count;
 }
 
 static struct kobj_attribute enable_attribute =
