@@ -33,6 +33,9 @@
 #  -- erase_image (binary)
 # 
 
+
+APP='Semaphore.apk'
+
 export _PATH="$PATH"
 export PATH=/
 
@@ -69,97 +72,110 @@ $BB echo "mounting devices..."
 $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
 $BB mount -t yaffs2 /dev/block/mtdblock2 /system
+$BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"
- 
+
 if $BB [ "`/busybox grep $KV /system/lib/modules/ansi_cprng.ko`" ]; then
     $BB echo "kernel files already installed, nothing to do"
 else
-    $BB mount -t ext4 /dev/block/mmcblk0p2 /data
-    
     $BB echo "updating modules..."
+
+    $BB echo "removing old modules..."
+
     $BB rm /system/lib/modules/*
+    $BB echo "updating modules..."
     $BB cp /files/modules/* /system/lib/modules/
-
-    if $BB [ -f /data/local/logger.ko ]; then
-        $BB echo "found /data/local/logger.ko, updating..."
-        $BB cp /system/lib/modules/logger.ko /data/local/logger.ko
-    else
-        $BB echo "/data/local/logger.ko, not found, skipping..."
-    fi
-
-    if $BB [ ! -d /system/etc/init.d ]; then 
-        $BB echo "creating /system/etc/init.d"
-        $BB mkdir /system/etc/init.d
-        $BB chmod 777 /system/etc/init.d
-    fi
-
-    APP=""
-    $BB echo "coping kernel app"
-    $BB rm /system/app/$APP
-    $BB rm /data/dalvik-cache/*$APP*
-    $BB cp /files/$APP /system/app/
-    $BB chown 0.0 /system/app/$APP
-    $BB chmod 644 /system/app/$APP    
 
     $BB echo "updating lights.aries.so..."
     $BB mv /files/hw/* /system/lib/hw/
     $BB chmod 644 /system/lib/hw/lights.aries.so
-    
+
+    $BB mount -t ext4 /dev/block/mmcblk0p2 /data
+    if $BB [ -f /data/local/logger.ko ]; then
+	$BB echo "found /data/local/logger.ko, updating..."
+	$BB cp /system/lib/modules/logger.ko /data/local/logger.ko
+    else
+	$BB echo "/data/local/logger.ko, not found, skipping..."
+    fi
     $BB umount /data
-fi
-
-$BB echo "starting bootmode detection..."
-if $BB grep -q bootmode=2 /proc/cmdline ; then
-	# recovery boot
-    $BB echo "moving ics_rec_init to /"
-	$BB mv /ics_rec_init/* /
-	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
-elif ! $BB test -e /system/build.prop ; then
-	# emergency boot
-    $BB echo "build.prop not found, starting emergency boot..."
-    erase_image cache
-    $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
-    $BB mkdir /cache/recovery
-	$BB mount -t vfat /dev/block/mmcblk0p1 /sdcard	
-
-    $BB echo "checking cm9 update config /sdcard/cyanogenmod.cfg..."
-	UPDATE=$($BB cat /sdcard/cyanogenmod.cfg)
-	if $BB test -e $UPDATE ; then
-        $BB echo "cm9 update found, initializing extendedcommand..."
-		$BB echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
-  	else
-        $BB echo "cm9 update not found, doing nothing"
+    
+    if $BB [ ! -d /system/etc/init.d ]; then 
+	$BB echo "making init.d"
+	$BB mkdir /system/etc/init.d
+	$BB chmod 777 /system/etc/init.d
     fi
 
-    $BB echo "moving ics_rec_init to /..."
+    $BB echo "coping kernel control apk"
+    $BB rm /system/app/$APP
+    $BB rm /data/dalvik-cache/*$APP*
+
+    $BB cp /files/$APP /system/app/
+    $BB chown 0.0 /system/app/$APP
+    $BB chmod 644 /system/app/$APP
+fi
+
+$BB echo "command line:"
+$BB cat /proc/cmdline
+
+$BB echo "starting bootmode detection..."
+if $BB grep -q bootmode=2 /proc/cmdline || $BB grep -q bootmode=9 /proc/cmdline || $BB grep -q bootmode=5 /proc/cmdline ; then
+    # recovery boot
+    $BB echo "found recovery command, preparing boot..."
+
+if busybox test -e /cache/twrp ; then
+    $BB echo "moving twrp to /"
+    $BB mv /twrp/* /
+else
+    $BB echo "moving ics_rec_init to /"
     $BB mv /ics_rec_init/* /
-	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+fi
+    $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
     $BB mv /ics_init/* /
+	if $BB grep -q bootmode=3 /proc/cmdline || $BB grep -q bootmode=5 /proc/cmdline ; then
+    		$BB echo "copying XL_mem libs"
+    		$BB mv /files/xl/* /system/lib/
+	else
+    		$BB echo "copying cm9 default libs"
+    		$BB mv /files/cm/* /system/lib/
+	fi
 fi
 
 if $BB grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
-	# low power mode
+    # low power mode
     $BB echo "found charging_mode command"
-	$BB cp /lpm.rc /init.rc
-	$BB rm /init.aries.rc
+    $BB cp /lpm.rc /init.rc
+    $BB rm /init.aries.rc
 fi
+
+$BB echo "debug output:"
+$BB echo "current /:"
+$BB ls -l /
+$BB echo "current /system:"
+$BB ls -l /system/
+#$BB echo "current /cache:"
+#$BB ls -l /cache/
+$BB echo "current /system/lib/modules:"
+$BB ls -l /system/lib/modules/
+$BB echo "current /system/lib/hw:"
+$BB ls -l /system/lib/hw/
 
 $BB echo "cleaning up..."
 $BB umount /sys
 $BB umount /proc
 $BB umount /system
-
+$BB umount /cache
 $BB rm -r /files
 $BB rm -r /sdcard
-$BB rm /erase_image
+#$BB rm /erase_image
 
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
 $BB rm -rf /ics_init
 $BB rm -rf /ics_rec_init
+$BB rm -rf /twrp
 
 $BB date >>boot.txt
 $BB rm -fr /dev/*
