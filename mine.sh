@@ -7,7 +7,7 @@ mem="cm"
 
 handy="i9000"
 
-build="Devil2_0.91""$rom"_"$handy"
+build="Devil2_0.92""$rom"_"$handy"
 
 scheduler="CFS"
 
@@ -48,12 +48,12 @@ find . -name "*.ko" -exec cp {} initramfs/ics_combo/files/modules/ \; 2>/dev/nul
 make -j4 zImage
 
 echo "creating boot.img"
+cp arch/arm/boot/zImage ./release/boot.img
 
-exit 0
-if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
-then
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
-fi
+#if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
+#then
+#release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+#fi
 
 if [ "$rom" = "sense"  ] 
 then
@@ -61,7 +61,7 @@ release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage relea
 fi
 echo "..."
 echo "boot.img ready"
-rm arch/arm/boot/zImage
+#rm arch/arm/boot/zImage
 echo "launching packaging script"
 
 . ./packaging.inc

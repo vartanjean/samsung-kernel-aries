@@ -452,7 +452,7 @@ echo; echo "governor settings"
 	else
 		echo "nothing to do"
 	fi
-
+#busybox run-parts /system/etc/init.d
 rm /etc/init.d/05zram
 rm /etc/init.d/S05swap
 echo; echo "mount system ro"
