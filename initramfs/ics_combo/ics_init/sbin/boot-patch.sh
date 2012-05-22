@@ -393,12 +393,6 @@ fi
 # executes <0-9><0-9>scriptname, <E>scriptname, <S>scriptname 
 # in this order.
 echo; echo "init.d"
-#sleep 10
-if [ -e "/data/local/devil/initd" ];then
-	echo "init.d already executed"
-	/system/xbin/busybox rm /data/local/devil/initd
-else
-
     echo "starting init.d script execution..."
 
     echo $(date) USER INIT START from /system/etc/init.d
@@ -437,22 +431,25 @@ else
         done
     fi
     echo $(date) USER INIT DONE from /system/etc/init.d
-fi
 
 # governor specific settings:
 echo; echo "governor settings"
     governor=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
 	if [ "$governor" = "conservative" ] || [ "$governor" = "ondemand" ];then
+		if [ -e "/data/local/devil/$governor" ];then
 		$responsiveness=`cat /data/local/devil/$governor/responsiveness`
 		$min_upthreshold=`cat /data/local/devil/$governor/min_upthreshold`
 		$sleep_multiplier=`cat /data/local/devil/$governor/sleep_multiplier`
 		echo $responsiveness > /sys/devices/system/cpu/cpufreq/$governor/responsiveness_freq
 		echo $min_upthreshold > /sys/devices/system/cpu/cpufreq/$governor/up_threshold_min_freq
 		echo $sleep_multiplier > /sys/devices/system/cpu/cpufreq/$governor/sleep_multiplier
+		else
+		echo "/data/local/devil/$governor not found, skipping..."
+		fi
 	else
 		echo "nothing to do"
 	fi
-#busybox run-parts /system/etc/init.d
+busybox run-parts /data/local/userinit
 rm /etc/init.d/05zram
 rm /etc/init.d/S05swap
 echo; echo "mount system ro"

@@ -24,12 +24,12 @@ else
 	cp updater-script.LED META-INF/com/google/android/updater-script || exit 1
 fi
 
-if [ "$mem" = "cm" ]
-then
-	cp cm/* system/lib/ || exit 1
-else	
-	cp xl/* system/lib/ || exit 1
-fi	
+#if [ "$mem" = "cm" ]
+#then
+	#cp cm/* system/lib/ || exit 1
+#else	
+#	cp xl/* system/lib/ || exit 1
+#fi	
 
 	cp S30datafix system/etc/init.d/ || exit 1
 #	cp S98oc_value system/etc/init.d/ || exit 1
