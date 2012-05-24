@@ -3,11 +3,11 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-mem="XL"
+mem="cm"
 
-handy="i9000"
+handy="cappy"
 
-build="Devil3_0.70""$rom"_"$handy"
+build="Devil2_0.61""$rom"_"$handy"
 
 scheduler="CFS"
 
@@ -41,13 +41,20 @@ then
 make aries_vibrantmtd_defconfig
 fi
 
-make -j4
+# make -j4
+
+make -j4 modules
+find . -name "*.ko" -exec cp {} initramfs/ics_combo/files/modules/ \; 2>/dev/null || exit 1
+make -j4 zImage
 
 echo "creating boot.img"
-if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
-then
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
-fi
+cp arch/arm/boot/zImage ./release/zImage
+cp arch/arm/boot/zImage ./release/boot.img
+
+#if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
+#then
+#release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+#fi
 
 if [ "$rom" = "sense"  ] 
 then
@@ -55,7 +62,7 @@ release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage relea
 fi
 echo "..."
 echo "boot.img ready"
-rm arch/arm/boot/zImage
+#rm arch/arm/boot/zImage
 echo "launching packaging script"
 
 . ./packaging.inc
