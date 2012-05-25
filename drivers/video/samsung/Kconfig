@@ -13,10 +13,26 @@ config FB_S3C
 	---help---
 	  This enables support for Samsung Display Controller (FIMD)
 
+
 config FB_S3C_SPLASH_SCREEN
         bool "SPLASH_SCREEN on LCD"
         depends on FB_S3C
 	default n
+
+config CONFIG_FB_S3C_UNLOCKED_REFRESH
+        bool "Unlocked screen refresh rate to 68Hz"
+        depends on FB_S3C
+  default n
+
+config BW_SPLASH
+        bool "Splash logo in black and white"
+        depends on MACH_ARIES
+  default n
+
+config FB_S3C_SPLASH_SCREEN_BW
+       bool "SPLASH_SCREEN on LCD in Black and White only"
+        depends on FB_S3C_SPLASH_SCREEN
+
 
 config FB_S3C_LCD_INIT
         bool "LCD init in kernel"

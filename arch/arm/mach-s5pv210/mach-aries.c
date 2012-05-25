@@ -298,7 +298,7 @@ static struct s3c2410_uartcfg aries_uartcfgs[] __initdata = {
 	{
 		.hwport		= 3,
 		.flags		= 0,
-		.ucon		= S5PfV210_UCON_DEFAULT,
+		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
 	},

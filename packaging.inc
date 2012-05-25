@@ -44,6 +44,10 @@ fi
 	zip -q -r "${REL}.zip" system data backup boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
 	sha256sum ${REL}.zip > ${REL}.sha256sum
 
+	tar -H ustar -c zImage > "${REL}"_odin.tar
+	md5sum -t "${REL}"_odin.tar >> "${REL}"_odin.tar
+	mv "${REL}"_odin.tar "${REL}"_odin.tar.md5 
+
 } || exit 1
 
 echo ${REL}
