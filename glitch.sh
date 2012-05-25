@@ -99,7 +99,7 @@ REL=Glitch-${target}-SkunkWorks-$(date +%Y%m%d.%H%M).zip
 
 	rm -r system 2> /dev/null
 	mkdir  -p system/lib/modules || exit 1
-	mkdir  -p system/etc/init.d || exit 1
+	mkdir  -p system/etc/{init.d,shutdown.d} || exit 1
 	mkdir  -p system/etc/glitch-config || exit 1
 	mkdir  -p system/lib/hw || exit 1
 	echo "inactive" > system/etc/glitch-config/screenstate_scaling || exit 1
@@ -115,7 +115,7 @@ REL=Glitch-${target}-SkunkWorks-$(date +%Y%m%d.%H%M).zip
 	cp $formodules/fs/nls/nls_utf8.ko system/lib/modules/nls_utf8.ko
 
 	cp S99screenstate_scaling system/etc/init.d/ || exit 1
-	#cp S98rfkill_didle system/etc/init.d/ || exit 1
+	cp 00shutdown system/etc/shutdown.d/ || exit 1
 
 #if [ "$target" = fascinatemtd ] ; then
 #	cp 90call_vol_fascinate system/etc/init.d/ || exit 1

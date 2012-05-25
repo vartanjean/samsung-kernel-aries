@@ -1,0 +1,38 @@
+#!/system/xbin/bash
+
+function usage()
+{
+  echo "Usage:  setbootsnd [audio file]"
+  echo "        setbootsnd --none"
+  echo
+  echo "where [audio file] is a valid audio file in .ogg or .mp3 format."
+  echo "other formats may work, but these 2 are known to work."
+  echo "use the --none option to disable boot sound completely."
+  echo
+  echo "Note: this program does not check to make sure your"
+  echo "selected file is a valid media audio file!"
+}
+
+if [ "$1"x == x ]; then
+  usage
+  exit 1
+fi
+
+/system/xbin/mount -o rw,remount /system
+
+if [ "$1" == "--none" ]; then
+  # be compatible with AOKP RomControl
+  mv /system/media/boot_audio.mp3 /system/media/boot_audio.unicorn
+elif [ -r "$1" ]; then
+  if [ -r /system/media/boot_audio.mp3 ]; then
+     cp /system/media/boot_audio.mp3 /system/media/boot_audio.bak
+  fi
+  
+  cp "$1" /system/media/boot_audio.mp3
+  chmod 644 /system/media/boot_audio.mp3
+else
+  usage
+fi
+
+mount -o ro,remount /system
+
