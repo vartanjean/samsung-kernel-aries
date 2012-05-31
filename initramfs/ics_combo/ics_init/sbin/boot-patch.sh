@@ -456,9 +456,23 @@ echo; echo "governor settings"
 	else
 		echo "nothing to do"
 	fi
-# busybox run-parts /data/local/userinit
+
+# userinit.d:
+echo; echo "userinit.d"
+if [ -d /data/local/userinit.d ];
+then
+   logwrapper $BB run-parts /data/local/userinit.d;
+   setprop cm.userinit.active 1;
+fi;
+
+if [ -e /etc/init.d/05zram ]; then
 rm /etc/init.d/05zram
+fi
+
+if [ -e /etc/init.d/S05swap ]; then
 rm /etc/init.d/S05swap
+fi
+
 echo; echo "mount system ro"
 busybox mount -o ro,remount /system
 

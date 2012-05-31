@@ -19,10 +19,10 @@ ro.build.type=eng
 ro.build.user=dominik
 ro.build.host=ubuntu
 ro.build.tags=test-keys
-ro.product.model=SGH-I897
+ro.product.model=GT-I9000
 ro.product.brand=samsung
-ro.product.name=full_captivatemtd
-ro.product.device=captivatemtd
+ro.product.name=full_galaxysmtd
+ro.product.device=galaxysmtd
 ro.product.board=aries
 ro.product.cpu.abi=armeabi-v7a
 ro.product.cpu.abi2=armeabi
@@ -32,7 +32,7 @@ ro.product.locale.region=US
 ro.wifi.channels=
 ro.board.platform=s5pc110
 # ro.build.product is obsolete; use ro.product.device
-ro.build.product=captivate
+ro.build.product=galaxysmtd
 # Do not try to parse ro.build.description or .fingerprint
 ro.build.description=full_galaxysmtd-eng 4.0.4 IMM76D eng.dominik.20120516.200548 test-keys
 ro.build.fingerprint=samsung/full_galaxysmtd/galaxysmtd:4.0.4/IMM76D/eng.dominik.20120516.200548:eng/test-keys
