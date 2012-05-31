@@ -43,6 +43,7 @@
 #define SGX540_IRQ IRQ_3D
 
 #define SYS_SGX_CLOCK_SPEED					(200000000)
+#define SYS_SGX_CLOCK_FAST_SPEED				(250000000)
 #define SYS_SGX_HWRECOVERY_TIMEOUT_FREQ		(100) // 10ms (100hz)
 #define SYS_SGX_PDS_TIMER_FREQ				(1000) // 1ms (1000hz)
 #ifndef SYS_SGX_ACTIVE_POWER_LATENCY_MS
@@ -81,6 +82,8 @@ IMG_UINT32   PVRSRV_BridgeDispatchKM( IMG_UINT32  Ioctl,
 									IMG_BYTE   *pOutBuf,
 									IMG_UINT32  OutBufLen,
 									IMG_UINT32 *pdwBytesTransferred);
+extern bool gpu_speed_mod;
+
 
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 /*
@@ -273,7 +276,12 @@ PVRSRV_ERROR SysInitialise(IMG_VOID)
 
 	/* Set up timing information*/
 	psTimingInfo = &gsSGXDeviceMap.sTimingInfo;
-	psTimingInfo->ui32CoreClockSpeed = SYS_SGX_CLOCK_SPEED;
+	if(gpu_speed_mod)
+		psTimingInfo->ui32CoreClockSpeed = SYS_SGX_CLOCK_FAST_SPEED;
+	else
+		psTimingInfo->ui32CoreClockSpeed = SYS_SGX_CLOCK_SPEED;
+pr_info("gpu_speed_mod %u\n", gpu_speed_mod);
+//pr_info("psTimingInfo->ui32CoreClockSpeed %lu\n", psTimingInfo->ui32CoreClockSpeed);
 	psTimingInfo->ui32HWRecoveryFreq = SYS_SGX_HWRECOVERY_TIMEOUT_FREQ; 
 	psTimingInfo->ui32ActivePowManLatencyms = SYS_SGX_ACTIVE_POWER_LATENCY_MS; 
 	psTimingInfo->ui32uKernelFreq = SYS_SGX_PDS_TIMER_FREQ; 

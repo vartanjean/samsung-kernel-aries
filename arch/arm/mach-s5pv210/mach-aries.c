@@ -152,27 +152,61 @@ EXPORT_SYMBOL(bigmem);
 bool xlmem;
 EXPORT_SYMBOL(xlmem);
 
+bool gpu_speed_mod;
+EXPORT_SYMBOL(gpu_speed_mod);
+
 static int aries_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
 {
 	int mode = REBOOT_MODE_NONE;
-	if (bigmem)
-		mode = 7;
-	else if (xlmem)
-		mode = 3;
+	if (bigmem){
+		if(gpu_speed_mod)
+			mode = 17;
+		else
+			mode = 7;
+	}
+	else if (xlmem){
+		if(gpu_speed_mod)
+			mode = 13;
+		else
+			mode = 3;
+	}
+	else if(gpu_speed_mod)
+			mode = 11;
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
-			if (bigmem)
-				mode = 9;
-			else if (xlmem)
-				mode = 5;
+			if (bigmem){
+				if(gpu_speed_mod)
+					mode = 19;
+				else
+					mode = 9;
+			}
+			else if (xlmem){
+				if(gpu_speed_mod)
+					mode = 15;
+				else					
+					mode = 5;
+			}
 			else
+				if(gpu_speed_mod)
+					mode = 12;
+				else
 				mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
 		else {
-			if (bigmem)
-				mode = 7;
-			else if (xlmem)
-				mode = 3;
+			if (bigmem){
+				if(gpu_speed_mod)
+					mode = 17;
+				else
+					mode = 7;
+			}
+			else if (xlmem){
+				if(gpu_speed_mod)
+					mode = 13;
+				else
+					mode = 3;
+			}
+			else if(gpu_speed_mod)
+					mode = 11;
 			else
 				mode = REBOOT_MODE_NONE;
 		}
@@ -5224,6 +5258,17 @@ static void check_bigmem(void) {
 	}
 }
 
+static void check_gpu_speed_mod(void) {
+	int bootmode = __raw_readl(S5P_INFORM6);
+	if ((bootmode == 17) || (bootmode == 19) || (bootmode == 13) || (bootmode == 15)) {
+		gpu_speed_mod = true;
+	}
+	else {
+		gpu_speed_mod = false;
+	}
+}
+
+
 static void __init aries_map_io(void)
 {
 	s5p_init_io(NULL, 0, S5P_VA_CHIPID);
@@ -5234,6 +5279,7 @@ static void __init aries_map_io(void)
 		s5p_set_timer_source(S5P_PWM3, S5P_PWM4);
 	#endif
 	check_bigmem();
+	check_gpu_speed_mod();
 	s5p_reserve_bootmem(aries_media_devs,
 		ARRAY_SIZE(aries_media_devs), S5P_RANGE_MFC);
 #ifdef CONFIG_MTD_ONENAND
@@ -5419,7 +5465,7 @@ static void __init aries_inject_cmdline(void) {
 
 	// Only write bootmode when less than 10 to prevent confusion with watchdog
 	// reboot (0xee = 238)
-	if (bootmode < 10) {
+	if (bootmode < 20) {
 		size += sprintf(new_command_line + size, " bootmode=%d", bootmode);
 	}
 
