@@ -93,7 +93,7 @@ swap_use=`cat /data/local/devil/swap_use`
 	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
 	ZRAMSIZE=$(($RAMSIZE*200))
 	echo "#!/sbin/bb/busybox ash" > /etc/init.d/05zram
-	echo "insmod /system/lib/modules/zram.ko" >> /etc/init.d/05zram
+#	echo "insmod /system/lib/modules/zram.ko" >> /etc/init.d/05zram
 	echo "echo 1 > /sys/block/zram0/reset" >> /etc/init.d/05zram
 	echo "echo $ZRAMSIZE > /sys/block/zram0/disksize" >> /etc/init.d/05zram
 	echo "mkswap /dev/block/zram0" >> /etc/init.d/05zram
