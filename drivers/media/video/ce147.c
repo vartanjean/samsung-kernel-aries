@@ -26,8 +26,8 @@
 #define	FORMAT_FLAGS_COMPRESSED		0x3
 #define	SENSOR_JPEG_SNAPSHOT_MEMSIZE	0x360000
 
-/* #define CE147_DEBUG */
-/* #define CE147_INFO */
+#define CE147_DEBUG
+#define CE147_INFO
 
 #ifdef CE147_DEBUG
 #define	ce147_msg	dev_err
