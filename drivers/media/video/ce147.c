@@ -2724,8 +2724,11 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 
 #ifdef CONFIG_SAMSUNG_FASCINATE
-       	case FLASH_MODE_TORCH_ON:
- 		ce147_buf_set_flash_manual[1] = 0x01;
+    case FLASH_MODE_TORCH:
+      ctrl->value = FLASH_MODE_TORCH_ON;
+   	case FLASH_MODE_TORCH_ON:
+    
+      ce147_buf_set_flash_manual[1] = 0x01;
  		break;
 
        	case FLASH_MODE_TORCH_OFF:
@@ -2748,12 +2751,13 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	}
 
 #ifdef CONFIG_SAMSUNG_FASCINATE
-        // set flash power
-        err = ce147_i2c_write_multi(client, CMD_SET_FLASH_POWER, ce147_buf_set_flash_power_control, ce147_len_set_flash_power_control);
-        if(err < 0){
-            dev_err(&client->dev, "%s: failed: i2c_write for set_flash_power\n", __func__);
-            return -EIO;
-        }
+  // set flash power
+  err = ce147_i2c_write_multi(client, CMD_SET_FLASH_POWER, ce147_buf_set_flash_power_control, ce147_len_set_flash_power_control);
+  if(err < 0){
+     dev_err(&client->dev, "%s: failed: i2c_write for set_flash_power\n", __func__);
+     return -EIO;
+  }
+  
 	//need to modify flash off for torch mode
 	if(ctrl->value == FLASH_MODE_TORCH_ON ||ctrl->value == FLASH_MODE_TORCH_OFF) {
 		err = ce147_i2c_write_multi(client, CMD_SET_FLASH_MANUAL, ce147_buf_set_flash_manual, ce147_len_set_flash_manual);
@@ -2761,16 +2765,16 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 			dev_err(&client->dev, "%s: failed: i2c_write for set_flash\n", __func__);
 			return -EIO;
 		}
-                ce147_msg(&client->dev, "%s: done, camcorder_flash: 0x%02x\n", __func__, ce147_buf_set_flash_manual[1]);
-        	}
-                else {
-                	err = ce147_i2c_write_multi(client, CMD_SET_FLASH, ce147_buf_set_flash, ce147_len_set_flash);
-                        if (err < 0) {
-                        		dev_err(&client->dev, "%s: failed: i2c_write for set_flash\n", __func__);
-                	return -EIO;
-                }
-        	ce147_msg(&client->dev, "%s: done, flash: 0x%02x\n", __func__, ce147_buf_set_flash[1]);
-        }
+    ce147_msg(&client->dev, "%s: done, camcorder_flash: 0x%02x\n", __func__, ce147_buf_set_flash_manual[1]);
+  }
+  else {
+   	err = ce147_i2c_write_multi(client, CMD_SET_FLASH, ce147_buf_set_flash, ce147_len_set_flash);
+    if (err < 0) {
+  	   dev_err(&client->dev, "%s: failed: i2c_write for set_flash\n", __func__);
+       return -EIO;
+    }
+   	ce147_msg(&client->dev, "%s: done, flash: 0x%02x\n", __func__, ce147_buf_set_flash[1]);
+  }
 #else
 	if (ctrl->value == FLASH_MODE_OFF) {
 		err = ce147_i2c_write_multi(client, CMD_SET_FLASH_MANUAL,
