@@ -5199,6 +5199,7 @@ static struct platform_device *aries_devices[] __initdata = {
 };
 
 static void check_bigmem(void) {
+
 	int bootmode = __raw_readl(S5P_INFORM6);
 	if ((bootmode == 7) || (bootmode == 9)) {
 		bigmem = true;
