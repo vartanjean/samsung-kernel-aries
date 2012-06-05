@@ -7,11 +7,11 @@ mem="cm"
 
 handy="i9000"
 
-build="Devil3_0.62""$rom"_"$handy"
+build="Devil3_0.66""$rom"_"$handy"
 
 scheduler="CFS"
 
-color="CMC"
+color="VC"
 
 light="BLN"
 if [ "$mem" = "cm" ]
@@ -29,6 +29,11 @@ echo "building kernel"
 if [ "$handy" = "i9000"  ] 
 then
 make aries_galaxysmtd_defconfig
+fi
+
+if [ "$handy" = "i9000B"  ] 
+then
+make aries_galaxysbmtd_defconfig
 fi
 
 if [ "$handy" = "cappy"  ] 
