@@ -93,8 +93,10 @@ fi
 #fi
 
 
-if $BB [ ! -d /system/lib/modules ]; then
-mkdir -p /system/lib/modules; fi
+if $BB [ ! -d /system/lib/modules ]; then 
+    $BB mkdir /system/lib/modules
+    $BB chmod 777 /system/lib/modules
+fi
 
 if $BB [ "`/busybox grep $KV /system/lib/modules/ansi_cprng.ko`" ] && [ "$CUR" == "$SAV" ]; then
     $BB echo "kernel files already installed, nothing to do"
