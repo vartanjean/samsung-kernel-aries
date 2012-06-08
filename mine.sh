@@ -1,7 +1,7 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
 
-rom=""
+rom="sense"
 
 mem="cm"
 
@@ -28,7 +28,12 @@ echo "building kernel"
 
 if [ "$handy" = "i9000"  ] 
 then
-make aries_galaxysmtd_defconfig
+	if [ "$rom" = "sense"  ] 
+	then
+	make sense_i9000_defconfig
+	else
+	make aries_galaxysmtd_defconfig
+	fi
 fi
 
 if [ "$handy" = "i9000B"  ] 
@@ -80,6 +85,12 @@ then
 find . -name "*.ko" -exec cp {} usr/fascinate_initramfs/files/modules/ \; 2>/dev/null || exit 1
 fi
 
+if [ "$rom" = "sense"  ] 
+then
+find . -name "*.ko" -exec cp {} usr/i9000_sense_initramfs/files/modules/ \; 2>/dev/null || exit 1
+fi
+
+
 make -j4 zImage
 
 echo "creating boot.img"
@@ -91,10 +102,6 @@ cp arch/arm/boot/zImage ./release/boot.img
 #release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
 #fi
 
-if [ "$rom" = "sense"  ] 
-then
-release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/sense/ramdisk.img release/ramdisks/sense/ramdisk-recovery.img
-fi
 echo "..."
 echo "boot.img ready"
 #rm arch/arm/boot/zImage
