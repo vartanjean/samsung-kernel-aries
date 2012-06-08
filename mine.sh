@@ -5,7 +5,7 @@ rom=""
 
 mem="cm"
 
-handy="fascinate"
+handy="i9000"
 
 build="Devil3_0.69""$rom"_"$handy"
 
