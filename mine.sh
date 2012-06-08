@@ -1,13 +1,15 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
 
-rom="sense"
+rom=""
 
 mem="cm"
 
 handy="i9000"
 
-build="Devil3_0.69""$rom"_"$handy"
+number="0.70"
+
+build="Devil3"_"$number""$rom"_"$handy"
 
 scheduler="CFS"
 
