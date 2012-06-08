@@ -5,9 +5,9 @@ rom=""
 
 mem="cm"
 
-handy="cappy"
+handy="fascinate"
 
-build="Devil3_0.67""$rom"_"$handy"
+build="Devil3_0.69""$rom"_"$handy"
 
 scheduler="CFS"
 
@@ -46,6 +46,11 @@ then
 make aries_vibrantmtd_defconfig
 fi
 
+if [ "$handy" = "fascinate"  ] 
+then
+make aries_fascinatemtd_defconfig
+fi
+
 # make -j4
 find . -name "*.ko" -exec rm -rf {} \; 2>/dev/null || exit 1
 make -j4 modules
@@ -68,6 +73,11 @@ fi
 if [ "$handy" = "vibrant"  ] 
 then
 find . -name "*.ko" -exec cp {} usr/vibrantmtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
+fi
+
+if [ "$handy" = "fascinate"  ] 
+then
+find . -name "*.ko" -exec cp {} usr/fascinate_initramfs/files/modules/ \; 2>/dev/null || exit 1
 fi
 
 make -j4 zImage
