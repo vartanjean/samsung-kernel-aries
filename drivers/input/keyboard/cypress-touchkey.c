@@ -32,6 +32,10 @@
 #include <linux/miscdevice.h>
 #include <linux/input/cypress-touchkey.h>
 
+#include <mach/gpio.h>
+#include <mach/gpio-aries.h>
+#include <mach/regs-gpio.h>
+
 #ifdef CONFIG_GENERIC_BLN
 #include <linux/bln.h>
 #endif
@@ -48,9 +52,12 @@
 
 #define DEVICE_NAME "cypress-touchkey"
 
+extern const unsigned long touch_int_flt_width;
+void touch_key_set_int_flt( unsigned long width );
+
 int bl_on = 0;
 static DEFINE_SEMAPHORE(enable_sem);
-static DEFINE_SEMAPHORE(i2c_sem);
+//static DEFINE_SEMAPHORE(i2c_sem);
 
 struct cypress_touchkey_devdata *bl_devdata;
 
@@ -82,7 +89,7 @@ static int i2c_touchkey_read_byte(struct cypress_touchkey_devdata *devdata,
 	int ret;
 	int retry = 2;
 
-	down(&i2c_sem);
+//	down(&i2c_sem);
 
 	while (true) {
 		ret = i2c_smbus_read_byte(devdata->client);
@@ -99,7 +106,7 @@ static int i2c_touchkey_read_byte(struct cypress_touchkey_devdata *devdata,
 		msleep(10);
 	}
 
-	up(&i2c_sem);
+//	up(&i2c_sem);
 
 	return ret;
 }
@@ -110,7 +117,7 @@ static int i2c_touchkey_write_byte(struct cypress_touchkey_devdata *devdata,
 	int ret;
 	int retry = 2;
 
-	down(&i2c_sem);
+//	down(&i2c_sem);
 
 	while (true) {
 		ret = i2c_smbus_write_byte(devdata->client, val);
@@ -126,7 +133,7 @@ static int i2c_touchkey_write_byte(struct cypress_touchkey_devdata *devdata,
 		msleep(10);
 	}
 
-	up(&i2c_sem);
+//	up(&i2c_sem);
 
 	return ret;
 }
@@ -188,7 +195,10 @@ static int recovery_routine(struct cypress_touchkey_devdata *devdata)
 		ret = i2c_touchkey_read_byte(devdata, &data);
 		if (!ret) {
 			if (!devdata->is_sleeping)
-				enable_irq(irq_eint);
+		      	{
+         		enable_irq(irq_eint);
+        		touch_key_set_int_flt( touch_int_flt_width );
+      			}
 			goto out;
 		}
 		dev_err(&devdata->client->dev, "%s: i2c transfer error retry = "
@@ -208,12 +218,23 @@ extern unsigned int touch_state_val;
 
 static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 {
-	u8 data;
+	u8 data = 0xff;
 	int i;
 	int ret;
 	int scancode;
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
 
+  for ( i = 0; i < 10; ++i )
+  {
+    ret = gpio_get_value(_3_GPIO_TOUCH_INT);
+  
+    if ( ret & 1 )
+    {
+      // the int pin is high on a falling edge triggered interrupt. Something ain't right here.
+      // probably EMI / phantom key press.  So throw it away.
+      goto err;
+    }
+  }
 	ret = i2c_touchkey_read_byte(devdata, &data);
 	if (ret || (data & ESD_STATE_MASK)) {
 		ret = recovery_routine(devdata);
@@ -257,8 +278,10 @@ static irqreturn_t touchkey_interrupt_handler(int irq, void *touchkey_devdata)
 {
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
 
-	if (devdata->is_powering_on) {
-		dev_dbg(&devdata->client->dev, "%s: ignoring spurious boot "
+	int i = gpio_get_value(_3_GPIO_TOUCH_INT);
+
+  	if ( (i & 1) || devdata->is_powering_on) {
+    	dev_dbg(&devdata->client->dev, "%s: ignoring spurious "
 					"interrupt\n", __func__);
 		return IRQ_HANDLED;
 	}
@@ -363,6 +386,7 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 	}
 	devdata->is_dead = false;
 	enable_irq(devdata->client->irq);
+	touch_key_set_int_flt( touch_int_flt_width );
 	devdata->is_powering_on = false;
 	devdata->is_sleeping = false;
 
@@ -589,6 +613,8 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 		dev_err(dev, "%s: Can't allocate irq.\n", __func__);
 		goto err_req_irq;
 	}
+
+	touch_key_set_int_flt( touch_int_flt_width );
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	devdata->early_suspend.suspend = cypress_touchkey_early_suspend;
