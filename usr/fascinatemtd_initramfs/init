@@ -126,7 +126,7 @@ else
     $BB mv /files/hw/* /system/lib/hw/
     $BB chmod 644 /system/lib/hw/lights.aries.so
 
-    $BB mount -t ext4 /dev/block/mmcblk0p2 /data
+    $BB mount -t ext4 /dev/block/mmcblk0p1 /data
     if $BB [ -f /data/local/logger.ko ]; then
 	$BB echo "found /data/local/logger.ko, updating..."
 	$BB cp /system/lib/modules/logger.ko /data/local/logger.ko
@@ -169,7 +169,7 @@ else
 
 ################ apply bigmem at first boot ##################################################################
 
-    $BB mount -t ext4 /dev/block/mmcblk0p2 /data
+    $BB mount -t ext4 /dev/block/mmcblk0p1 /data
 	bigmem=`$BB cat /data/local/devil/bigmem`
 	$BB echo "$bigmem"
 	if $BB [ -e /data/local/devil/bigmem ] ; then
