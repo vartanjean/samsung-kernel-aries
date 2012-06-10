@@ -7,7 +7,7 @@ mem="cm"
 
 handy="i9000"
 
-number="0.70"
+number="0.72"
 
 build="Devil3"_"$number""$rom"_"$handy"
 
