@@ -94,7 +94,7 @@ fi
 
 
 if $BB [ ! -d /system/lib/modules ]; then 
-    $BB mkdir /system/lib/modules
+    $BB mkdir -p /system/lib/modules
     $BB chmod 777 /system/lib/modules
 fi
 
@@ -137,7 +137,7 @@ else
     
     if $BB [ ! -d /system/etc/init.d ]; then 
 	$BB echo "making init.d"
-	$BB mkdir /system/etc/init.d
+	$BB mkdir -p /system/etc/init.d
 	$BB chmod 777 /system/etc/init.d
     fi
 
