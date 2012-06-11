@@ -1,11 +1,11 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
 
-rom=""
+rom="sense"
 
 mem="cm"
 
-handy="i9000"
+handy="cappy"
 
 number="0.72"
 
@@ -45,7 +45,12 @@ fi
 
 if [ "$handy" = "cappy"  ] 
 then
-make aries_captivatemtd_defconfig
+	if [ "$rom" = "sense"  ] 
+	then
+	make sense_i9000_defconfig
+	else
+	make aries_captivatemtd_defconfig
+	fi
 fi
 
 if [ "$handy" = "vibrant"  ] 
@@ -87,9 +92,14 @@ then
 find . -name "*.ko" -exec cp {} usr/fascinate_initramfs/files/modules/ \; 2>/dev/null || exit 1
 fi
 
-if [ "$rom" = "sense"  ] 
+if [ "$rom" = "sense"  ] && [ "$handy" = "i9000"  ] 
 then
 find . -name "*.ko" -exec cp {} usr/i9000_sense_initramfs/files/modules/ \; 2>/dev/null || exit 1
+fi
+
+if [ "$rom" = "sense"  ] && [ "$handy" = "cappy"  ] 
+then
+find . -name "*.ko" -exec cp {} usr/cappy_sense_initramfs/files/modules/ \; 2>/dev/null || exit 1
 fi
 
 
