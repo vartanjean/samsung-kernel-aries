@@ -1,13 +1,13 @@
 #!/bin/sh
 rm arch/arm/boot/zImage
 
-rom="sense"
+rom=""
 
 mem="cm"
 
-handy="cappy"
+handy="i9000"
 
-number="0.72"
+number="0.73"
 
 build="Devil3"_"$number""$rom"_"$handy"
 
