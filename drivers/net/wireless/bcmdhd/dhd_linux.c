@@ -328,7 +328,7 @@ module_param(dhd_console_ms, uint, 0644);
 /* Controls Status off wiffi Power on SleepMode
    sys/module/bcmdhd/parameters/uiFastWifi      */
 #if defined(CONFIG_HAS_EARLYSUSPEND)
-uint uiFastWifi = 0;
+uint uiFastWifi = 1;
 module_param(uiFastWifi, uint, 0664);
 #endif /* defined(CONFIG_HAS_EARLYSUSPEND) */
 
@@ -535,12 +535,13 @@ static void dhd_set_packet_filter(int value, dhd_pub_t *dhd)
 static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 {
 	int power_mode = PM_MAX;
-	/* wl_pkt_filter_enable_t	enable_parm; */
+	/* wl_pkt_filter_enable_t enable_parm; */
+
 	char iovbuf[32];
 	int bcn_li_dtim = 3;
 	uint roamvar = 1;
 
-  /* Don't allow low power is uiFastWifi is set */
+  /* Don't allow low power if uiFastWifi is set */
   if (uiFastWifi == 1)
           power_mode = PM_FAST;
 
