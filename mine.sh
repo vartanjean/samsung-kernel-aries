@@ -89,7 +89,7 @@ fi
 
 if [ "$handy" = "fascinate"  ] 
 then
-find . -name "*.ko" -exec cp {} usr/fascinate_initramfs/files/modules/ \; 2>/dev/null || exit 1
+find . -name "*.ko" -exec cp {} usr/fascinatemtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
 fi
 
 if [ "$rom" = "sense"  ] && [ "$handy" = "i9000"  ] 

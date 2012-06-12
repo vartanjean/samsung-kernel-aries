@@ -50,7 +50,7 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 find . -name "*.ko" -exec rm -rf {} \; 2>/dev/null || exit 1
 make -j4 modules
 
-find . -name "*.ko" -exec cp {} usr/fascinate_initramfs/files/modules/ \; 2>/dev/null || exit 1
+find . -name "*.ko" -exec cp {} usr/fascinatemtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
 
 make -j4 zImage
 
@@ -98,7 +98,7 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 find . -name "*.ko" -exec rm -rf {} \; 2>/dev/null || exit 1
 make -j4 modules
 
-find . -name "*.ko" -exec cp {} usr/fascinate_initramfs/files/modules/ \; 2>/dev/null || exit 1
+find . -name "*.ko" -exec cp {} usr/fascinatemtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
 
 make -j4 zImage
 

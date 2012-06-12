@@ -170,8 +170,6 @@ else
 ################ apply bigmem at first boot ##################################################################
 
     $BB mount -t ext4 /dev/block/mmcblk0p2 /data
-	bigmem=`$BB cat /data/local/devil/bigmem`
-	$BB echo "$bigmem"
 	if $BB [ -e /data/local/devil/bigmem ] ; then
 	bigmem=`$BB cat /data/local/devil/bigmem`
 		if $BB grep -q bootmode=0 /proc/cmdline; then
@@ -181,6 +179,8 @@ else
 				/system/bin/toolbox reboot
 			fi
 		fi
+	else
+	$BB echo "no bigmem values found"
 	fi
     $BB umount /data
 ##############################################################################################################	
