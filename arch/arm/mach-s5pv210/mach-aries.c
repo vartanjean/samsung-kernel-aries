@@ -153,27 +153,61 @@ EXPORT_SYMBOL(bigmem);
 bool xlmem;
 EXPORT_SYMBOL(xlmem);
 
+bool refreshrate;
+EXPORT_SYMBOL(refreshrate);
+
 static int aries_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
 {
 	int mode = REBOOT_MODE_NONE;
-	if (bigmem)
-		mode = 7;
-	else if (xlmem)
-		mode = 3;
+	if (bigmem){
+		if(refreshrate)
+			mode = 17;
+		else
+			mode = 7;
+	}
+	else if (xlmem){
+		if(refreshrate)
+			mode = 13;
+		else
+			mode = 3;
+	}
+	else if(refreshrate)
+			mode = 11;
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
-			if (bigmem)
-				mode = 9;
-			else if (xlmem)
-				mode = 5;
+			if (bigmem){
+				if(refreshrate)
+					mode = 19;
+				else
+					mode = 9;
+			}
+			else if (xlmem){
+				if(refreshrate)
+					mode = 15;
+				else					
+					mode = 5;
+			}
 			else
+				if(refreshrate)
+					mode = 12;
+				else
 				mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
 		else {
-			if (bigmem)
-				mode = 7;
-			else if (xlmem)
-				mode = 3;
+			if (bigmem){
+				if(refreshrate)
+					mode = 17;
+				else
+					mode = 7;
+			}
+			else if (xlmem){
+				if(refreshrate)
+					mode = 13;
+				else
+					mode = 3;
+			}
+			else if(refreshrate)
+					mode = 11;
 			else
 				mode = REBOOT_MODE_NONE;
 		}
@@ -314,7 +348,7 @@ static struct s3cfb_lcd s6e63m0 = {
 	.p_width = 52,
 	.p_height = 86,
 	.bpp = 24,
-	.freq = 60,
+//	.freq = 60,
 
 	.timing = {
 		.h_fp = 16,
@@ -5217,17 +5251,30 @@ static struct platform_device *aries_devices[] __initdata = {
 	&samsung_asoc_dma,
 };
 
+static void check_refreshrate(void) {
+  int bootmode = __raw_readl(S5P_INFORM6);
+  if ((bootmode == 17) || (bootmode == 19) || (bootmode == 13) || (bootmode == 15) || (bootmode == 11)) {
+    	refreshrate = true;
+	s6e63m0.freq= 60;
+  }
+  else {
+    	refreshrate = false;
+	s6e63m0.freq= 56;
+  }
+}
+
+
 static void check_bigmem(void) {
 
 	int bootmode = __raw_readl(S5P_INFORM6);
-	if ((bootmode == 7) || (bootmode == 9)) {
+	if ((bootmode == 7) || (bootmode == 9) || (bootmode == 17) || (bootmode == 19)) {
 		bigmem = true;
 		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM;
 		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM;
 		aries_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0_XL; 
 		aries_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1_XL;
 	}
-	else if ((bootmode == 3) || (bootmode == 5)) {
+	else if ((bootmode == 3) || (bootmode == 5) || (bootmode == 13) || (bootmode == 15)) {
 		xlmem = true;
 		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
 		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
@@ -5253,6 +5300,7 @@ static void __init aries_map_io(void)
 	#ifndef CONFIG_S5P_HIGH_RES_TIMERS
 		s5p_set_timer_source(S5P_PWM3, S5P_PWM4);
 	#endif
+	check_refreshrate();
 	check_bigmem();
 	s5p_reserve_bootmem(aries_media_devs,
 		ARRAY_SIZE(aries_media_devs), S5P_RANGE_MFC);
@@ -5439,7 +5487,7 @@ static void __init aries_inject_cmdline(void) {
 
 	// Only write bootmode when less than 10 to prevent confusion with watchdog
 	// reboot (0xee = 238)
-	if (bootmode < 10) {
+	if (bootmode < 20) {
 		size += sprintf(new_command_line + size, " bootmode=%d", bootmode);
 	}
 
