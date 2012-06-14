@@ -246,10 +246,7 @@ int oc_value = get_oc_value();
 
 if (ch == DMC1)
 	{
-//	if (selective_oc == 0)
         __raw_writel((tmp1 * oc_value) / 100, reg);
-//	else
-//	__raw_writel(tmp1, reg);
 	}
   else
       __raw_writel(tmp1, reg);
@@ -726,12 +723,12 @@ static void liveoc_init(void)
     return;
 }
 
-void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq, unsigned int selective_oc)
+void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq)
 {
     int i, index, index_min = L0, index_max = L0, divider;
 
     unsigned long fclk;
-
+pr_info("LIVEOC oc-value set to %u\n", oc_value);
     struct cpufreq_policy * policy = cpufreq_cpu_get(0);
 
     mutex_lock(&set_freq_lock);
@@ -747,10 +744,6 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 
 	if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
 	    index_max = index;
-//if(selective_oc == 0)
-//	fclk = (original_fclk[index] * oc_value) / 100;
-
-//else{
 
 	if((original_fclk[index] ) / (clkdiv_val[index][0] + 1) < oc_low_freq)
 	fclk = original_fclk[index];
@@ -758,7 +751,7 @@ void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int
 	fclk = original_fclk[index];
 	else
 	fclk = (original_fclk[index] * oc_value) / 100;	
-//}
+
 	s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
 
 	if (original_fclk[index] / (clkdiv_val[index][0] + 1) == SLEEP_FREQ)
@@ -1178,46 +1171,7 @@ static ssize_t bus_limit_store(struct device * dev, struct device_attribute * at
 
     return size;
 }
-/*
-static ssize_t bus_limit_automatic_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-  return sprintf(buf,"%u\n",(bus_limit_automatic ? 1 : 0));
-}
 
-static ssize_t bus_limit_automatic_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
-{
-  unsigned short state;
-  if (sscanf(buf, "%hu", &state) == 1)
-  {
-    bus_limit_enable = false;
-    bus_limit_automatic = state == 0 ? false : true;    
-  }
-  return size;
-}
-EXPORT_SYMBOL(bus_limit_automatic);
-
-
-static ssize_t bus_limit_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-  return sprintf(buf,"%u\n",(bus_limit_enable ? 1 : 0));
-}
-
-static ssize_t bus_limit_enable_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
-{
-  unsigned short state;
-  if (sscanf(buf, "%hu", &state) == 1)
-  {
-    bus_limit_enable = state == 0 ? false : true;
-    bus_limit_automatic = false;
-    if (bus_limit_enable) {
-      s5pv210_bus_limit_true();
-    } else {
-      s5pv210_bus_limit_false();
-    }    
-  }
-  return size;
-}
-*/
 
 static ssize_t user_max_read(struct device * dev, struct device_attribute * attr, char * buf)
 {
