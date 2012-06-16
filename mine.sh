@@ -5,7 +5,7 @@ rom=""
 
 mem="cm"
 
-handy="cappy"
+handy="i9000"
 
 number="0.76"
 

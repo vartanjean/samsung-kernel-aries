@@ -158,6 +158,7 @@ if $BB test -e /cache/.startrecovery ||
 	$BB grep -q bootmode=15 /proc/cmdline; then
     # recovery boot
     $BB echo "found recovery command, preparing boot..."
+	$BB rm -fr /cache/.startrecovery
 
 if $BB [ -e /cache/twrp ] ; then
     $BB echo "moving twrp to /"
