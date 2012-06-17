@@ -371,7 +371,7 @@ static unsigned long uksm_pages_unshared;
  * Number of pages ksmd should scan in one batch. This is the top speed for
  * richly duplicated areas.
  */
-static unsigned long uksm_scan_batch_pages = 60000;
+static unsigned long uksm_scan_batch_pages = 30000;
 
 /* Milliseconds ksmd should sleep between batches */
 static unsigned int uksm_sleep_jiffies;
@@ -423,7 +423,7 @@ static u64 uksm_sleep_times;
 
 #define UKSM_RUN_STOP	0
 #define UKSM_RUN_MERGE	1
-static unsigned int uksm_run = UKSM_RUN_MERGE;
+static unsigned int uksm_run = 0;
 
 static DECLARE_WAIT_QUEUE_HEAD(uksm_thread_wait);
 static DEFINE_MUTEX(uksm_thread_mutex);
