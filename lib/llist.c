@@ -30,6 +30,26 @@
 #include <asm/system.h>
 
 /**
+ * llist_add - add a new entry
+ * @new:	new entry to be added
+ * @head:	the head for your lock-less list
+ */
+void llist_add(struct llist_node *new, struct llist_head *head)
+{
+	struct llist_node *entry;
+
+#ifndef CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
+	BUG_ON(in_nmi());
+#endif
+
+	do {
+		entry = head->first;
+		new->next = entry;
+	} while (cmpxchg(&head->first, entry, new) != entry);
+}
+EXPORT_SYMBOL_GPL(llist_add);
+
+/**
  * llist_add_batch - add several linked entries in batch
  * @new_first:	first entry in batch to be added
  * @new_last:	last entry in batch to be added
@@ -79,3 +99,21 @@ struct llist_node *llist_del_first(struct llist_head *head)
 
 	return entry;
 }
+EXPORT_SYMBOL_GPL(llist_del_first);
+
+/**
+ * llist_del_all - delete all entries from lock-less list
+ * @head:	the head of lock-less list to delete all entries
+ *
+ * If list is empty, return NULL, otherwise, delete all entries and
+ * return the pointer to the first entry.
+ */
+struct llist_node *llist_del_all(struct llist_head *head)
+{
+#ifndef CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
+	BUG_ON(in_nmi());
+#endif
+
+	return xchg(&head->first, NULL);
+}
+EXPORT_SYMBOL_GPL(llist_del_all);
