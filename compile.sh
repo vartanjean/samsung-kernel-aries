@@ -13,6 +13,11 @@ cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
 cp  usr/init_files/init_gsm usr/galaxysmtd_initramfs/init
 cp  usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/ics_init/sbin/boot-patch.sh
 
+rm -rf usr/galaxysbmtd_initramfs/files/*
+cp -r  usr/init_files/files/ usr/galaxysbmtd_initramfs/
+cp  usr/init_files/init_gsm usr/galaxysbmtd_initramfs/init
+cp  usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/ics_init/sbin/boot-patch.sh
+
 rm -rf usr/captivatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/captivatemtd_initramfs/
 cp  usr/init_files/init_gsm usr/captivatemtd_initramfs/init
