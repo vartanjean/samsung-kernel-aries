@@ -158,6 +158,7 @@ if $BB test -e /cache/.startrecovery ||
 	$BB grep -q bootmode=15 /proc/cmdline; then
     # recovery boot
     $BB echo "found recovery command, preparing boot..."
+	$BB rm -fr /cache/.startrecovery
 
 if $BB [ -e /cache/twrp ] ; then
     $BB echo "moving twrp to /"
@@ -177,7 +178,7 @@ slim=0
 
 [ "`$BB grep -i Slim /system/build.prop`" ] && slim=1
 
-	$BB mount -t ext4 /dev/block/mmcblk0p1 /data
+    $BB mount -t ext4 /dev/block/mmcblk0p1 /data
 	if $BB [ -e /data/local/devil/bigmem ] ; then
 	bigmem=`$BB cat /data/local/devil/bigmem`
 		if $BB grep -q bootmode=0 /proc/cmdline; then

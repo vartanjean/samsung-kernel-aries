@@ -90,15 +90,28 @@ swap_use=`cat /data/local/devil/swap_use`
 		if [ -e "/system/etc/fstab" ]; then
 		rm /system/etc/fstab
 		fi
-	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
-	ZRAMSIZE=$(($RAMSIZE*200))
+	if [ -e "/data/local/devil/zram_size" ]; then
+	RAMSIZE=`cat /data/local/devil/zram_size`
+	else RAMSIZE=75
+	fi
+
+	if $BB [ "$RAMSIZE" -eq 50 ];then echo "Zram: found vaild RAMSIZE: <$RAMSIZE mb>" 
+	elif $BB [ "$RAMSIZE" -eq 75 ];then echo "Zram: found vaild RAMSIZE: <$RAMSIZE mb>" 
+	elif $BB [ "$RAMSIZE" -eq 100 ];then echo "Zram: found vaild RAMSIZE: <$RAMSIZE mb>" 
+	elif $BB [ "$RAMSIZE" -eq 150 ];then echo "Zram: found vaild RAMSIZE: <$RAMSIZE mb>" 
+	else RAMSIZE=75
+	echo "Zram: set RAMSIZE to: <$RAMSIZE mb>" 
+	fi
+	ZRAMSIZE=$(($RAMSIZE*1024*1000))
+#	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
+#	ZRAMSIZE=$(($RAMSIZE*200))
 	echo "#!/sbin/bb/busybox ash" > /etc/init.d/05zram
 #	echo "insmod /system/lib/modules/zram.ko" >> /etc/init.d/05zram
 	echo "echo 1 > /sys/block/zram0/reset" >> /etc/init.d/05zram
 	echo "echo $ZRAMSIZE > /sys/block/zram0/disksize" >> /etc/init.d/05zram
 	echo "mkswap /dev/block/zram0" >> /etc/init.d/05zram
 	echo "swapon /dev/block/zram0" >> /etc/init.d/05zram
-	echo "echo 60 > /proc/sys/vm/swappiness" >> /system/etc/init.d/05zram
+	echo "echo 70 > /proc/sys/vm/swappiness" >> /system/etc/init.d/05zram
 	echo 'echo "500,1000,20000,20000,20000,25000" > /sys/module/lowmemorykiller/parameters/minfree'  >> /etc/init.d/05zram
 	chmod 555 /etc/init.d/05zram
 	echo 60 > /proc/sys/vm/swappiness
@@ -140,6 +153,7 @@ echo; echo "profile"
 echo; echo "set cpu max freq while screen off"
 if [ -e "/data/local/devil/user_min_max_enable" ];then
    min_max_enable=`cat /data/local/devil/user_min_max_enable`
+echo $min_max_enable > /sys/class/misc/devil_idle/user_min_max_enable
    if [ "$min_max_enable" -eq 1 ]; then
    	if [ -e "/data/local/devil/screen_off_max" ];then
 	screen_off_max=`cat /data/local/devil/screen_off_max`

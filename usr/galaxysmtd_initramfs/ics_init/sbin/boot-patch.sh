@@ -102,7 +102,7 @@ swap_use=`cat /data/local/devil/swap_use`
 	else RAMSIZE=75
 	echo "Zram: set RAMSIZE to: <$RAMSIZE mb>" 
 	fi
-	ZRAMSIZE=$(($RAMSIZE*1024*1000))
+	ZRAMSIZE=$(($RAMSIZE*1024*1024))
 #	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
 #	ZRAMSIZE=$(($RAMSIZE*200))
 	echo "#!/sbin/bb/busybox ash" > /etc/init.d/05zram
@@ -111,10 +111,10 @@ swap_use=`cat /data/local/devil/swap_use`
 	echo "echo $ZRAMSIZE > /sys/block/zram0/disksize" >> /etc/init.d/05zram
 	echo "mkswap /dev/block/zram0" >> /etc/init.d/05zram
 	echo "swapon /dev/block/zram0" >> /etc/init.d/05zram
-	echo "echo 70 > /proc/sys/vm/swappiness" >> /system/etc/init.d/05zram
+#	echo "echo 70 > /proc/sys/vm/swappiness" >> /system/etc/init.d/05zram
 	echo 'echo "500,1000,20000,20000,20000,25000" > /sys/module/lowmemorykiller/parameters/minfree'  >> /etc/init.d/05zram
 	chmod 555 /etc/init.d/05zram
-	echo 60 > /proc/sys/vm/swappiness
+	echo 70 > /proc/sys/vm/swappiness
 	echo "zram enabled and activated"
 	else
 	echo "zram and swap not activated"	
@@ -217,13 +217,22 @@ echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 fi
 
 
-# debug output
-cat_msg_sysfile "max           : " /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-cat_msg_sysfile "gov           : " /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-#cat_msg_sysfile "UV_mv         : " /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-#cat_msg_sysfile "states_enabled: " /sys/devices/system/cpu/cpu0/cpufreq/states_enabled_table
-echo
-#echo "freq/voltage  : ";cat /sys/devices/system/cpu/cpu0/cpufreq/frequency_voltage_table
+# uksm
+echo; echo "uksm"
+	if [ -e "/data/local/devil/uksm" ];then
+	uksm=`cat /data/local/devil/uksm`
+		if [ "$uksm" -eq 1 ]; then
+    			echo "uksm: found vaild uksm value: <enabled>";
+      			echo 1 > /sys/kernel/mm/uksm/run;
+		else
+    			echo "uksm: found vaild uksm value: <disabled>";
+      			echo 0 > /sys/kernel/mm/uksm/run;
+		fi
+	else
+    		echo "uksm not found: doing nothing";
+      		echo 0 > /sys/kernel/mm/uksm/run;
+    		echo 0 > /data/local/devil/uksm;
+	fi
 
 
 # vm tweaks

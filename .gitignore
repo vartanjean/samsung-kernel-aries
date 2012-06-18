@@ -33,7 +33,7 @@ modules.builtin
 *.patch
 *.gcno
 
-init/version.backup
+/init/version.backup
 
 #
 # Top-level generic files
