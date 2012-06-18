@@ -102,7 +102,7 @@ swap_use=`cat /data/local/devil/swap_use`
 	else RAMSIZE=75
 	echo "Zram: set RAMSIZE to: <$RAMSIZE mb>" 
 	fi
-	ZRAMSIZE=$(($RAMSIZE*1024))
+	ZRAMSIZE=$(($RAMSIZE*1024*1000))
 #	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
 #	ZRAMSIZE=$(($RAMSIZE*200))
 	echo "#!/sbin/bb/busybox ash" > /etc/init.d/05zram
