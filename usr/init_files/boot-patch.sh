@@ -60,6 +60,10 @@ busybox mount -o rw,remount /system
 	$BB chmod 777 /data/local/devil
     fi
 
+if [ -e "/system/vendor/bin/samsung-gpsd" ]; then
+    echo 2 > /proc/sys/kernel/randomize_va_space
+fi
+
 #copy use normal swap or zram:
 if [ -e "/data/local/devil/swap_use" ]; then
 swap_use=`cat /data/local/devil/swap_use`
