@@ -35,7 +35,7 @@ cp  usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/ics_init/sbin/boot-p
 
 target="$1"
 
-number="0.79"
+number="0.81"
 if [ "$target" = "i9000"  ] 
 then
 ./i9000.sh "${number}"
