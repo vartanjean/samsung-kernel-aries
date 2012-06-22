@@ -193,8 +193,9 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= arm
-CROSS_COMPILE	?= ../../prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-#CROSS_COMPILE	?= /opt/toolchains/linaro2/bin/arm-linux-gnueabihf-
+#CROSS_COMPILE	?= ../../prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
+#CROSS_COMPILE	?= /opt/toolchains/linaro/bin/arm-eabi-
+CROSS_COMPILE	?= /opt/toolchains/linaro2/bin/arm-linux-gnueabihf-
 #CROSS_COMPILE	?= /opt/toolchains/arm-2011.03/bin/arm-none-linux-gnueabi-
 #CROSS_COMPILE	?= /opt/toolchains/arm-2011.03/bin/arm-none-linux-gnueabi-
 #CROSS_COMPILE	?= /opt/toolchains/arm-2009q3_arm/bin/arm-none-eabi-
@@ -377,6 +378,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
+		   -mno-unaligned-access \
 		   -mtune=cortex-a8 -mfpu=neon -ftree-vectorize -mfloat-abi=softfp
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
