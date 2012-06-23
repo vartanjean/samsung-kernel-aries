@@ -5262,7 +5262,7 @@ static int __init uksm_init(void)
 	int err;
 	unsigned int sr = uksm_min_scan_ratio;
 
-	uksm_sleep_jiffies = msecs_to_jiffies(10);
+	uksm_sleep_jiffies = msecs_to_jiffies(1000);
 
 	uksm_scan_ladder_size = 1;
 	while (sr < UKSM_SCAN_RATIO_MAX) {
