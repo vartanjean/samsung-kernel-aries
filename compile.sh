@@ -10,7 +10,7 @@ export USE_CCACHE=1
 
 target="$1"
 
-number="0.85"
+number="0.86"
 
 rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
