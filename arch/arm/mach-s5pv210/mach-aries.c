@@ -5255,11 +5255,11 @@ static void check_refreshrate(void) {
   int bootmode = __raw_readl(S5P_INFORM6);
   if ((bootmode == 17) || (bootmode == 19) || (bootmode == 13) || (bootmode == 15) || (bootmode == 11)) {
     	refreshrate = true;
-	s6e63m0.freq = 56;
+	s6e63m0.freq= 60;
   }
   else {
     	refreshrate = false;
-	s6e63m0.freq = 60;
+	s6e63m0.freq= 56;
   }
 }
 
