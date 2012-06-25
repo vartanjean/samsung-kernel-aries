@@ -185,8 +185,6 @@ slim=0
 				/system/bin/toolbox reboot
 			fi
 		fi
-	else
-	$BB echo "no bigmem values found"
 	fi
     $BB umount /data
 ##############################################################################################################	
