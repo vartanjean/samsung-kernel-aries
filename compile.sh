@@ -11,7 +11,7 @@ export USE_CCACHE=1
 
 target="$1"
 
-number="0.87"
+number="0.88"
 
 rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
@@ -78,10 +78,10 @@ then
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
 	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
 	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o
-	echo "Built-in.o modem files for GSM copied"
+	echo "Built-in.o modem files for CDMA copied"
 	else
 	echo "***** built-in.o.gcc4.4.3_cdma files are missing *****"
-	echo "******** Please build old GSM *********"
+	echo "******** Please build old CDMA *********"
 	exit 1
 	fi
 fi
