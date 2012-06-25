@@ -4,38 +4,44 @@ export USE_CCACHE=1
 
         CCACHE=ccache
         CCACHE_COMPRESS=1
-        CCACHE_DIR=/home/dominik/android/ccache
-        export CCACHE_DIR CCACHE_COMPRESS
+        CCACHE_DIR="/home/dominik/android/ccache"
+	CCACHE_LOGFILE="/home/dominik/android/ccache/ccache-log"
+        export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
 
 target="$1"
 
-number="0.86"
+number="0.87"
 
 rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
 cp  usr/init_files/init_gsm usr/galaxysmtd_initramfs/init
 cp  usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/ics_init/sbin/boot-patch.sh
+cp  usr/init_files/datafix.sh usr/galaxysmtd_initramfs/ics_init/sbin/datafix.sh
 
 rm -rf usr/galaxysbmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysbmtd_initramfs/
 cp  usr/init_files/init_gsm usr/galaxysbmtd_initramfs/init
 cp  usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/ics_init/sbin/boot-patch.sh
+cp  usr/init_files/datafix.sh usr/galaxysbmtd_initramfs/ics_init/sbin/datafix.sh
 
 rm -rf usr/captivatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/captivatemtd_initramfs/
 cp  usr/init_files/init_gsm usr/captivatemtd_initramfs/init
 cp  usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/ics_init/sbin/boot-patch.sh
+cp  usr/init_files/datafix.sh usr/captivatemtd_initramfs/ics_init/sbin/datafix.sh
 
 rm -rf usr/vibrantmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/vibrantmtd_initramfs/
 cp  usr/init_files/init_gsm usr/vibrantmtd_initramfs/init
 cp  usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/ics_init/sbin/boot-patch.sh
+cp  usr/init_files/datafix.sh usr/vibrantmtd_initramfs/ics_init/sbin/datafix.sh
 
 rm -rf usr/fascinatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/fascinatemtd_initramfs/
 cp  usr/init_files/init_cdma usr/fascinatemtd_initramfs/init
 cp  usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/ics_init/sbin/boot-patch.sh
+cp  usr/init_files/datafix.sh usr/fascinatemtd_initramfs/ics_init/sbin/datafix.sh
 
 
 if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 

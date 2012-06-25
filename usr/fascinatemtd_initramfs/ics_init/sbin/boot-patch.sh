@@ -131,6 +131,21 @@ echo 0 > /data/local/devil/swap_use
 echo 0 > /proc/sys/vm/swappiness	
 fi
 
+# load datafix
+echo; echo "datafix"
+echo "Many thx to Wendigogo for his great script"
+echo "please visit his thread: http://forum.xda-developers.com/showthread.php?t=1665742"
+if [ -e "/data/local/devil/datafix" ]; then
+	if [ -f /data/local/datafix ]; then
+	rm /data/local/datafix
+	fi
+datafix=`cat /data/local/devil/datafix`
+	echo "datafix: found: <$datafix>";
+		if [ "$datafix" -eq 1 ]; then
+		./sbin/datafix.sh
+		fi
+fi
+
 # load profile
 echo; echo "profile"
 	if [ -e "/data/local/devil/profile" ];then
@@ -498,6 +513,17 @@ fi
 
 if [ -e /etc/init.d/S05swap ]; then
 rm /etc/init.d/S05swap
+fi
+
+echo; echo "swappiness"
+if [ -e "/data/local/devil/swappiness" ];then
+	swappiness=`cat /data/local/devil/swappiness`
+	if [ "$swappiness" -le 100 ] && [ "$swappiness" -ge 0 ];then
+    		echo "swappiness: found vaild swappiness value: <$swappiness>"
+    		echo $swappiness > /proc/sys/vm/swappiness
+	else
+		echo "swappiness: value has to be betwenn 0 and 100"
+	fi
 fi
 
 echo; echo "mount system ro"
