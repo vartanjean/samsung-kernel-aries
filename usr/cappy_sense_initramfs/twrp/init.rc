@@ -10,10 +10,10 @@ sysclktz 0
 loglevel 9
 
 # setup the global environment
-#    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin ## for cwm
-#    export LD_LIBRARY_PATH /vendor/lib:/system/lib ## for cwm
-    export PATH /sbin
-    export LD_LIBRARY_PATH .:/sbin
+#    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin # for cm9
+#    export LD_LIBRARY_PATH /vendor/lib:/system/lib # for cm9
+        export PATH /sbin # for twrp
+        export LD_LIBRARY_PATH .:/sbin # for twrp
     export ANDROID_BOOTLOGO 1
     export ANDROID_ROOT /system
     export ANDROID_ASSETS /system/app
@@ -22,7 +22,7 @@ loglevel 9
     export SECONDARY_STORAGE /mnt/emmc
     export ASEC_MOUNTPOINT /mnt/asec
     export LOOP_MOUNTPOINT /mnt/obb
-    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/framework2.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/HTCDev.jar:/system/framework/HTCExtension.jar:/system/framework/filterfw.jar:/system/framework/wimax.jar:/system/framework/com.htc.android.bluetooth.jar:/system/framework/android.supl.jar:/system/framework/com.orange.authentication.simcard.jar
+    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/core-junit.jar
 
 # symlink /misc to /etc for recovery
     symlink /misc /etc

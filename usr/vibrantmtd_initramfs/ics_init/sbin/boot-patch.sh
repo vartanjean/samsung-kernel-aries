@@ -55,7 +55,7 @@ echo; echo "mount"
 busybox mount -o rw,remount /system
 
     if $BB [ ! -d /data/local/devil ]; then 
-	$BB echo "making devil folder at /data/local"
+	$BB echo "creating devil folder at /data/local"
 	$BB mkdir /data/local/devil
 	$BB chmod 777 /data/local/devil
     fi
@@ -64,15 +64,32 @@ if [ -e "/system/vendor/bin/samsung-gpsd" ]; then
     echo 2 > /proc/sys/kernel/randomize_va_space
 fi
 
+#clean init.d from known files
 if [ -e "/cache/clean_initd" ]; then
+echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
 
-#copy use normal swap or zram:
+# load datafix
+if [ -e "/data/local/devil/datafix" ]; then
+	if [ -f /data/local/datafix ]; then
+	rm /data/local/datafix
+	fi
+datafix=`cat /data/local/devil/datafix`
+	echo "datafix: found: <$datafix>";
+		if [ "$datafix" -eq 1 ]; then
+echo; echo "datafix activated"
+echo "Many thx to Wendigogo for his great script"
+echo "please visit his thread: http://forum.xda-developers.com/showthread.php?t=1665742"
+		./sbin/datafix.sh
+		fi
+fi
+
+#use normal swap or zram:
 if [ -e "/data/local/devil/swap_use" ]; then
 swap_use=`cat /data/local/devil/swap_use`
 	if [ "$swap_use" -eq 1 ]; then
-
+	echo; echo "preparing for swap usage"
 	# Detect the swap partition
 	SWAP_PART=`fdisk -l /dev/block/mmcblk1 | grep swap | sed 's/\(mmcblk1p[0-9]*\).*/\1/'`
 
@@ -95,12 +112,14 @@ swap_use=`cat /data/local/devil/swap_use`
 		fi
 
 	elif [ "$swap_use" -eq 2 ]; then
+	echo; echo "preparing for zram usage"
 		if [ -e "/system/etc/fstab" ]; then
 		rm /system/etc/fstab
 		fi
 	if [ -e "/data/local/devil/zram_size" ]; then
 	RAMSIZE=`cat /data/local/devil/zram_size`
 	else RAMSIZE=75
+	echo $RAMSIZE > /data/local/devil/zram_size
 	fi
 
 	if $BB [ "$RAMSIZE" -eq 50 ];then echo "Zram: found vaild RAMSIZE: <$RAMSIZE mb>" 
@@ -111,15 +130,11 @@ swap_use=`cat /data/local/devil/swap_use`
 	echo "Zram: set RAMSIZE to: <$RAMSIZE mb>" 
 	fi
 	ZRAMSIZE=$(($RAMSIZE*1024*1024))
-#	RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
-#	ZRAMSIZE=$(($RAMSIZE*200))
 	echo "#!/sbin/bb/busybox ash" > /etc/init.d/05zram
-#	echo "insmod /system/lib/modules/zram.ko" >> /etc/init.d/05zram
 	echo "echo 1 > /sys/block/zram0/reset" >> /etc/init.d/05zram
 	echo "echo $ZRAMSIZE > /sys/block/zram0/disksize" >> /etc/init.d/05zram
 	echo "mkswap /dev/block/zram0" >> /etc/init.d/05zram
 	echo "swapon /dev/block/zram0" >> /etc/init.d/05zram
-#	echo "echo 70 > /proc/sys/vm/swappiness" >> /system/etc/init.d/05zram
 	echo 'echo "500,1000,20000,20000,20000,25000" > /sys/module/lowmemorykiller/parameters/minfree'  >> /etc/init.d/05zram
 	chmod 555 /etc/init.d/05zram
 	echo 70 > /proc/sys/vm/swappiness
@@ -135,20 +150,7 @@ echo 0 > /data/local/devil/swap_use
 echo 0 > /proc/sys/vm/swappiness	
 fi
 
-# load datafix
-echo; echo "datafix"
-echo "Many thx to Wendigogo for his great script"
-echo "please visit his thread: http://forum.xda-developers.com/showthread.php?t=1665742"
-if [ -e "/data/local/devil/datafix" ]; then
-	if [ -f /data/local/datafix ]; then
-	rm /data/local/datafix
-	fi
-datafix=`cat /data/local/devil/datafix`
-	echo "datafix: found: <$datafix>";
-		if [ "$datafix" -eq 1 ]; then
-		./sbin/datafix.sh
-		fi
-fi
+
 
 # load profile
 echo; echo "profile"
@@ -172,55 +174,56 @@ echo; echo "profile"
     		echo 0 > /data/local/devil/profile;
 	fi
 
-#set cpu max freq while screen off
-echo; echo "set cpu max freq while screen off"
+#set cpu max and min freq while screen off
 if [ -e "/data/local/devil/user_min_max_enable" ];then
    min_max_enable=`cat /data/local/devil/user_min_max_enable`
-echo $min_max_enable > /sys/class/misc/devil_idle/user_min_max_enable
    if [ "$min_max_enable" -eq 1 ]; then
+	#set cpu min freq while screen off
    	if [ -e "/data/local/devil/screen_off_max" ];then
-	screen_off_max=`cat /data/local/devil/screen_off_max`
-	if $BB [ "$screen_off_max" -eq 1400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
-	elif $BB [ "$screen_off_max" -eq 1300000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
-	elif $BB [ "$screen_off_max" -eq 1200000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
-	elif $BB [ "$screen_off_max" -eq 1000000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
-	elif $BB [ "$screen_off_max" -eq 800000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
-	elif $BB [ "$screen_off_max" -eq 400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"   		
-	else
-		echo "CPU: did not find vaild screen_off_max, setting 1000 Mhz as default"
-		screen_off_max=1000000
-	fi
-	echo $screen_off_max > /sys/class/misc/devil_idle/user_max
+		echo; echo "set cpu max freq while screen off"
+		screen_off_max=`cat /data/local/devil/screen_off_max`
+		if $BB [ "$screen_off_max" -eq 1400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
+			elif $BB [ "$screen_off_max" -eq 1300000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
+			elif $BB [ "$screen_off_max" -eq 1200000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
+			elif $BB [ "$screen_off_max" -eq 1000000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
+			elif $BB [ "$screen_off_max" -eq 800000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
+			elif $BB [ "$screen_off_max" -eq 400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"   			else
+			echo "CPU: did not find vaild screen_off_max, setting 1000 Mhz as default"
+			screen_off_max=1000000
+		fi
+		echo $screen_off_max > /sys/class/misc/devil_idle/user_max
     	else
-	echo "screen_off_max: did not find any screen_off_max, setting 1000 Mhz as default"
-	echo 1000000 > /sys/class/misc/devil_idle/user_max
-	echo 1000000 > /data/local/devil/screen_off_max
+		echo "screen_off_max: did not find any screen_off_max, setting 1000 Mhz as default"
+		echo 1000000 > /sys/class/misc/devil_idle/user_max
+		echo 1000000 > /data/local/devil/screen_off_max
    	fi
+
+	#set cpu min freq while screen off
+	if [ -e "/data/local/devil/screen_off_min" ];then
+		echo; echo "set cpu min freq while screen off"
+		screen_off_min=`cat /data/local/devil/screen_off_min`
+		if $BB [ "$screen_off_min" -eq 100000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>"  
+			elif $BB [ "$screen_off_min" -eq 200000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
+			elif $BB [ "$screen_off_min" -eq 400000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
+			elif $BB [ "$screen_off_min" -eq 800000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
+		else
+			echo "CPU: did not find vaild screen_off_min, setting 100 Mhz as default"
+			screen_off_min=100000
+		fi
+		echo $screen_off_min > /sys/class/misc/devil_idle/user_min
+	else
+		echo "screen_off_min: did not find any screen_off_min, setting 100 Mhz as default"
+		echo 100000 > /sys/class/misc/devil_idle/user_min
+		echo 100000 > /data/local/devil/screen_off_min
+	fi
+
    else
 	echo "screen_off_user_min_max not enabled...nothing to do"
    fi
-fi
-
-#set cpu min freq while screen off
-echo; echo "set cpu min freq while screen off"
-if [ -e "/data/local/devil/screen_off_min" ];then
-	screen_off_min=`cat /data/local/devil/screen_off_min`
-	if $BB [ "$screen_off_min" -eq 100000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>"  
-	elif $BB [ "$screen_off_min" -eq 200000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
-	elif $BB [ "$screen_off_min" -eq 400000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
-	elif $BB [ "$screen_off_min" -eq 800000 ];then echo "CPU: found vaild screen_off_min: <$screen_off_min>" 
-		  		
-
-	else
-		echo "CPU: did not find vaild screen_off_min, setting 100 Mhz as default"
-		screen_off_min=100000
-	fi
-		echo $screen_off_min > /sys/class/misc/devil_idle/user_min
 else
-	echo "screen_off_min: did not find any screen_off_min, setting 100 Mhz as default"
-	echo 100000 > /sys/class/misc/devil_idle/user_min
-	echo 100000 > /data/local/devil/screen_off_min
+echo 0 > /data/local/devil/user_min_max_enable
 fi
+
 
 # set fsync
 echo; echo "fsync"
@@ -234,28 +237,28 @@ if [ -e "/data/local/devil/fsync" ];then
 		echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 	fi
 else
-echo "fsync: did not find vaild fsync mode: setting default"
-echo 1 > /data/local/devil/fsync
-echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
+	echo "fsync: did not find vaild fsync mode: setting default"
+	echo 1 > /data/local/devil/fsync
+	echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 fi
 
 
 # uksm
 echo; echo "uksm"
-	if [ -e "/data/local/devil/uksm" ];then
+if [ -e "/data/local/devil/uksm" ];then
 	uksm=`cat /data/local/devil/uksm`
-		if [ "$uksm" -eq 1 ]; then
-    			echo "uksm: found vaild uksm value: <enabled>";
-      			echo 1 > /sys/kernel/mm/uksm/run;
-		else
-    			echo "uksm: found vaild uksm value: <disabled>";
-      			echo 0 > /sys/kernel/mm/uksm/run;
-		fi
+	if [ "$uksm" -eq 1 ]; then
+    		echo "uksm: found vaild uksm value: <enabled>";
+      		echo 1 > /sys/kernel/mm/uksm/run;
 	else
-    		echo "uksm not found: doing nothing";
+    		echo "uksm: found vaild uksm value: <disabled>";
       		echo 0 > /sys/kernel/mm/uksm/run;
-    		echo 0 > /data/local/devil/uksm;
 	fi
+else
+    	echo "uksm not found: doing nothing";
+      	echo 0 > /sys/kernel/mm/uksm/run;
+    	echo 0 > /data/local/devil/uksm;
+fi
 
 
 # vm tweaks
@@ -270,7 +273,6 @@ echo "0" > /proc/sys/vm/laptop_mode
 echo "0" > /proc/sys/vm/oom_kill_allocating_task
 echo "0" > /proc/sys/vm/panic_on_oom
 echo "1" > /proc/sys/vm/overcommit_memory
-cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness                   
 cat_msg_sysfile "dirty_writeback_centisecs: " /proc/sys/vm/dirty_writeback_centisecs
 cat_msg_sysfile "dirty_expire_centisecs: " /proc/sys/vm/dirty_expire_centisecs    
 cat_msg_sysfile "dirty_background_ratio: " /proc/sys/vm/dirty_background_ratio
@@ -503,14 +505,6 @@ echo; echo "governor settings"
 		echo "nothing to do"
 	fi
 
-# userinit.d:
-echo; echo "userinit.d"
-if [ -d /data/local/userinit.d ];
-then
-   logwrapper $BB run-parts /data/local/userinit.d;
-   setprop cm.userinit.active 1;
-fi;
-
 if [ -e /etc/init.d/05zram ]; then
 rm /etc/init.d/05zram
 fi
@@ -528,7 +522,11 @@ if [ -e "/data/local/devil/swappiness" ];then
 	else
 		echo "swappiness: value has to be betwenn 0 and 100"
 	fi
+else
+swappiness=`cat /proc/sys/vm/swappiness`
+echo $swapiness > /data/local/devil/swappiness
 fi
+cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
 
 echo; echo "mount system ro"
 busybox mount -o ro,remount /system
