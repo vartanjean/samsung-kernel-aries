@@ -103,11 +103,8 @@ if $BB [ "`/busybox grep $KV /system/lib/modules/ansi_cprng.ko`" ] && [ "$CUR" =
 else
   if $BB [ "$CUR" != "$SAV" ] ; then
     $BB	echo $CUR > /system/last_version
-    $BB echo "moving init.d scripts to /init.d/backup..."
-	if $BB [ ! -d "/system/etc/init.d/backup" ] ; then
-		$BB mkdir -p /system/etc/init.d/backup;
-	fi
-    $BB mv /system/etc/init.d/* /system/etc/init.d/backup/
+    $BB echo "deleting known init.d scripts from other kernels..."
+    $BB touch /cache/clean_initd
   fi
     $BB echo "copying files to init.d..."
     $BB cp /files/init.d/* /system/etc/init.d/

@@ -1,4 +1,4 @@
-#!/system/xbin/busybox sh
+#!/system/xbin/sh
 # 30datafix
 #
 # Move apps data to the ext4 /data partition then move back and create symbolic links

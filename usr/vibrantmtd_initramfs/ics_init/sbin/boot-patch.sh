@@ -64,6 +64,10 @@ if [ -e "/system/vendor/bin/samsung-gpsd" ]; then
     echo 2 > /proc/sys/kernel/randomize_va_space
 fi
 
+if [ -e "/cache/clean_initd" ]; then
+	./sbin/clean_initd.sh
+fi
+
 #copy use normal swap or zram:
 if [ -e "/data/local/devil/swap_use" ]; then
 swap_use=`cat /data/local/devil/swap_use`
