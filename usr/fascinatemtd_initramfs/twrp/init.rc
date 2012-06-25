@@ -10,8 +10,10 @@ sysclktz 0
 loglevel 9
 
 # setup the global environment
-    export PATH /sbin ## for twrp
-    export LD_LIBRARY_PATH .:/sbin  ## for twrp
+#    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin # for cm9
+#    export LD_LIBRARY_PATH /vendor/lib:/system/lib # for cm9
+        export PATH /sbin # for twrp
+        export LD_LIBRARY_PATH .:/sbin # for twrp
     export ANDROID_BOOTLOGO 1
     export ANDROID_ROOT /system
     export ANDROID_ASSETS /system/app
