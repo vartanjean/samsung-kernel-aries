@@ -2226,9 +2226,7 @@ static void vt1708_update_hp_jack_state(struct work_struct *work)
 		spec->vt1708_hp_present ^= 1;
 		via_hp_automute(spec->codec);
 	}
-	if (spec->vt1708_jack_detect)
-		schedule_delayed_work(&spec->vt1708_hp_work,
-				      msecs_to_jiffies(100));
+	vt1708_start_hp_work(spec);
 }
 
 static int get_mux_nids(struct hda_codec *codec)
