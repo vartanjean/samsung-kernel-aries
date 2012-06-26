@@ -44,6 +44,8 @@ extern void
 radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 			     struct drm_connector *drm_connector);
 
+bool radeon_connector_encoder_is_dp_bridge(struct drm_connector *connector);
+
 void radeon_connector_hotplug(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
@@ -951,8 +953,6 @@ radeon_dvi_detect(struct drm_connector *connector, bool force)
 							}
 						}
 					}
-					if (ret != connector_status_disconnected)
-						radeon_connector->detected_by_load = true;
 				}
 			}
 		}
@@ -1195,8 +1195,7 @@ static int radeon_dp_get_modes(struct drm_connector *connector)
 		}
 	} else {
 		/* need to setup ddc on the bridge */
-		if (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-			ENCODER_OBJECT_ID_NONE) {
+		if (radeon_connector_encoder_is_dp_bridge(connector)) {
 			if (encoder)
 				radeon_atom_ext_encoder_setup_ddc(encoder);
 		}
@@ -1206,12 +1205,13 @@ static int radeon_dp_get_modes(struct drm_connector *connector)
 	return ret;
 }
 
-u16 radeon_connector_encoder_get_dp_bridge_encoder_id(struct drm_connector *connector)
+bool radeon_connector_encoder_is_dp_bridge(struct drm_connector *connector)
 {
 	struct drm_mode_object *obj;
 	struct drm_encoder *encoder;
 	struct radeon_encoder *radeon_encoder;
 	int i;
+	bool found = false;
 
 	for (i = 0; i < DRM_CONNECTOR_MAX_ENCODER; i++) {
 		if (connector->encoder_ids[i] == 0)
@@ -1227,13 +1227,14 @@ u16 radeon_connector_encoder_get_dp_bridge_encoder_id(struct drm_connector *conn
 		switch (radeon_encoder->encoder_id) {
 		case ENCODER_OBJECT_ID_TRAVIS:
 		case ENCODER_OBJECT_ID_NUTMEG:
-			return radeon_encoder->encoder_id;
+			found = true;
+			break;
 		default:
 			break;
 		}
 	}
 
-	return ENCODER_OBJECT_ID_NONE;
+	return found;
 }
 
 bool radeon_connector_encoder_is_hbr2(struct drm_connector *connector)
