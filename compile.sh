@@ -51,100 +51,40 @@ cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/ics_init/sbin/clean_
 chmod a+x usr/*mtd_initramfs/ics_rec_init/sbin/*.sh
 chmod a+x usr/*mtd_initramfs/ics_init/sbin/*.sh
 
-
-if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 
-####################### prepare building for gsm device ###########################################################
-then
-	if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
-	then
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
-	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
-	echo "Built-in.o modem files for GSM copied"
-	else
-	echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
-	echo "******** Please build old GSM *********"
-	exit 1
-	fi
-fi
-
-if [ "$target" = "fassy"  ]
-####################### prepare building for cdma device ###########################################################
-then
-	if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
-	then
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
-	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o
-	echo "Built-in.o modem files for CDMA copied"
-	else
-	echo "***** built-in.o.gcc4.4.3_cdma files are missing *****"
-	echo "******** Please build old CDMA *********"
-	exit 1
-	fi
-fi
+target="$1"
 
 if [ "$target" = "i9000"  ] 
 then
 ./i9000.sh "${number}"
+exit 0
 fi
 
 if [ "$target" = "i9000b"  ] 
 then
 ./brasil.sh "${number}"
+exit 0
 fi
 
 if [ "$target" = "cappy"  ] 
 then
 ./cappy.sh "${number}"
+exit 0
 fi
 
 if [ "$target" = "fassy"  ] 
 then
 ./fassy.sh "${number}"
+exit 0
 fi
 
 if [ "$target" = "vibrant"  ] 
 then
 ./vibrant.sh "${number}"
+exit 0
 fi
 
-
-if [ "$target" = "all"  ] 
-then
-
-####################### prepare building for gsm device ###########################################################
-if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
-then
-cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
-cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
-echo "Built-in.o modem files for GSM copied"
-else
-echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
-echo "******** Please build old GSM *********"
-exit 1
-fi
 ./i9000.sh "${number}"
 ./brasil.sh "${number}"
 ./cappy.sh "${number}"
-./vibrant.sh "${number}"
-
-####################### prepare building for cdma device ###########################################################
-if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
-then
-cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
-cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o
-echo "Built-in.o modem files for GSM copied"
-else
-echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
-echo "******** Please build old GSM *********"
-exit 1
-fi
 ./fassy.sh "${number}"
-fi
+./vibrant.sh "${number}"
