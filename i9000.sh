@@ -47,9 +47,6 @@ if [ "$scheduler" = "BFS"  ]
 then
 	sed -i 's/^.*SCHED_BFS.*$//' .config
 	echo 'CONFIG_SCHED_BFS=y' >> .config
-else
-	sed -i 's/^.*SCHED_BFS.*$//' .config
-	echo '# CONFIG_SCHED_BFS is not set' >> .config
 fi
 
 ################################### Config ###############################################################
@@ -107,9 +104,6 @@ if [ "$scheduler" = "BFS"  ]
 then
 	sed -i 's/^.*SCHED_BFS.*$//' .config
 	echo 'CONFIG_SCHED_BFS=y' >> .config
-else
-	sed -i 's/^.*SCHED_BFS.*$//' .config
-	echo '# CONFIG_SCHED_BFS is not set' >> .config
 fi
 
 ################################### Config ###############################################################
