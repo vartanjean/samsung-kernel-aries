@@ -3002,7 +3002,6 @@ __cfq_update_io_thinktime(struct cfq_ttime *ttime, unsigned long slice_idle)
 {
 	unsigned long elapsed = jiffies - ttime->last_end_request;
 	elapsed = min(elapsed, 2UL * slice_idle);
-
 	ttime->ttime_samples = (7*ttime->ttime_samples + 256) / 8;
 	ttime->ttime_total = (7*ttime->ttime_total + 256*elapsed) / 8;
 	ttime->ttime_mean = (ttime->ttime_total + 128) / ttime->ttime_samples;
@@ -3750,11 +3749,6 @@ static void *cfq_init_queue(struct request_queue *q)
 
 	if (blkio_alloc_blkg_stats(&cfqg->blkg)) {
 		kfree(cfqg);
-
-		spin_lock(&cic_index_lock);
-		ida_remove(&cic_index_ida, cfqd->cic_index);
-		spin_unlock(&cic_index_lock);
-
 		kfree(cfqd);
 		return NULL;
 	}

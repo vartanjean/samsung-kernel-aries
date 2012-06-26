@@ -385,10 +385,7 @@ static void iwlagn_tx_cmd_build_basic(struct iwl_priv *priv,
 		tx_cmd->tid_tspec = qc[0] & 0xf;
 		tx_flags &= ~TX_CMD_FLG_SEQ_CTL_MSK;
 	} else {
-		if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ)
-			tx_flags |= TX_CMD_FLG_SEQ_CTL_MSK;
-		else
-			tx_flags &= ~TX_CMD_FLG_SEQ_CTL_MSK;
+		tx_flags |= TX_CMD_FLG_SEQ_CTL_MSK;
 	}
 
 	priv->cfg->ops->utils->tx_cmd_protection(priv, info, fc, &tx_flags);
