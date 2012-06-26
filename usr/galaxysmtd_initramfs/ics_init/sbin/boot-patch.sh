@@ -521,10 +521,13 @@ if [ -e "/data/local/devil/swappiness" ];then
     		echo $swappiness > /proc/sys/vm/swappiness
 	else
 		echo "swappiness: value has to be betwenn 0 and 100"
+		swappiness=`cat /proc/sys/vm/swappiness`
+		echo $swappiness > /data/local/devil/swappiness
+		echo "swappiness set to: $swappiness"
 	fi
 else
 swappiness=`cat /proc/sys/vm/swappiness`
-echo $swapiness > /data/local/devil/swappiness
+echo $swappiness > /data/local/devil/swappiness
 fi
 cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
 
