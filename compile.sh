@@ -11,9 +11,17 @@ export USE_CCACHE=1
 
 target="$1"
 
-number="0.91"
+scheduler="$2"
 
-scheduler="BFS"
+number="0.93"
+
+if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
+	then
+	scheduler="CFS"
+	else
+	scheduler="BFS"
+fi
+
 
 rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
@@ -61,8 +69,6 @@ then
 	then
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
-#	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-#	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
 	echo "Built-in.o modem files for GSM copied"
 	else
 	echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
