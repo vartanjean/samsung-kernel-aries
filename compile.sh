@@ -11,7 +11,9 @@ export USE_CCACHE=1
 
 target="$1"
 
-number="0.90"
+number="0.91"
+
+scheduler="BFS"
 
 rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
@@ -59,8 +61,8 @@ then
 	then
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
-	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
+#	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
+#	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
 	echo "Built-in.o modem files for GSM copied"
 	else
 	echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
@@ -76,8 +78,6 @@ then
 	then
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
 	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
-#	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-#	cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o
 	echo "Built-in.o modem files for CDMA copied"
 	else
 	echo "***** built-in.o.gcc4.4.3_cdma files are missing *****"
@@ -88,27 +88,27 @@ fi
 
 if [ "$target" = "i9000"  ] 
 then
-./i9000.sh "${number}"
+./i9000.sh "${number}" "${scheduler}"
 fi
 
 if [ "$target" = "i9000b"  ] 
 then
-./brasil.sh "${number}"
+./brasil.sh "${number}" "${scheduler}"
 fi
 
 if [ "$target" = "cappy"  ] 
 then
-./cappy.sh "${number}"
+./cappy.sh "${number}" "${scheduler}"
 fi
 
 if [ "$target" = "fassy"  ] 
 then
-./fassy.sh "${number}"
+./fassy.sh "${number}" "${scheduler}"
 fi
 
 if [ "$target" = "vibrant"  ] 
 then
-./vibrant.sh "${number}"
+./vibrant.sh "${number}" "${scheduler}"
 fi
 
 
@@ -120,31 +120,29 @@ if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
 then
 cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
 cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
+#cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
+#cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
 echo "Built-in.o modem files for GSM copied"
 else
 echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./i9000.sh "${number}"
-./brasil.sh "${number}"
-./cappy.sh "${number}"
-./vibrant.sh "${number}"
+./i9000.sh "${number}" "${scheduler}"
+./brasil.sh "${number}" "${scheduler}"
+./cappy.sh "${number}" "${scheduler}"
+./vibrant.sh "${number}" "${scheduler}"
 
 ####################### prepare building for cdma device ###########################################################
 if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
 then
 cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
 cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
-cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/modemctl/built-in.o
 echo "Built-in.o modem files for GSM copied"
 else
 echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./fassy.sh "${number}"
+./fassy.sh "${number}" "${scheduler}"
 fi
