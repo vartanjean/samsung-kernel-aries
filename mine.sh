@@ -3,13 +3,11 @@ rm arch/arm/boot/zImage
 
 rom=""
 
-mem="cm"
+mem="XL"
 
 handy="i9000"
 
-number="0.77"
-
-build="Devil3"_"$number""$rom"_"$handy"
+build="Devil3_0.70""$rom"_"$handy"
 
 scheduler="CFS"
 
@@ -58,65 +56,17 @@ then
 make aries_vibrantmtd_defconfig
 fi
 
-if [ "$handy" = "fascinate"  ] 
-then
-make aries_fascinatemtd_defconfig
-fi
-
-# make -j4
-find . -name "*.ko" -exec rm -rf {} \; 2>/dev/null || exit 1
-make -j4 modules
-if [ "$handy" = "i9000"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/galaxysmtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-if [ "$handy" = "i9000b"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/galaxysbmtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-make -j4 modules
-if [ "$handy" = "cappy"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/captivatemtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-if [ "$handy" = "vibrant"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/vibrantmtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-if [ "$handy" = "fascinate"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/fascinatemtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-if [ "$rom" = "sense"  ] && [ "$handy" = "i9000"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/i9000_sense_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-if [ "$rom" = "sense"  ] && [ "$handy" = "cappy"  ] 
-then
-find . -name "*.ko" -exec cp {} usr/cappy_sense_initramfs/files/modules/ \; 2>/dev/null || exit 1
-fi
-
-
-make -j4 zImage
+make -j4
 
 echo "creating boot.img"
-cp arch/arm/boot/zImage ./release/zImage
-cp arch/arm/boot/zImage ./release/boot.img
-
-#if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
-#then
-#release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
-#fi
+if [ "$handy" = "i9000"  ] || [ "$handy" = "cappy"  ] || [ "$handy" = "vibrant"  ]
+then
+release/build-scripts/mkshbootimg.py release/boot.img arch/arm/boot/zImage release/ramdisks/galaxys_ramdisk/ramdisk.img release/ramdisks/galaxys_ramdisk/ramdisk-recovery.img
+fi
 
 echo "..."
 echo "boot.img ready"
-#rm arch/arm/boot/zImage
+rm arch/arm/boot/zImage
 echo "launching packaging script"
 
 . ./packaging.inc
