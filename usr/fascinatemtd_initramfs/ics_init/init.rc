@@ -529,21 +529,3 @@ on property:service.adb.tcp.port=-1
     stop adbd
     start adbd
 
-# stuff for shutdown scripts
-service shutdown_misc /sbin/shutdown_misc
-    class main
-    user root
-    disabled
-    oneshot
-
-# power off
-on property:sys.shutdown.requested=0
-    start shutdown_misc
-
-# reboot
-on property:sys.shutdown.requested=1
-    start shutdown_misc
-
-# reboot recovery
-on property:sys.shutdown.requested=1recovery
-    start shutdown_misc

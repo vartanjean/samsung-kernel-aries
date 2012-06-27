@@ -106,23 +106,8 @@ else
     $BB echo "deleting known init.d scripts from other kernels..."
     $BB touch /cache/clean_initd
   fi
-  if $BB [ ! -d /system/etc/init.d ]; then 
-    $BB echo "making init.d"
-    $BB mkdir -p /system/etc/init.d
-    $BB chmod 777 /system/etc/init.d
-  fi
     $BB echo "copying files to init.d..."
     $BB cp /files/init.d/* /system/etc/init.d/
-    
-    if $BB [ ! -d /system/etc/shutdown.d ]; then
-      $BB echo "making shutdown.d"
-      $BB mkdir -p /system/etc/shutdown.d
-      $BB chmod 777 /system/etc/shutdown.d
-    fi
-    
-    $BB echo "copying files to shutdown.d..."
-    $BB cp /files/shutdown.d/* /system/etc/shutdown.d/
-    
     $BB echo "updating modules..."
 
     $BB echo "removing old modules..."
@@ -147,7 +132,11 @@ else
     fi
     $BB umount /data
     
-    
+    if $BB [ ! -d /system/etc/init.d ]; then 
+	$BB echo "making init.d"
+	$BB mkdir -p /system/etc/init.d
+	$BB chmod 777 /system/etc/init.d
+    fi
 
 fi
 
