@@ -22,7 +22,6 @@ if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	scheduler="BFS"
 fi
 
-
 rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
 cp usr/init_files/init_gsm usr/galaxysmtd_initramfs/init
