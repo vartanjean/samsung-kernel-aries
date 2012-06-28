@@ -5200,8 +5200,10 @@ static struct platform_device *aries_devices[] __initdata = {
 	&sec_device_dpram,
 #endif
 
+#ifndef CONFIG_HAS_BROKEN_SD
 #ifdef CONFIG_S3C_DEV_HSMMC
 	&s3c_device_hsmmc0,
+#endif
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC1
 	&s3c_device_hsmmc1,
@@ -5211,6 +5213,12 @@ static struct platform_device *aries_devices[] __initdata = {
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC3
 	&s3c_device_hsmmc3,
+#endif
+
+#ifdef CONFIG_HAS_BROKEN_SD
+#ifdef CONFIG_S3C_DEV_HSMMC
+	&s3c_device_hsmmc0,
+#endif
 #endif
 #ifdef CONFIG_VIDEO_TV20
         &s5p_device_tvout,

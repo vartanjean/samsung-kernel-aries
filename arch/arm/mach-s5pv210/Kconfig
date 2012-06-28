@@ -402,4 +402,10 @@ config FORCE_FAST_CHARGE
          A simple sysfs interface to force adapters that
          are detected as USB to charge as AC.
 
+config HAS_BROKEN_SD
+       bool "this initialises the secondary sd card as first"
+        depends on !SAMSUNG_FASCINATE
+       default n
+       help
+         puts the internal SD as the last MMC to initialize, thus mmc1 => mmc0
 endif
