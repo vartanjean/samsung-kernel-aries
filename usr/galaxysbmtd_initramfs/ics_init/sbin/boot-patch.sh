@@ -70,6 +70,12 @@ echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
 
+
+touch /data/local/devil/bigmem
+touch /data/local/devil/zram_size
+touch /data/local/devil/screen_off_min
+touch /data/local/devil/screen_off_max
+
 # load datafix
 if [ -e "/data/local/devil/datafix" ]; then
 	if [ -f /data/local/datafix ]; then
@@ -187,7 +193,9 @@ if [ -e "/data/local/devil/user_min_max_enable" ];then
 			elif $BB [ "$screen_off_max" -eq 1200000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
 			elif $BB [ "$screen_off_max" -eq 1000000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
 			elif $BB [ "$screen_off_max" -eq 800000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>" 
-			elif $BB [ "$screen_off_max" -eq 400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"   			else
+			elif $BB [ "$screen_off_max" -eq 400000 ];then echo "CPU: found vaild screen_off_max: <$screen_off_max>"
+
+   			else
 			echo "CPU: did not find vaild screen_off_max, setting 1000 Mhz as default"
 			screen_off_max=1000000
 		fi
