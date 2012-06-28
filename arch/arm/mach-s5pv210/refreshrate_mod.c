@@ -22,7 +22,7 @@ static ssize_t enable_store(struct kobject *kobj, struct kobj_attribute *attr, c
 {
 	int input;
 	sscanf(buf, "%du", &input);
-	refreshrate = input;
+//	refreshrate = input;
 	return count;
 }
 
