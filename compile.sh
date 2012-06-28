@@ -13,7 +13,7 @@ target="$1"
 
 scheduler="$2"
 
-number="0.94"
+number="0.95"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
