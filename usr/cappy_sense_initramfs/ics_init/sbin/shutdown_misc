@@ -1,0 +1,11 @@
+#!/system/xbin/bash
+
+# user shutdown scripts
+if [ -d /data/local/shutdown.d ]; then
+   /system/xbin/run-parts /data/local/shutdown.d
+fi
+
+# system ones
+if [ -d /system/etc/shutdown.d ]; then
+   /system/xbin/run-parts /system/etc/shutdown.d
+fi
