@@ -44,7 +44,7 @@ static DEFINE_SPINLOCK(zone_scan_lock);
  * @new_val: new oom_score_adj for swap
  *
  * Sets the oom_score_adj value for current to @new_val iff its present value is
- * @old_val. Usually used to reinstate a previous value to prevent racing with
+ * @old_val.  Usually used to reinstate a previous value to prevent racing with
  * userspacing tuning the value in the interim.
  */
 void compare_swap_oom_score_adj(int old_val, int new_val)
@@ -53,7 +53,7 @@ void compare_swap_oom_score_adj(int old_val, int new_val)
 
 	spin_lock_irq(&sighand->siglock);
 	if (current->signal->oom_score_adj == old_val)
-	 current->signal->oom_score_adj = new_val;
+		current->signal->oom_score_adj = new_val;
 	spin_unlock_irq(&sighand->siglock);
 }
 
