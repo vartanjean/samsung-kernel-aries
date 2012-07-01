@@ -17,7 +17,7 @@ package_extract_dir("data/", "/data/");
 #set_perm(0, 0, 0700, "/tmp/move.sh");
 #run_program("/tmp/move.sh");
 #ui_print("");
-
+	
 ui_print("Cleaning cache ... ");
 delete_recursive("/cache");
 ui_print("Cleaning dalvik-cache...");

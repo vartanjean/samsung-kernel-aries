@@ -84,15 +84,6 @@ else
 SAV=unknown
 fi
 
-#DATE=$(date +%s)
-#if $BB [ ! -e /system/devil_lastboot_date ]; then
-#	$BB echo $DATE > /system/devil_lastboot_date
-#	lastboot_diff=100000	
-#else
-#	lastboot_diff=`$BB cat /system/devil_lastboot_date`-`$DATE`
-#fi
-
-
 if $BB [ ! -d /system/lib/modules ]; then 
     $BB mkdir -p /system/lib/modules
     $BB chmod 777 /system/lib/modules
@@ -106,8 +97,23 @@ else
     $BB echo "deleting known init.d scripts from other kernels..."
     $BB touch /cache/clean_initd
   fi
+  if $BB [ ! -d /system/etc/init.d ]; then 
+    $BB echo "making init.d"
+    $BB mkdir -p /system/etc/init.d
+    $BB chmod 777 /system/etc/init.d
+  fi
     $BB echo "copying files to init.d..."
     $BB cp /files/init.d/* /system/etc/init.d/
+    
+    if $BB [ ! -d /system/etc/shutdown.d ]; then
+      $BB echo "making shutdown.d"
+      $BB mkdir -p /system/etc/shutdown.d
+      $BB chmod 777 /system/etc/shutdown.d
+    fi
+    
+    $BB echo "copying files to shutdown.d..."
+    $BB cp /files/shutdown.d/* /system/etc/shutdown.d/
+    
     $BB echo "updating modules..."
 
     $BB echo "removing old modules..."
@@ -115,9 +121,6 @@ else
     $BB rm /system/lib/modules/*
     $BB echo "updating modules..."
     $BB cp /files/modules/* /system/lib/modules/
-
-    $BB echo "updating twrp libs..."
-    $BB cp /files/lib/* /system/lib/
 
     $BB echo "updating lights.aries.so..."
     $BB mv /files/hw/* /system/lib/hw/
@@ -132,15 +135,8 @@ else
     fi
     $BB umount /data
     
-    if $BB [ ! -d /system/etc/init.d ]; then 
-	$BB echo "making init.d"
-	$BB mkdir -p /system/etc/init.d
-	$BB chmod 777 /system/etc/init.d
-    fi
 
 fi
-
-# $BB echo $DATE > /system/devil_lastboot_date
 
 $BB echo "command line:"
 $BB cat /proc/cmdline
@@ -163,7 +159,7 @@ if $BB [ -e /cache/twrp ] ; then
 else
     $BB echo "moving ics_rec_init to /"
     $BB mv /ics_rec_init/* /
-    $BB chmod a+x /sbin/nandroid-md5.sh
+    $BB chmod 777 /sbin/*
 fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
