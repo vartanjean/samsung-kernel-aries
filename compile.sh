@@ -13,7 +13,7 @@ target="$1"
 
 scheduler="$2"
 
-number="0.96"
+number="0.97"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
@@ -57,8 +57,8 @@ cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/ics_init/sbin/boot-pa
 cp usr/init_files/datafix.sh usr/fascinatemtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/ics_init/sbin/clean_initd.sh
 
-chmod a+x usr/*mtd_initramfs/ics_rec_init/sbin/*.sh
-chmod a+x usr/*mtd_initramfs/ics_init/sbin/*.sh
+chmod 777 usr/*mtd_initramfs/ics_rec_init/sbin/*.sh
+chmod 777 usr/*mtd_initramfs/ics_init/sbin/*.sh
 
 
 if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 
