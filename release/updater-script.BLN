@@ -17,6 +17,13 @@ package_extract_dir("data/", "/data/");
 #set_perm(0, 0, 0700, "/tmp/move.sh");
 #run_program("/tmp/move.sh");
 #ui_print("");
+	
+ui_print("Cleaning cache ... ");
+delete_recursive("/cache");
+ui_print("Cleaning dalvik-cache...");
+delete_recursive("/data/dalvik-cache");
+ui_print("");
+
 package_extract_dir("system/", "/system/");
 delete("/system/lib/hw/lights.goldfish.so"); 
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/init.d");
