@@ -17,34 +17,49 @@
  * claimed   NULL, 3 -> {pending}       : claimed to be enqueued
  * pending   next, 3 -> {busy}          : queued, pending callback
  * busy      NULL, 2 -> {free, claimed} : callback in progress, can be claimed
+ *
+ * We use the lower two bits of the next pointer to keep PENDING and BUSY
+ * flags.
  */
 
 #define IRQ_WORK_PENDING	1UL
 #define IRQ_WORK_BUSY		2UL
 #define IRQ_WORK_FLAGS		3UL
 
-#define LIST_NONEMPTY_BIT	0
+static inline bool irq_work_is_set(struct irq_work *entry, int flags)
+{
+	return (unsigned long)entry->next & flags;
+}
 
-struct irq_work_list {
-	unsigned long flags;
-	struct llist_head llist;
-};
+static inline struct irq_work *irq_work_next(struct irq_work *entry)
+{
+	unsigned long next = (unsigned long)entry->next;
+	next &= ~IRQ_WORK_FLAGS;
+	return (struct irq_work *)next;
+}
 
-static DEFINE_PER_CPU(struct irq_work_list, irq_work_lists);
+static inline struct irq_work *next_flags(struct irq_work *entry, int flags)
+{
+	unsigned long next = (unsigned long)entry;
+	next |= flags;
+	return (struct irq_work *)next;
+}
+
+static DEFINE_PER_CPU(struct irq_work *, irq_work_list);
 
 /*
  * Claim the entry so that no one else will poke at it.
  */
-static bool irq_work_claim(struct irq_work *work)
+static bool irq_work_claim(struct irq_work *entry)
 {
-	unsigned long flags, nflags;
+	struct irq_work *next, *nflags;
 
 	do {
-		flags = work->flags;
-		if (flags & IRQ_WORK_PENDING)
+		next = entry->next;
+		if ((unsigned long)next & IRQ_WORK_PENDING)
 			return false;
-		nflags = flags | IRQ_WORK_FLAGS;
-	} while (cmpxchg(&work->flags, flags, nflags) != flags);
+		nflags = next_flags(next, IRQ_WORK_FLAGS);
+	} while (cmpxchg(&entry->next, next, nflags) != next);
 
 	return true;
 }
@@ -60,19 +75,23 @@ void __weak arch_irq_work_raise(void)
 /*
  * Queue the entry and raise the IPI if needed.
  */
-static void __irq_work_queue(struct irq_work *work)
+static void __irq_work_queue(struct irq_work *entry)
 {
-	struct irq_work_list *irq_work_list;
+	struct irq_work *next;
 
-	struct irq_work_list *irq_work_list;
+	preempt_disable();
 
-	llist_add(&work->llnode, &irq_work_list->llist);
+	do {
+		next = __this_cpu_read(irq_work_list);
+		/* Can assign non-atomic because we keep the flags set. */
+		entry->next = next_flags(next, IRQ_WORK_FLAGS);
+	} while (this_cpu_cmpxchg(irq_work_list, next, entry) != next);
 
 	/* The list was empty, raise self-interrupt to start processing. */
-	if (!test_and_set_bit(LIST_NONEMPTY_BIT, &irq_work_list->flags))
+	if (!irq_work_next(entry))
 		arch_irq_work_raise();
 
-	put_cpu_var(irq_work_list);
+	preempt_enable();
 }
 
 /*
@@ -81,16 +100,16 @@ static void __irq_work_queue(struct irq_work *work)
  *
  * Can be re-enqueued while the callback is still in progress.
  */
-bool irq_work_queue(struct irq_work *work)
+bool irq_work_queue(struct irq_work *entry)
 {
-	if (!irq_work_claim(work)) {
+	if (!irq_work_claim(entry)) {
 		/*
 		 * Already enqueued, can't do!
 		 */
 		return false;
 	}
 
-	__irq_work_queue(work);
+	__irq_work_queue(entry);
 	return true;
 }
 EXPORT_SYMBOL_GPL(irq_work_queue);
@@ -101,35 +120,34 @@ EXPORT_SYMBOL_GPL(irq_work_queue);
  */
 void irq_work_run(void)
 {
-	struct irq_work *work;
-	struct irq_work_list *irq_work_list;
-	struct llist_node *llnode;
+	struct irq_work *list;
 
-	irq_work_list = &__get_cpu_var(irq_work_lists);
-	if (llist_empty(&irq_work_list->llist))
+	if (this_cpu_read(irq_work_list) == NULL)
 		return;
 
 	BUG_ON(!in_irq());
 	BUG_ON(!irqs_disabled());
 
-	clear_bit(LIST_NONEMPTY_BIT, &irq_work_list->flags);
-	llnode = llist_del_all(&irq_work_list->llist);
-	while (llnode != NULL) {
-		work = llist_entry(llnode, struct irq_work, llnode);
+	list = this_cpu_xchg(irq_work_list, NULL);
 
-		llnode = llnode->next;
+	while (list != NULL) {
+		struct irq_work *entry = list;
+
+		list = irq_work_next(list);
 
 		/*
-		 * Clear the PENDING bit, after this point the @work
+		 * Clear the PENDING bit, after this point the @entry
 		 * can be re-used.
 		 */
-		work->flags = IRQ_WORK_BUSY;
-		work->func(work);
+		entry->next = next_flags(NULL, IRQ_WORK_BUSY);
+		entry->func(entry);
 		/*
 		 * Clear the BUSY bit and return to the free state if
 		 * no-one else claimed it meanwhile.
 		 */
-		(void)cmpxchg(&work->flags, IRQ_WORK_BUSY, 0);
+		(void)cmpxchg(&entry->next,
+			      next_flags(NULL, IRQ_WORK_BUSY),
+			      NULL);
 	}
 }
 EXPORT_SYMBOL_GPL(irq_work_run);
@@ -138,11 +156,11 @@ EXPORT_SYMBOL_GPL(irq_work_run);
  * Synchronize against the irq_work @entry, ensures the entry is not
  * currently in use.
  */
-void irq_work_sync(struct irq_work *work)
+void irq_work_sync(struct irq_work *entry)
 {
 	WARN_ON_ONCE(irqs_disabled());
 
-	while (work->flags & IRQ_WORK_BUSY)
+	while (irq_work_is_set(entry, IRQ_WORK_BUSY))
 		cpu_relax();
 }
 EXPORT_SYMBOL_GPL(irq_work_sync);
