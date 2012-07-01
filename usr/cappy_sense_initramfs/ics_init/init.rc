@@ -546,6 +546,9 @@ on property:sys.shutdown.requested=0
     start shutdown_misc
 
 # reboot
+on property:sys.shutdown.requested=1null
+    start shutdown_misc
+
 on property:sys.shutdown.requested=1
     start shutdown_misc
 
