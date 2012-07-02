@@ -169,7 +169,7 @@ else
 
 slim=0
 
-[ "`$BB grep -i Slim /system/build.prop`" ] && slim=1
+[ "`$BB grep -i Slim /system/build.prop`" ] && xl=1
 
     $BB mount -t ext4 /dev/block/mmcblk0p2 /data
 	if $BB [ -e /data/local/devil/bigmem ] ; then
@@ -181,6 +181,10 @@ slim=0
 				/system/bin/toolbox reboot
 			fi
 		fi
+	elif $BB [ "$xl" -eq 1 ]; then
+		$BB echo 1 > /sys/kernel/bigmem/enable
+    		$BB umount /data
+		/system/bin/toolbox reboot
 	fi
     $BB umount /data
 ##############################################################################################################	
