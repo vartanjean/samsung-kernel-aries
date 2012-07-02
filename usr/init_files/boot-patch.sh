@@ -75,6 +75,7 @@ touch /data/local/devil/bigmem
 touch /data/local/devil/zram_size
 touch /data/local/devil/screen_off_min
 touch /data/local/devil/screen_off_max
+touch /data/local/devil/governor
 
 # load datafix
 if [ -e "/data/local/devil/datafix" ]; then
@@ -450,6 +451,24 @@ else
 	echo 1 > /data/local/devil/smooth_ui
 fi
 
+
+# governor
+echo; echo "governor"
+if [ -e "/data/local/devil/governor" ];then
+    governor=`cat /data/local/devil/governor`
+	if grep -q $governor /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors ;then
+    		echo $governor > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    		echo "governor set to: $governor"
+	else
+    		echo "did not find vaild governor: doing nothing"
+    		governor=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
+    		echo "your current governor is: $governor"	
+	fi
+else
+    	echo "did not find governor config file: doing nothing"
+    	governor=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
+    	echo "your current governor is: $governor"
+fi
 
 
 # init.d support 
