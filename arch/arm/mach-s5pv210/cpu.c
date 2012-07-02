@@ -17,7 +17,7 @@
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/io.h>
-#include <linux/device.h>
+#include <linux/sysdev.h>
 #include <linux/platform_device.h>
 #include <linux/sched.h>
 
@@ -193,18 +193,17 @@ void __init s5pv210_init_irq(void)
 	s5p_init_irq(vic, ARRAY_SIZE(vic));
 }
 
-struct bus_type s5pv210_subsys = {
-	.name		= "s5pv210-core",
-	.dev_name	= "s5pv210-core",
+struct sysdev_class s5pv210_sysclass = {
+	.name	= "s5pv210-core",
 };
 
-static struct device s5pv210_dev = {
-	.bus	= &s5pv210_subsys,
+static struct sys_device s5pv210_sysdev = {
+	.cls	= &s5pv210_sysclass,
 };
 
 static int __init s5pv210_core_init(void)
 {
-	return subsys_system_register(&s5pv210_subsys, NULL);
+	return sysdev_class_register(&s5pv210_sysclass);
 }
 
 core_initcall(s5pv210_core_init);
@@ -220,5 +219,5 @@ int __init s5pv210_init(void)
 	if (!(machine_is_herring() || machine_is_aries()))
 		s5p_reset_hook = s5pv210_sw_reset;
 
-	return device_register(&s5pv210_dev);
+	return sysdev_register(&s5pv210_sysdev);
 }

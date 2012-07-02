@@ -10,7 +10,7 @@
 #ifndef __ASM_ARM_MACH_TIME_H
 #define __ASM_ARM_MACH_TIME_H
 
-#include <linux/device.h>
+#include <linux/sysdev.h>
 
 /*
  * This is our kernel timer structure.

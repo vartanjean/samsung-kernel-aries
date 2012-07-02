@@ -16,7 +16,7 @@
 #include <linux/init.h>
 #include <linux/clk.h>
 #include <linux/io.h>
-#include <linux/device.h>
+#include <linux/sysdev.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
 #include <linux/sched.h>
@@ -184,18 +184,17 @@ void __init s5p6450_init_irq(void)
 	s5p_init_irq(vic, ARRAY_SIZE(vic));
 }
 
-struct bus_type s5p64x0_subsys = {
-	.name		= "s5p64x0-core",
-	.dev_name	= "s5p64x0-core",
+struct sysdev_class s5p64x0_sysclass = {
+	.name	= "s5p64x0-core",
 };
 
-static struct device s5p64x0_subsys = {
-	.bus	= &s5p64x0_subsys,
+static struct sys_device s5p64x0_sysdev = {
+	.cls	= &s5p64x0_sysclass,
 };
 
 static int __init s5p64x0_core_init(void)
 {
-	return subsys_system_register(&s5p64x0_subsys, NULL);
+	return sysdev_class_register(&s5p64x0_sysclass);
 }
 core_initcall(s5p64x0_core_init);
 
@@ -206,5 +205,5 @@ int __init s5p64x0_init(void)
 	/* set idle function */
 	pm_idle = s5p64x0_idle;
 
-	return device_register(&s5p64x0_dev);
+	return sysdev_register(&s5p64x0_sysdev);
 }

@@ -28,6 +28,7 @@
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/device.h>
+#include <linux/sysdev.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
 #include <linux/mutex.h>
@@ -110,7 +111,7 @@ static struct clk s3c2440_clk_ac97 = {
 	.ctrlbit	= S3C2440_CLKCON_CAMERA,
 };
 
-static int s3c2440_clk_add(struct device *dev)
+static int s3c2440_clk_add(struct sys_device *sysdev)
 {
 	struct clk *clock_upll;
 	struct clk *clock_h;
@@ -139,15 +140,13 @@ static int s3c2440_clk_add(struct device *dev)
 	return 0;
 }
 
-static struct subsys_interface s3c2440_clk_interface = {
-	.name		= "s3c2440_clk",
-	.subsys		= &s3c2440_subsys,
-	.add_dev	= s3c2440_clk_add,
+static struct sysdev_driver s3c2440_clk_driver = {
+	.add	= s3c2440_clk_add,
 };
 
-static __init int s3c24xx_clk_init(void)
+static __init int s3c24xx_clk_driver(void)
 {
-	return subsys_interface_register(&s3c2440_clk_interface);
+	return sysdev_driver_register(&s3c2440_sysclass, &s3c2440_clk_driver);
 }
 
-arch_initcall(s3c24xx_clk_init);
+arch_initcall(s3c24xx_clk_driver);

@@ -14,7 +14,7 @@
 #define __ASM_ARCH_DMA_H __FILE__
 
 #include <plat/dma.h>
-#include <linux/device.h>
+#include <linux/sysdev.h>
 
 #define MAX_DMA_TRANSFER_SIZE   0x100000 /* Data Unit is half word  */
 
@@ -191,7 +191,7 @@ struct s3c2410_dma_chan {
 	struct s3c2410_dma_buf	*end;		/* end of queue */
 
 	/* system device */
-	struct device	dev;
+	struct sys_device	dev;
 };
 
 typedef unsigned long dma_device_t;

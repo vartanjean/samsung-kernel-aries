@@ -17,7 +17,7 @@
 
 #include <linux/irq.h>
 
-struct device;
+struct sys_device;
 
 #ifdef CONFIG_PM
 
