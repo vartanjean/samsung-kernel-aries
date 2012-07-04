@@ -257,6 +257,7 @@ $BB rm -r /sdcard
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
 $BB rm -rf /ics_init
+$BB rm -rf /jb_init
 $BB rm -rf /ics_rec_init
 $BB rm -rf /twrp
 
