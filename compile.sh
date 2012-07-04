@@ -11,9 +11,19 @@ export USE_CCACHE=1
 
 target="$1"
 
-scheduler="$2"
+if [ "$2" = "vc"  ] || [ "$3" = "vc" ]
+	then
+	vc="yes"
+fi
 
-number="0.97"
+if [ "$2" = "vc"  ]
+	then
+	scheduler="CFS"
+	else
+	scheduler="$2"
+fi
+
+number="0.98.2"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
@@ -29,12 +39,22 @@ cp usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/ics_init/sbin/boot-patc
 cp usr/init_files/datafix.sh usr/galaxysmtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/galaxysmtd_initramfs/ics_init/sbin/clean_initd.sh
 
+cp usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/jb_init/sbin/boot-patch.sh
+cp usr/init_files/datafix.sh usr/galaxysmtd_initramfs/jb_init/sbin/datafix.sh
+cp usr/init_files/clean_initd.sh usr/galaxysmtd_initramfs/jb_init/sbin/clean_initd.sh
+
+
 rm -rf usr/galaxysbmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysbmtd_initramfs/
 cp usr/init_files/init_gsm usr/galaxysbmtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/ics_init/sbin/boot-patch.sh
 cp usr/init_files/datafix.sh usr/galaxysbmtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/galaxysbmtd_initramfs/ics_init/sbin/clean_initd.sh
+
+cp usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/jb_init/sbin/boot-patch.sh
+cp usr/init_files/datafix.sh usr/galaxysbmtd_initramfs/jb_init/sbin/datafix.sh
+cp usr/init_files/clean_initd.sh usr/galaxysbmtd_initramfs/jb_init/sbin/clean_initd.sh
+
 
 rm -rf usr/captivatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/captivatemtd_initramfs/
@@ -43,12 +63,22 @@ cp usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/ics_init/sbin/boot-pa
 cp usr/init_files/datafix.sh usr/captivatemtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/captivatemtd_initramfs/ics_init/sbin/clean_initd.sh
 
+cp usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/jb_init/sbin/boot-patch.sh
+cp usr/init_files/datafix.sh usr/captivatemtd_initramfs/jb_init/sbin/datafix.sh
+cp usr/init_files/clean_initd.sh usr/captivatemtd_initramfs/jb_init/sbin/clean_initd.sh
+
+
 rm -rf usr/vibrantmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/vibrantmtd_initramfs/
 cp usr/init_files/init_gsm usr/vibrantmtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/ics_init/sbin/boot-patch.sh
 cp usr/init_files/datafix.sh usr/vibrantmtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/vibrantmtd_initramfs/ics_init/sbin/clean_initd.sh
+
+cp usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/jb_init/sbin/boot-patch.sh
+cp usr/init_files/datafix.sh usr/vibrantmtd_initramfs/jb_init/sbin/datafix.sh
+cp usr/init_files/clean_initd.sh usr/vibrantmtd_initramfs/jb_init/sbin/clean_initd.sh
+
 
 rm -rf usr/fascinatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/fascinatemtd_initramfs/
@@ -57,8 +87,9 @@ cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/ics_init/sbin/boot-pa
 cp usr/init_files/datafix.sh usr/fascinatemtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/ics_init/sbin/clean_initd.sh
 
-chmod 777 usr/*mtd_initramfs/ics_rec_init/sbin/*.sh
-chmod 777 usr/*mtd_initramfs/ics_init/sbin/*.sh
+cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/jb_init/sbin/boot-patch.sh
+cp usr/init_files/datafix.sh usr/fascinatemtd_initramfs/jb_init/sbin/datafix.sh
+cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/jb_init/sbin/clean_initd.sh
 
 
 if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 
@@ -93,27 +124,27 @@ fi
 
 if [ "$target" = "i9000"  ] 
 then
-./i9000.sh "${number}" "${scheduler}"
+./i9000.sh "${number}" "${scheduler}" "${vc}"
 fi
 
 if [ "$target" = "i9000b"  ] 
 then
-./brasil.sh "${number}" "${scheduler}"
+./brasil.sh "${number}" "${scheduler}" "${vc}"
 fi
 
 if [ "$target" = "cappy"  ] 
 then
-./cappy.sh "${number}" "${scheduler}"
+./cappy.sh "${number}" "${scheduler}" "${vc}"
 fi
 
 if [ "$target" = "fassy"  ] 
 then
-./fassy.sh "${number}" "${scheduler}"
+./fassy.sh "${number}" "${scheduler}" "${vc}"
 fi
 
 if [ "$target" = "vibrant"  ] 
 then
-./vibrant.sh "${number}" "${scheduler}"
+./vibrant.sh "${number}" "${scheduler}" "${vc}"
 fi
 
 
@@ -133,10 +164,10 @@ echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./i9000.sh "${number}" "${scheduler}"
-./brasil.sh "${number}" "${scheduler}"
-./cappy.sh "${number}" "${scheduler}"
-./vibrant.sh "${number}" "${scheduler}"
+./i9000.sh "${number}" "${scheduler}" "${vc}"
+./brasil.sh "${number}" "${scheduler}" "${vc}"
+./cappy.sh "${number}" "${scheduler}" "${vc}"
+./vibrant.sh "${number}" "${scheduler}" "${vc}"
 
 ####################### prepare building for cdma device ###########################################################
 if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
@@ -149,5 +180,5 @@ echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./fassy.sh "${number}" "${scheduler}"
+./fassy.sh "${number}" "${scheduler}" "${vc}"
 fi

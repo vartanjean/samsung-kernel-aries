@@ -159,17 +159,32 @@ if $BB [ -e /cache/twrp ] ; then
 else
     $BB echo "moving ics_rec_init to /"
     $BB mv /ics_rec_init/* /
-    $BB chmod 777 /sbin/*
+    $BB chmod 777 /sbin/fix_permissions
+    $BB chmod 777 /sbin/killrecovery.sh
+    $BB chmod 777 /sbin/nandroid-md5.sh
+    $BB chmod 777 /sbin/setupdatadata.sh
+    $BB chmod 777 /sbin/fix_permissions
+    $BB chmod 777 /sbin/sdparted
+
 fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
-    $BB mv /ics_init/* /
+
+    jb=0
+    [ "`$BB grep -i JRN83C /system/build.prop`" ] && jb=1
+    if $BB [ "$jb" -eq 1 ]; then
+        $BB echo "moving jb_init to /"
+    	$BB mv /jb_init/* /
+    else
+        $BB echo "moving ics_init to /"
+        $BB mv /ics_init/* /
+    fi
 
 ################ apply bigmem at first boot ##################################################################
 
 slim=0
 
-[ "`$BB grep -i Slim /system/build.prop`" ] && slim=1
+[ "`$BB grep -i Slim /system/build.prop`" ] && xl=1
 
     $BB mount -t ext4 /dev/block/mmcblk0p2 /data
 	if $BB [ -e /data/local/devil/bigmem ] ; then
@@ -181,6 +196,10 @@ slim=0
 				/system/bin/toolbox reboot
 			fi
 		fi
+	elif $BB [ "$xl" -eq 1 ]; then
+		$BB echo 1 > /sys/kernel/bigmem/enable
+    		$BB umount /data
+		/system/bin/toolbox reboot
 	fi
     $BB umount /data
 ##############################################################################################################	
@@ -238,6 +257,7 @@ $BB rm -r /sdcard
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
 $BB rm -rf /ics_init
+$BB rm -rf /jb_init
 $BB rm -rf /ics_rec_init
 $BB rm -rf /twrp
 
