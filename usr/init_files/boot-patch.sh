@@ -218,6 +218,7 @@ if [ -e "/data/local/devil/user_min_max_enable" ];then
 		else
 			echo "CPU: did not find vaild screen_off_min, setting 100 Mhz as default"
 			screen_off_min=100000
+			echo $screen_off_min >/data/local/devil/screen_off_min
 		fi
 		echo $screen_off_min > /sys/class/misc/devil_idle/user_min
 	else
@@ -251,6 +252,41 @@ else
 	echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 fi
 
+# set deep_idle
+echo; echo "deep_idle"
+if [ -e "/data/local/devil/deep_idle" ];then
+	fsync=`cat /data/local/devil/deep_idle`
+	if [ "$deep_idle" -eq 0 ] || [ "$deep_idle" -eq 1 ];then
+    		echo "deep_idle: found vaild deep_idle mode: <$deep_idle>"
+    		echo $deep_idle > /sys/devices/virtual/misc/deepidle/enabled
+	else
+		echo "deep_idle: did not find vaild deep_idle mode: setting disabled"
+		echo 0 > /sys/devices/virtual/misc/deepidle/enabled
+	fi
+else
+	echo "deep_idle: did not find vaild deep_idle mode: setting disabled"
+	echo 0 > /data/local/devil/deep_idle
+	echo 0 > /sys/devices/virtual/misc/deepidle/enabled
+fi
+
+# set deep_idle_stats
+echo; echo "deep_idle_stats"
+if [ "$deep_idle" -eq 1 ]; then
+   if [ -e "/data/local/devil/deep_idle_stats" ];then
+	fsync=`cat /data/local/devil/deep_idle_stats`
+	if [ "$deep_idle_stats" -eq 0 ] || [ "$deep_idle_stats" -eq 1 ];then
+    		echo "deep_idle_stats: found vaild deep_idle_stats mode: <$deep_idle_stats>"
+    		echo $deep_idle_stats > /sys/devices/virtual/misc/deepidle/stats_enabled
+	else
+		echo "deep_idle_stats: did not find vaild deep_idle_stats mode: setting disabled"
+		echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
+	fi
+    else
+	echo "deep_idle_stats: did not find vaild deep_idle_stats mode: setting disabled"
+	echo 0 > /data/local/devil/deep_idle_stats
+	echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
+   fi
+fi
 
 # uksm
 echo; echo "uksm"
