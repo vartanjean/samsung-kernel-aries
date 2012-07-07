@@ -198,6 +198,7 @@ slim=0
 		fi
 	elif $BB [ "$xl" -eq 1 ]; then
 		$BB echo 1 > /sys/kernel/bigmem/enable
+		$BB echo 1 > /data/local/devil/bigmem
     		$BB umount /data
 		/system/bin/toolbox reboot
 	fi
