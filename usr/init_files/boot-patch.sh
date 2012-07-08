@@ -274,7 +274,7 @@ fi
 echo; echo "deep_idle_stats"
 if [ "$deep_idle" -eq 1 ]; then
    if [ -e "/data/local/devil/deep_idle_stats" ];then
-	fsync=`cat /data/local/devil/deep_idle_stats`
+	deep_idle_stats=`cat /data/local/devil/deep_idle_stats`
 	if [ "$deep_idle_stats" -eq 0 ] || [ "$deep_idle_stats" -eq 1 ];then
     		echo "deep_idle_stats: found valid deep_idle_stats mode: <$deep_idle_stats>"
     		echo $deep_idle_stats > /sys/devices/virtual/misc/deepidle/stats_enabled
@@ -304,6 +304,46 @@ else
     	echo "uksm not found: doing nothing";
       	echo 0 > /sys/kernel/mm/uksm/run;
     	echo 0 > /data/local/devil/uksm;
+fi
+
+
+# set touchwake
+echo; echo "touchwake"
+if [ -e "/data/local/devil/touchwake" ];then
+	touchwake=`cat /data/local/devil/touchwake`
+	if [ "$touchwake" -eq 0 ] || [ "$touchwake" -eq 1 ];then
+    		echo "touchwake: found valid touchwake mode: <$touchwake>"
+    		echo $touchwake > /sys/devices/virtual/misc/touchwake/enabled
+	else
+		echo "touchwake: did not find valid touchwake mode: setting disabled"
+		echo 0 > /sys/devices/virtual/misc/touchwake/enabled
+	fi
+else
+	echo "touchwake: did not find valid touchwake mode: setting disabled"
+	touchwake=0
+	echo 0 > /data/local/devil/touchwake
+	echo 0 > /sys/devices/virtual/misc/touchwake/enabled
+fi
+
+# set touchwake timeout
+echo; echo "touchwake_timeout"
+if [ "$touchwake" -eq 1 ]; then
+   if [ -e "/data/local/devil/touchwake_timeout" ];then
+	touchwake_timeout=`cat /data/local/devil/touchwake_timeout`
+	if [ "$touchwake_timeout" -le 300 ] && [ "$vibrator" -ge 0 ];then
+    		echo "touchwake_timeout: found valid touchwake_timeout: <$touchwake_timeout>"
+    		echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
+	else
+		echo "touchwake_timeout: did not find valid touchwake_timeout: setting 30 sec."
+		touchwake_timeout=30
+		echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
+	fi
+    else
+	echo "touchwake_timeout: did not find valid touchwake_timeout: setting 30 sec."
+	touchwake_timeout=30
+	echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
+	echo $touchwake_timeout > /data/local/devil/touchwake_timeout
+   fi
 fi
 
 
@@ -420,6 +460,7 @@ for i in $MTD $MMC;do
     echo 1024 > $i/queue/nr_requests
 done
 
+echo;
 for i in $MTD $MMC $LOOP $RAM;do
     cat_msg_sysfile "$i/queue/scheduler: " $i/queue/scheduler
     cat_msg_sysfile "$i/queue/rotational: " $i/queue/rotational
