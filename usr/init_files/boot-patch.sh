@@ -255,7 +255,7 @@ fi
 # set deep_idle
 echo; echo "deep_idle"
 if [ -e "/data/local/devil/deep_idle" ];then
-	fsync=`cat /data/local/devil/deep_idle`
+	deep_idle=`cat /data/local/devil/deep_idle`
 	if [ "$deep_idle" -eq 0 ] || [ "$deep_idle" -eq 1 ];then
     		echo "deep_idle: found valid deep_idle mode: <$deep_idle>"
     		echo $deep_idle > /sys/devices/virtual/misc/deepidle/enabled
@@ -265,6 +265,7 @@ if [ -e "/data/local/devil/deep_idle" ];then
 	fi
 else
 	echo "deep_idle: did not find valid deep_idle mode: setting disabled"
+	deep_idle=0
 	echo 0 > /data/local/devil/deep_idle
 	echo 0 > /sys/devices/virtual/misc/deepidle/enabled
 fi
@@ -411,7 +412,7 @@ for i in $MTD $MMC $LOOP;do
     echo "$iosched" > $i/queue/scheduler
     echo 0 > $i/queue/rotational
     echo 0 > $i/queue/iostats
-done`
+done
       
 
 # mtd/mmc only tweaks
