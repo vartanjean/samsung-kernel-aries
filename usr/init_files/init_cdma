@@ -171,7 +171,7 @@ fi
 else
 
     jb=0
-    [ "`$BB grep -i JRN83C /system/build.prop`" ] && jb=1
+    [ "`$BB grep -i JRN83 /system/build.prop`" ] && jb=1
     if $BB [ "$jb" -eq 1 ]; then
         $BB echo "moving jb_init to /"
     	$BB mv /jb_init/* /
