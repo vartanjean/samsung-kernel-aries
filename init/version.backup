@@ -44,5 +44,9 @@ const char linux_banner[] =
 
 const char linux_proc_banner[] =
 	"%s version %s"
+<<<<<<< HEAD
  " (Devil3_0.99_wifi1_i9000_CFS_BLN_CMC)"
+=======
+ " (Devil3_0.98.3_i9000_CFS_BLN_CMC)"
+>>>>>>> 1e095d8... using gnexus wifi driver...trying to fix wifi for jb
 	" (" LINUX_COMPILER ") %s\n";
