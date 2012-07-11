@@ -113,9 +113,6 @@ enum pageflags {
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	PG_compound_lock,
 #endif
-#ifdef CONFIG_CLEANCACHE
-	PG_was_active,
-#endif
 	__NR_PAGEFLAGS,
 
 	/* Filesystems */
