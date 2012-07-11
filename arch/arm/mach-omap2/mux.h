@@ -131,6 +131,7 @@ struct omap_mux_partition {
 struct omap_mux {
 	u16	reg_offset;
 	u16	gpio;
+	struct omap_mux_partition *partition;
 #ifdef CONFIG_OMAP_MUX
 	char	*muxnames[OMAP_MUX_NR_MODES];
 #ifdef CONFIG_DEBUG_FS
@@ -225,7 +226,20 @@ omap_hwmod_mux_init(struct omap_device_pad *bpads, int nr_pads);
  */
 void omap_hwmod_mux(struct omap_hwmod_mux_info *hmux, u8 state);
 
+/**
+ * omap_hwmod_mux_get_wake_status - omap hwmod check pad wakeup
+ * @hmux:		Pads for a hwmod
+ *
+ * Called only from omap_hwmod.c, do not use.
+ */
+int omap_hwmod_mux_get_wake_status(struct omap_hwmod_mux_info *hmux);
 #else
+
+static inline int
+omap_hwmod_mux_get_wake_status(struct omap_hwmod_mux_info *hmux)
+{
+	return 0;
+}
 
 static inline int omap_mux_init_gpio(int gpio, int val)
 {
@@ -251,11 +265,31 @@ static struct omap_board_mux *board_mux __initdata __maybe_unused;
 #endif
 
 /**
- * omap_mux_get_gpio() - get mux register value based on GPIO number
+ * omap_mux_get_gpio() - get mux struct based on GPIO number
  * @gpio:		GPIO number
  *
  */
-u16 omap_mux_get_gpio(int gpio);
+struct omap_mux *omap_mux_get_gpio(int gpio);
+
+/** omap_mux_set_wakeupenable() - set the wakeupenable bit on a mux struct
+ * @m:			mux struct
+ */
+int omap_mux_set_wakeupenable(struct omap_mux *m);
+
+/** omap_mux_clear_wakeupenable() - clear the wakeupenable bit on a mux struct
+ * @m:			mux struct
+ */
+int omap_mux_clear_wakeupenable(struct omap_mux *m);
+
+/** omap_mux_get_wakeupenable() - get the wakeupenable bit from a mux struct
+ * @m:			mux struct
+ */
+bool omap_mux_get_wakeupenable(struct omap_mux *m);
+
+/** omap_mux_get_wakeupevent() - get the wakeupevent bit from a mux struct
+ * @m:			mux struct
+ */
+bool omap_mux_get_wakeupevent(struct omap_mux *m);
 
 /**
  * omap_mux_set_gpio() - set mux register value based on GPIO number

@@ -364,7 +364,6 @@ enum charge_type {
 static void mem_cgroup_get(struct mem_cgroup *memcg);
 static void mem_cgroup_put(struct mem_cgroup *memcg);
 static struct mem_cgroup *parent_mem_cgroup(struct mem_cgroup *memcg);
-#ifdef CONFIG_INET
 static void drain_all_stock_async(struct mem_cgroup *memcg);
 
 static struct mem_cgroup_per_zone *
@@ -710,7 +709,8 @@ static void memcg_check_events(struct mem_cgroup *memcg, struct page *page)
 	/* threshold event is triggered in finer grain than soft limit */
 	if (unlikely(mem_cgroup_event_ratelimit(memcg,
 						MEM_CGROUP_TARGET_THRESH))) {
-		bool do_softlimit, do_numainfo;
+		bool do_softlimit;
+		bool do_numainfo __maybe_unused;
 
 		do_softlimit = mem_cgroup_event_ratelimit(memcg,
 						MEM_CGROUP_TARGET_SOFTLIMIT);
@@ -4302,12 +4302,6 @@ static int mem_cgroup_usage_register_event(struct cgroup *cgrp,
 	/* Free old spare buffer and save old primary buffer as spare */
 	kfree(thresholds->spare);
 	thresholds->spare = thresholds->primary;
-	
-  	/* If all events are unregistered, free the spare array */
-  	if (!new) {
-    	kfree(thresholds->spare);
-    	thresholds->spare = NULL;
-  	}
 
 	rcu_assign_pointer(thresholds->primary, new);
 
@@ -5203,8 +5197,9 @@ static void mem_cgroup_clear_mc(void)
 
 static int mem_cgroup_can_attach(struct cgroup_subsys *ss,
 				struct cgroup *cgroup,
-				struct task_struct *p)
+				struct cgroup_taskset *tset)
 {
+	struct task_struct *p = cgroup_taskset_first(tset);
 	int ret = 0;
 	struct mem_cgroup *memcg = mem_cgroup_from_cont(cgroup);
 
@@ -5242,7 +5237,7 @@ static int mem_cgroup_can_attach(struct cgroup_subsys *ss,
 
 static void mem_cgroup_cancel_attach(struct cgroup_subsys *ss,
 				struct cgroup *cgroup,
-				struct task_struct *p)
+				struct cgroup_taskset *tset)
 {
 	mem_cgroup_clear_mc();
 }
@@ -5361,9 +5356,9 @@ retry:
 
 static void mem_cgroup_move_task(struct cgroup_subsys *ss,
 				struct cgroup *cont,
-				struct cgroup *old_cont,
-				struct task_struct *p)
+				struct cgroup_taskset *tset)
 {
+	struct task_struct *p = cgroup_taskset_first(tset);
 	struct mm_struct *mm = get_task_mm(p);
 
 	if (mm) {
@@ -5378,19 +5373,18 @@ static void mem_cgroup_move_task(struct cgroup_subsys *ss,
 #else	/* !CONFIG_MMU */
 static int mem_cgroup_can_attach(struct cgroup_subsys *ss,
 				struct cgroup *cgroup,
-				struct task_struct *p)
+				struct cgroup_taskset *tset)
 {
 	return 0;
 }
 static void mem_cgroup_cancel_attach(struct cgroup_subsys *ss,
 				struct cgroup *cgroup,
-				struct task_struct *p)
+				struct cgroup_taskset *tset)
 {
 }
 static void mem_cgroup_move_task(struct cgroup_subsys *ss,
 				struct cgroup *cont,
-				struct cgroup *old_cont,
-				struct task_struct *p)
+				struct cgroup_taskset *tset)
 {
 }
 #endif

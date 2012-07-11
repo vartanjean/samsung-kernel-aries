@@ -23,7 +23,7 @@
 #include <linux/file.h>
 #include <linux/slab.h>
 #include <linux/time.h>
-#include <linux/pm_qos_params.h>
+#include <linux/pm_qos.h>
 #include <linux/uio.h>
 #include <linux/dma-mapping.h>
 #include <sound/core.h>
@@ -842,6 +842,7 @@ static int snd_pcm_pre_start(struct snd_pcm_substream *substream, int state)
 	if (runtime->status->state != SNDRV_PCM_STATE_PREPARED)
 		return -EBADFD;
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    !substream->hw_no_buffer &&
 	    !snd_pcm_playback_data(substream))
 		return -EPIPE;
 	runtime->trigger_master = substream;
@@ -2032,6 +2033,12 @@ int snd_pcm_open_substream(struct snd_pcm *pcm, int stream,
 	err = snd_pcm_hw_constraints_init(substream);
 	if (err < 0) {
 		snd_printd("snd_pcm_hw_constraints_init failed\n");
+		goto error;
+	}
+
+	if (substream->ops == NULL) {
+		snd_printd("cannot open back end PCMs directly\n");
+		err = -ENODEV;
 		goto error;
 	}
 

@@ -34,7 +34,6 @@ config ARCH_OMAP3
 	default y
 	select CPU_V7
 	select USB_ARCH_HAS_EHCI
-	select ARM_L1_CACHE_SHIFT_6 if !ARCH_OMAP4
 	select ARCH_HAS_OPP
 	select PM_OPP if PM
 
@@ -45,12 +44,13 @@ config ARCH_OMAP4
 	select CPU_V7
 	select ARM_GIC
 	select LOCAL_TIMERS if SMP
-	select PL310_ERRATA_588369
-	select PL310_ERRATA_727915
+	select PL310_ERRATA_588369 if CONFIG_CACHE_L2X0
+	select PL310_ERRATA_727915 if CONFIG_CACHE_L2X0
 	select ARM_ERRATA_720789
 	select ARCH_HAS_OPP
 	select PM_OPP if PM
 	select USB_ARCH_HAS_EHCI
+	select ARCH_HAS_BARRIERS
 
 comment "OMAP Core Type"
 	depends on ARCH_OMAP2
@@ -314,6 +314,7 @@ config MACH_OMAP_4430SDP
 	select OMAP_PACKAGE_CBL
 	select OMAP_PACKAGE_CBS
 	select REGULATOR_FIXED_VOLTAGE
+	select OMAP_TPS6236X
 
 config MACH_OMAP4_PANDA
 	bool "OMAP4 Panda Board"
@@ -322,6 +323,15 @@ config MACH_OMAP4_PANDA
 	select OMAP_PACKAGE_CBL
 	select OMAP_PACKAGE_CBS
 	select REGULATOR_FIXED_VOLTAGE
+
+config MACH_TUNA
+	bool "Tuna Board"
+	default y
+	depends on ARCH_OMAP4
+	select OMAP_PACKAGE_CBL
+	select OMAP_PACKAGE_CBS
+	select REGULATOR_FIXED_VOLTAGE
+	select OMAP_TPS6236X
 
 config OMAP3_EMU
 	bool "OMAP3 debugging peripherals"
@@ -343,6 +353,101 @@ config OMAP3_SDRC_AC_TIMING
 	  wish to say no.  Selecting yes without understanding what is
 	  going on could result in system crashes;
 
+config OMAP_TPS6236X
+       bool
+
+config OMAP_ALLOW_OSWR
+	bool  "Enable Open Switch Retention"
+	depends on ARCH_OMAP4
+	default n
+	help
+	  Select this option to enable OSWR support.
+	  Which means the Logic of power domains can be lost now
+	  unlike the CSWR wherein the logic is retained
+
+config CPU_FREQ_SET_MIN_MAX
+	bool "Set Min/Max CPU frequencies."
+	default n
+	help
+	  Allow setting min and max CPU frequencies. Sysfs can be used
+	  to override these values.
+
+config CPU_FREQ_MAX
+	int "Max CPU Frequency"
+	depends on CPU_FREQ_SET_MIN_MAX
+	default 1060000
+
+config CPU_FREQ_MIN
+	int "Min CPU Frequency"
+	depends on CPU_FREQ_SET_MIN_MAX
+	default 350000
+
+config PRE_UNDERVOLT
+	bool "Enable CPU compiled time undervolting on OMAP"
+	depends on !OMAP_SMARTREFLEX_CLASS1P5
+	default n
+	help
+	  Enable CPU compiled time undervolting on OMAP
+
+config CPU_OVERCLOCK
+	bool "Enable CPU Overclocking on OMAP"
+	default n
+	help
+	  Enables CPU Overclocking on OMAP
+
+config GPU_OVERCLOCK
+	bool "Enable GPU Overclocking on OMAP"
+	default n
+	help
+	  Enables CPU Overclocking on OMAP
+
+config VOLTAGE_CONTROL
+	bool "Enable MPU Votlage Control on OMAP"
+	depends on !OMAP_SMARTREFLEX_CLASS1P5
+	default n
+	help
+	  Enables MPU voltage control on OMAP
+
+config OMAP_FIQ_DEBUGGER
+	bool "Enable the serial FIQ debugger on OMAP"
+	default y
+	select FIQ_DEBUGGER
+	help
+	  Enables the serial FIQ debugger on OMAP"
+
+config OMAP4_PPA_CPU1_ONLINE_BUG
+	bool "Enable Support for CPU1 ONLINE WA for OSWR/OFF"
+	depends on ARCH_OMAP4
+	depends on OMAP_ALLOW_OSWR
+	default y
+	help
+	  If an non GP OMAP4 device is used and PPA revision is < v1.7.3,
+	  the device does not perform the memory maintenance and TLB sync
+	  operations required before releasing CPU1 to HLOS. This results
+	  in crash while resuming from OFF mode.
+
+	  Disable this option *ONLY IF* you meet the minimum PPA version
+	  requirement.
+
+	  If, on the other hand, you do not understand the change, leave the
+	  default as enabled.
+
+config OMAP4_HSOTG_ED_CORRECTION
+	bool "OMAP 44XX HSOTG Eye diagram correction"
+	depends on ARCH_OMAP4
+	default y
+	help
+	  Select this option to overrive HSOTG PHY settings in
+	  order to improve Eye Diagramm. On 4430 CPUs this should
+	  improve Eye Diagram at least 8%.
+
 endmenu
+
+config FORCE_FAST_CHARGE
+	bool "Force AC charge mode at will"
+	default y
+	help
+	  A simple sysfs interface to force adapters that
+	  are detected as USB to charge as AC.
 
 endif

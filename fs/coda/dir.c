@@ -132,11 +132,11 @@ exit:
 }
 
 
-int coda_permission(struct inode *inode, int mask, unsigned int flags)
+int coda_permission(struct inode *inode, int mask)
 {
 	int error;
 
-	if (flags & IPERM_FLAG_RCU)
+	if (mask & MAY_NOT_BLOCK)
 		return -ECHILD;
 
 	mask &= MAY_READ | MAY_WRITE | MAY_EXEC;
@@ -340,7 +340,7 @@ static int coda_rmdir(struct inode *dir, struct dentry *de)
 	if (!error) {
 		/* VFS may delete the child */
 		if (de->d_inode)
-		    de->d_inode->i_nlink = 0;
+			clear_nlink(de->d_inode);
 
 		/* fix the link count of the parent */
 		coda_dir_drop_nlink(dir);

@@ -3002,6 +3002,7 @@ __cfq_update_io_thinktime(struct cfq_ttime *ttime, unsigned long slice_idle)
 {
 	unsigned long elapsed = jiffies - ttime->last_end_request;
 	elapsed = min(elapsed, 2UL * slice_idle);
+
 	ttime->ttime_samples = (7*ttime->ttime_samples + 256) / 8;
 	ttime->ttime_total = (7*ttime->ttime_total + 256*elapsed) / 8;
 	ttime->ttime_mean = (ttime->ttime_total + 128) / ttime->ttime_samples;

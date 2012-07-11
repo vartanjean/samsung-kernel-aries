@@ -128,4 +128,11 @@ source "drivers/hwspinlock/Kconfig"
 
 source "drivers/clocksource/Kconfig"
 
+source "drivers/remoteproc/Kconfig"
+
+source "drivers/virtio/Kconfig"
+
+source "drivers/rpmsg/Kconfig"
+
+source "drivers/omap_hsi/Kconfig"
 endmenu

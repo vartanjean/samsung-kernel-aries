@@ -31,16 +31,6 @@ static u16 control_mmc1;
 
 #define HSMMC_NAME_LEN	9
 
-#if defined(CONFIG_ARCH_OMAP3) && defined(CONFIG_PM)
-
-static int hsmmc_get_context_loss(struct device *dev)
-{
-	return omap_pm_get_dev_context_loss_count(dev);
-}
-
-#else
-#define hsmmc_get_context_loss NULL
-#endif
 
 static void omap_hsmmc1_before_set_reg(struct device *dev, int slot,
 				  int power_on, int vdd)
@@ -184,7 +174,7 @@ static void omap4_hsmmc1_after_set_reg(struct device *dev, int slot,
 	}
 }
 
-static void hsmmc23_before_set_reg(struct device *dev, int slot,
+static void hsmmc2_before_set_reg(struct device *dev, int slot,
 				   int power_on, int vdd)
 {
 	struct omap_mmc_platform_data *mmc = dev->platform_data;
@@ -318,8 +308,6 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 	else
 		mmc->reg_offset = 0;
 
-	mmc->get_context_loss_count = hsmmc_get_context_loss;
-
 	mmc->slots[0].switch_pin = c->gpio_cd;
 	mmc->slots[0].gpio_wp = c->gpio_wp;
 
@@ -343,6 +331,20 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 
 	if (c->vcc_aux_disable_is_sleep)
 		mmc->slots[0].vcc_aux_disable_is_sleep = 1;
+
+	if (cpu_is_omap44xx()) {
+		if (omap_rev() > OMAP4430_REV_ES1_0)
+			mmc->slots[0].features |= HSMMC_HAS_UPDATED_RESET;
+		if (c->mmc >= 3 && c->mmc <= 5)
+			mmc->slots[0].features |= HSMMC_HAS_48MHZ_MASTER_CLK;
+	}
+
+	if (c->mmc_data) {
+		memcpy(&mmc->slots[0].mmc_data, c->mmc_data,
+				sizeof(struct mmc_platform_data));
+		mmc->slots[0].card_detect =
+				(mmc_card_detect_func)c->mmc_data->status;
+	}
 
 	/*
 	 * NOTE:  MMC slots should have a Vcc regulator set up.
@@ -393,14 +395,13 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 			c->caps &= ~MMC_CAP_8_BIT_DATA;
 			c->caps |= MMC_CAP_4_BIT_DATA;
 		}
-		/* FALLTHROUGH */
-	case 3:
 		if (mmc->slots[0].features & HSMMC_HAS_PBIAS) {
 			/* off-chip level shifting, or none */
-			mmc->slots[0].before_set_reg = hsmmc23_before_set_reg;
+			mmc->slots[0].before_set_reg = hsmmc2_before_set_reg;
 			mmc->slots[0].after_set_reg = NULL;
 		}
 		break;
+	case 3:
 	case 4:
 	case 5:
 		mmc->slots[0].before_set_reg = NULL;

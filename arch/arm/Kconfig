@@ -30,6 +30,7 @@ config ARM
 	select HAVE_SPARSE_IRQ
 	select GENERIC_IRQ_SHOW
 	select CPU_PM if (SUSPEND || CPU_IDLE)
+	select HAVE_BPF_JIT
 	select GENERIC_STRNCPY_FROM_USER
 	select GENERIC_STRNLEN_USER
 	help
@@ -141,7 +142,7 @@ config RWSEM_GENERIC_SPINLOCK
 	bool
 
 config RWSEM_XCHGADD_ALGORITHM
-    def_bool y
+	def_bool y
 
 config ARCH_HAS_ILOG2_U32
 	bool
@@ -214,6 +215,10 @@ config ARM_PATCH_PHYS_VIRT_16BIT
 	  This option extends the physical to virtual translation patching
 	  to allow physical memory down to a theoretical minimum of 64K
 	  boundaries.
+
+config GENERIC_BUG
+	def_bool y
+	depends on BUG
 
 source "init/Kconfig"
 
@@ -739,7 +744,6 @@ config ARCH_S5PC100
 	select GENERIC_GPIO
 	select HAVE_CLK
 	select CPU_V7
-	select ARM_L1_CACHE_SHIFT_6
 	select ARCH_USES_GETTIMEOFFSET
 	select HAVE_S3C2410_I2C if I2C
 	select HAVE_S3C_RTC if RTC_CLASS
@@ -754,7 +758,6 @@ config ARCH_S5PV210
 	select ARCH_HAS_HOLES_MEMORYMODEL
 	select GENERIC_GPIO
 	select HAVE_CLK
-	select ARM_L1_CACHE_SHIFT_6
 	select ARCH_HAS_CPUFREQ
 	select GENERIC_CLOCKEVENTS
 	select HAVE_SCHED_CLOCK if !S5P_HIGH_RES_TIMERS

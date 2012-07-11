@@ -308,6 +308,13 @@ __dma_alloc(struct device *dev, size_t size, dma_addr_t *handle, gfp_t gfp,
 	struct page *page;
 	void *addr;
 
+	/* Following is a work-around (a.k.a. hack) to prevent pages
+	 * with __GFP_COMP being passed to split_page() which cannot
+	 * handle them.  The real problem is that this flag probably
+	 * should be 0 on ARM as it is not supported on this
+	 * platform--see CONFIG_HUGETLB_PAGE. */
+	gfp &= ~(__GFP_COMP);
+
 	*handle = ~0;
 	size = PAGE_ALIGN(size);
 
@@ -356,6 +363,18 @@ dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle, gfp_
 			   pgprot_writecombine(pgprot_kernel));
 }
 EXPORT_SYMBOL(dma_alloc_writecombine);
+
+/*
+ * Allocate a strongly ordered region, in much the same way as
+ * dma_alloc_coherent above.
+ */
+void *dma_alloc_stronglyordered(struct device *dev, size_t size,
+				dma_addr_t *handle, gfp_t gfp)
+{
+	return __dma_alloc(dev, size, handle, gfp,
+			   pgprot_stronglyordered(pgprot_kernel));
+}
+EXPORT_SYMBOL(dma_alloc_stronglyordered);
 
 static int dma_mmap(struct device *dev, struct vm_area_struct *vma,
 		    void *cpu_addr, dma_addr_t dma_addr, size_t size)
