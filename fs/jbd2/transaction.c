@@ -1171,9 +1171,7 @@ out_unlock_bh:
 	jbd_unlock_bh_state(bh);
 out:
 	JBUFFER_TRACE(jh, "exit");
-	if (ret)
-		__WARN();	/* All errors are bugs, so dump the stack */
-	return ret;
+	return 0;
 }
 
 /*

@@ -56,7 +56,7 @@ static unsigned int down_threshold_awake;
 
 #define LATENCY_MULTIPLIER			(1000)
 #define MIN_LATENCY_MULTIPLIER			(100)
-#define DEF_SAMPLING_DOWN_FACTOR		(5)
+#define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(10)
 #define TRANSITION_LATENCY_LIMIT		(10 * 1000 * 1000)
 #define UP_THRESHOLD_AT_MIN_FREQ    (100)
@@ -73,11 +73,6 @@ static int status_old;
 #endif
 
 static void do_dbs_timer(struct work_struct *work);
-
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static struct early_suspend cpufreq_gov_early_suspend;
-static unsigned int cpufreq_gov_lcd_status;
-#endif
 
 struct cpu_dbs_info_s {
 	cputime64_t prev_cpu_idle;
@@ -154,12 +149,10 @@ static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
 
 static inline cputime64_t get_cpu_idle_time(unsigned int cpu, cputime64_t *wall)
 {
-	u64 idle_time = get_cpu_idle_time_us(cpu, NULL);
+	u64 idle_time = get_cpu_idle_time_us(cpu, wall);
 
 	if (idle_time == -1ULL)
 		return get_cpu_idle_time_jiffy(cpu, wall);
-	else
-		idle_time += get_cpu_iowait_time_us(cpu, wall);
 
 	return idle_time;
 }
@@ -573,30 +566,11 @@ int up_threshold = dbs_tuners_ins.up_threshold;
 		this_dbs_info->requested_freq += freq_target;
 		if (this_dbs_info->requested_freq > policy->max)
 			this_dbs_info->requested_freq = policy->max;
-	
+
 		__cpufreq_driver_target(policy, this_dbs_info->requested_freq,
 			CPUFREQ_RELATION_H);
 		return;
 	}
-
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	/* should we enable auxillary CPUs? */
-	/* only master CPU is alive and Screen is ON */
-	if (num_online_cpus() < 2 && cpufreq_gov_lcd_status == 1) {
-		mutex_unlock(&this_dbs_info->timer_mutex);
-		/* hot-plug enable 2nd CPU */
-		cpu_up(1);
-		mutex_lock(&this_dbs_info->timer_mutex);
-		printk("Conservative - Screen ON Hot-plug!\n");
-	/* Both CPUs are up and Screen is OFF */
-	} else if (num_online_cpus() > 1 && cpufreq_gov_lcd_status == 0) {
-		mutex_unlock(&this_dbs_info->timer_mutex);
-		/* hot-unplug 2nd CPU */
-		cpu_down(1);
-		printk("Conservative - Screen OFF Hot-unplug!\n");
-		mutex_lock(&this_dbs_info->timer_mutex);
-	}
-#endif
 
 	/*
 	 * The optimal frequency is the frequency that is the lowest that
@@ -823,31 +797,8 @@ struct cpufreq_governor cpufreq_gov_conservative = {
 	.owner			= THIS_MODULE,
 };
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void cpufreq_gov_suspend(struct early_suspend *h)
-{
-	cpufreq_gov_lcd_status = 0;
-}
-
-static void cpufreq_gov_resume(struct early_suspend *h)
-{
-	cpufreq_gov_lcd_status = 1;
-}
-#endif
-
 static int __init cpufreq_gov_dbs_init(void)
 {
-
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	cpufreq_gov_lcd_status = 1;
-
-	cpufreq_gov_early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 25;
-
-	cpufreq_gov_early_suspend.suspend = cpufreq_gov_suspend;
-	cpufreq_gov_early_suspend.resume = cpufreq_gov_resume;
-	register_early_suspend(&cpufreq_gov_early_suspend);
-#endif
-
 	return cpufreq_register_governor(&cpufreq_gov_conservative);
 }
 

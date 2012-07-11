@@ -35,7 +35,7 @@
 #if defined(SUPPORT_DRI_DRM) && !defined(SUPPORT_DRI_DRM_PLUGIN)
 #define	PVR_MOD_STATIC
 #else
-	
+
 	#if defined(LDM_PLATFORM)
 		#define	PVR_LDM_PLATFORM_MODULE
 		#define	PVR_LDM_MODULE
@@ -122,26 +122,6 @@ extern IMG_UINT32 gPVRDebugLevel;
 module_param(gPVRDebugLevel, uint, 0644);
 MODULE_PARM_DESC(gPVRDebugLevel, "Sets the level of debug output (default 0x7)");
 #endif 
-
-#if defined(CONFIG_SGX_DVFS_MODE_NONE)
-#define DEFAULT_IDLE_MODE	0
-#elif defined(CONFIG_SGX_DVFS_MODE_LINEAR)
-#define DEFAULT_IDLE_MODE	1
-#elif defined(CONFIG_SGX_DVFS_MODE_OPTIMIZED)
-#define DEFAULT_IDLE_MODE	2
-#else
-#error "sgx ide mode not defined"
-#endif
-
-bool sgx_idle_logging = false;
-module_param(sgx_idle_logging, bool, 0644);
-uint sgx_idle_mode = DEFAULT_IDLE_MODE;
-module_param(sgx_idle_mode, uint, 0644);
-uint sgx_idle_timeout = CONFIG_SGX_DVFS_IDLE_TIMEOUT * NSEC_PER_USEC;
-module_param(sgx_idle_timeout, uint, 0644);
-
-uint sgx_apm_latency = SYS_SGX_ACTIVE_POWER_LATENCY_MS;
-module_param(sgx_apm_latency, uint, 0644);
 
 #if defined(CONFIG_ION_OMAP)
 #include <linux/ion.h>
@@ -284,7 +264,7 @@ static int __devinit PVRSRVDriverProbe(LDM_DEV *pDevice, const struct pci_device
 		return -EINVAL;
 	}
 #endif	
-	
+
 	psSysData = SysAcquireDataNoCheck();
 	if (psSysData == IMG_NULL)
 	{
@@ -328,7 +308,7 @@ static void __devexit PVRSRVDriverRemove(LDM_DEV *pDevice)
 #endif
 
 	SysAcquireData(&psSysData);
-	
+
 #if defined(DEBUG) && defined(PVR_MANUAL_POWER_CONTROL)
 	if (gPVRPowerLevel != 0)
 	{
@@ -548,7 +528,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 		{
 			PVRSRV_KERNEL_MEM_INFO *psKernelMemInfo;
 
-			
+
 			if(PVRSRVLookupHandle(KERNEL_HANDLE_BASE,
 								  (IMG_PVOID *)&psKernelMemInfo,
 								  psPrivateData->hKernelMemInfo,
@@ -559,7 +539,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 				goto err_unlock;
 			}
 
-			
+
 			if(FreeMemCallBackCommon(psKernelMemInfo, 0,
 									 PVRSRV_FREE_CALLBACK_ORIGIN_EXTERNAL) != PVRSRV_OK)
 			{
@@ -569,7 +549,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 			}
 		}
 
-		
+
 		gui32ReleasePID = psPrivateData->ui32OpenPID;
 		PVRSRVProcessDisconnect(psPrivateData->ui32OpenPID);
 		gui32ReleasePID = 0;
@@ -609,7 +589,7 @@ static int __init PVRCore_Init(void)
 #endif
 
 #if !defined(SUPPORT_DRI_DRM)
-	
+
 	PVRDPFInit();
 #endif
 	PVR_TRACE(("PVRCore_Init"));
@@ -673,7 +653,7 @@ static int __init PVRCore_Init(void)
 #endif 
 
 #if !defined(PVR_LDM_MODULE)
-	
+
 	if ((eError = SysInitialise()) != PVRSRV_OK)
 	{
 		error = -ENODEV;
@@ -702,7 +682,7 @@ static int __init PVRCore_Init(void)
 	PVR_TRACE(("PVRCore_Init: major device %d", AssignedMajorNumber));
 
 #if defined(PVR_LDM_MODULE)
-	
+
 	psPvrClass = class_create(THIS_MODULE, "pvr");
 
 	if (IS_ERR(psPvrClass))
@@ -750,7 +730,7 @@ sys_deinit:
 #endif
 
 #else	
-	
+
 	{
 		SYS_DATA *psSysData;
 
@@ -832,7 +812,7 @@ static void __exit PVRCore_Cleanup(void)
 		}
 	}
 #endif
-	
+
 	(void) SysDeinitialise(psSysData);
 #endif 
 
