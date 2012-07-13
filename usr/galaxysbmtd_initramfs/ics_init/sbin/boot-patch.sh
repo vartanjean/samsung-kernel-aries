@@ -185,6 +185,7 @@ echo; echo "profile"
 if [ -e "/data/local/devil/user_min_max_enable" ];then
    min_max_enable=`cat /data/local/devil/user_min_max_enable`
    if [ "$min_max_enable" -eq 1 ]; then
+	echo $min_max_enable > /sys/class/misc/devil_idle/user_min_max_enable
 	#set cpu min freq while screen off
    	if [ -e "/data/local/devil/screen_off_max" ];then
 		echo; echo "set cpu max freq while screen off"
@@ -229,6 +230,7 @@ if [ -e "/data/local/devil/user_min_max_enable" ];then
 
    else
 	echo "screen_off_user_min_max not enabled...nothing to do"
+	echo 0 > /sys/class/misc/devil_idle/user_min_max_enable
    fi
 else
 echo 0 > /data/local/devil/user_min_max_enable
@@ -330,17 +332,17 @@ echo; echo "touchwake_timeout"
 if [ "$touchwake" -eq 1 ]; then
    if [ -e "/data/local/devil/touchwake_timeout" ];then
 	touchwake_timeout=`cat /data/local/devil/touchwake_timeout`
-	if [ "$touchwake_timeout" -le 300 ] && [ "$vibrator" -ge 0 ];then
+	if [ "$touchwake_timeout" -le 90000 ] && [ "$touchwake_timeout" -ge 0 ];then
     		echo "touchwake_timeout: found valid touchwake_timeout: <$touchwake_timeout>"
     		echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
 	else
 		echo "touchwake_timeout: did not find valid touchwake_timeout: setting 30 sec."
-		touchwake_timeout=30
+		touchwake_timeout=30000
 		echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
 	fi
     else
 	echo "touchwake_timeout: did not find valid touchwake_timeout: setting 30 sec."
-	touchwake_timeout=30
+	touchwake_timeout=30000
 	echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
 	echo $touchwake_timeout > /data/local/devil/touchwake_timeout
    fi
