@@ -102,8 +102,11 @@ else
     $BB mkdir -p /system/etc/init.d
     $BB chmod 777 /system/etc/init.d
   fi
+
+  if $BB [ -d /files/init.d ]; then
     $BB echo "copying files to init.d..."
     $BB cp /files/init.d/* /system/etc/init.d/
+  fi
     
     if $BB [ ! -d /system/etc/shutdown.d ]; then
       $BB echo "making shutdown.d"
