@@ -3,16 +3,20 @@ import init.aries.gps.rc
 
 on init
     loglevel 9
-    export EXTERNAL_STORAGE /mnt/sdcard
-    export SECONDARY_STORAGE /mnt/emmc
+    export EXTERNAL_STORAGE /storage/sdcard0
+    export SECONDARY_STORAGE /storage/sdcard1
 
     # FIXME: Market checks this variable for space-checking, but downloads to /datadata
     export DOWNLOAD_CACHE /data/download
 
-    mkdir /mnt/emmc 0000 system system
-    symlink /mnt/emmc /emmc
-    mkdir /mnt/sdcard 0000 system system
-    symlink /mnt/sdcard /sdcard
+    mkdir /storage 0050 system sdcard_r
+    mkdir /storage/sdcard0 0000 system system
+    mkdir /storage/sdcard1 0000 system system
+    symlink /storage/sdcard0 /sdcard
+    symlink /storage/sdcard0 /mnt/sdcard
+    symlink /storage/sdcard1 /emmc
+    symlink /storage/sdcard1 /mnt/emmc
+    # FIXME: Remove emmc?
     mkdir /datadata 0771 system system
 
     # We will create our own ril-daemon service in class 'core' because the
@@ -38,7 +42,7 @@ on boot
 on fs
     mkdir /radio 0775 radio radio
     mount yaffs2 mtd@radio /radio
-    mount ext4 /dev/block/mmcblk0p2 /data wait nosuid nodev noatime nodiratime noauto_da_alloc
+    mount_all fstab.aries
     mount yaffs2 mtd@datadata /datadata
 
     chown radio radio /radio/modem.bin

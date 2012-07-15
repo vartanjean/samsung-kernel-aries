@@ -23,7 +23,7 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
-number="0.98.3"
+number="1.0.0-Rc3"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
