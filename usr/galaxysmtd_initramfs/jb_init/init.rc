@@ -192,6 +192,7 @@ on post-fs-data
     mkdir /data/ssh 0750 root shell
     mkdir /data/ssh/empty 0700 root root
 
+
     # create dalvik-cache, so as to enforce our permissions
     mkdir /data/dalvik-cache 0771 system system
     chown system system /data/dalvik-cache
@@ -208,6 +209,7 @@ on post-fs-data
 
     # create the lost+found directories, so as to enforce our permissions
     mkdir /data/lost+found 0770 root root
+
 
     # create directory for DRM plug-ins - give drm the read/write access to
     # the following directory.
@@ -418,7 +420,7 @@ on property:persist.sys.usb.config=*
 
     start semaboot
 
-# Semaphore boot patch
+# kernel specific boot script
 service semaboot /sbin/boot-patch.sh
 	user root
 	oneshot
@@ -589,3 +591,25 @@ service mdnsd /system/bin/mdnsd
     socket mdnsd stream 0660 mdnsr inet
     disabled
     oneshot
+
+# stuff for shutdown scripts
+service shutdown_misc /sbin/shutdown_misc
+    class main
+    user root
+    disabled
+    oneshot
+
+# power off
+on property:sys.shutdown.requested=0
+    start shutdown_misc
+
+# reboot
+on property:sys.shutdown.requested=1null
+    start shutdown_misc
+
+on property:sys.shutdown.requested=1
+    start shutdown_misc
+
+# reboot recovery
+on property:sys.shutdown.requested=1recovery
+    start shutdown_misc
