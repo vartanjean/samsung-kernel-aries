@@ -1,0 +1,6 @@
+#!/system/bin/sh
+
+LD_PRELOAD=/system/lib/libhardware_legacy.wifi.so
+export LD_PRELOAD
+
+exec /system/bin/netd.real "$@"
