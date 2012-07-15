@@ -258,6 +258,7 @@ fi
 echo; echo "deep_idle"
 if [ -e "/data/local/devil/deep_idle" ];then
 <<<<<<< HEAD
+<<<<<<< HEAD
 	deep_idle=`cat /data/local/devil/deep_idle`
 	if [ "$deep_idle" -eq 0 ] || [ "$deep_idle" -eq 1 ];then
     		echo "deep_idle: found valid deep_idle mode: <$deep_idle>"
@@ -271,16 +272,24 @@ else
 	deep_idle=0
 =======
 	fsync=`cat /data/local/devil/deep_idle`
+=======
+	deep_idle=`cat /data/local/devil/deep_idle`
+>>>>>>> 36e4e60... new initramfs and compiling of 1.0.0-Rc3
 	if [ "$deep_idle" -eq 0 ] || [ "$deep_idle" -eq 1 ];then
-    		echo "deep_idle: found vaild deep_idle mode: <$deep_idle>"
+    		echo "deep_idle: found valid deep_idle mode: <$deep_idle>"
     		echo $deep_idle > /sys/devices/virtual/misc/deepidle/enabled
 	else
-		echo "deep_idle: did not find vaild deep_idle mode: setting disabled"
+		echo "deep_idle: did not find valid deep_idle mode: setting disabled"
 		echo 0 > /sys/devices/virtual/misc/deepidle/enabled
 	fi
 else
+<<<<<<< HEAD
 	echo "deep_idle: did not find vaild deep_idle mode: setting disabled"
 >>>>>>> 0673608... hopefully really fixing the bootlooping issue, if bigmem config file is not present on slim ics + added deep idle (and stats) to initramfs
+=======
+	echo "deep_idle: did not find valid deep_idle mode: setting disabled"
+	deep_idle=0
+>>>>>>> 36e4e60... new initramfs and compiling of 1.0.0-Rc3
 	echo 0 > /data/local/devil/deep_idle
 	echo 0 > /sys/devices/virtual/misc/deepidle/enabled
 fi
@@ -289,6 +298,7 @@ fi
 echo; echo "deep_idle_stats"
 if [ "$deep_idle" -eq 1 ]; then
    if [ -e "/data/local/devil/deep_idle_stats" ];then
+<<<<<<< HEAD
 <<<<<<< HEAD
 	deep_idle_stats=`cat /data/local/devil/deep_idle_stats`
 	if [ "$deep_idle_stats" -eq 0 ] || [ "$deep_idle_stats" -eq 1 ];then
@@ -302,16 +312,23 @@ if [ "$deep_idle" -eq 1 ]; then
 	echo "deep_idle_stats: did not find valid deep_idle_stats mode: setting disabled"
 =======
 	fsync=`cat /data/local/devil/deep_idle_stats`
+=======
+	deep_idle_stats=`cat /data/local/devil/deep_idle_stats`
+>>>>>>> 36e4e60... new initramfs and compiling of 1.0.0-Rc3
 	if [ "$deep_idle_stats" -eq 0 ] || [ "$deep_idle_stats" -eq 1 ];then
-    		echo "deep_idle_stats: found vaild deep_idle_stats mode: <$deep_idle_stats>"
+    		echo "deep_idle_stats: found valid deep_idle_stats mode: <$deep_idle_stats>"
     		echo $deep_idle_stats > /sys/devices/virtual/misc/deepidle/stats_enabled
 	else
-		echo "deep_idle_stats: did not find vaild deep_idle_stats mode: setting disabled"
+		echo "deep_idle_stats: did not find valid deep_idle_stats mode: setting disabled"
 		echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
 	fi
     else
+<<<<<<< HEAD
 	echo "deep_idle_stats: did not find vaild deep_idle_stats mode: setting disabled"
 >>>>>>> 0673608... hopefully really fixing the bootlooping issue, if bigmem config file is not present on slim ics + added deep idle (and stats) to initramfs
+=======
+	echo "deep_idle_stats: did not find valid deep_idle_stats mode: setting disabled"
+>>>>>>> 36e4e60... new initramfs and compiling of 1.0.0-Rc3
 	echo 0 > /data/local/devil/deep_idle_stats
 	echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
    fi

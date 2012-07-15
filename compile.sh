@@ -23,7 +23,11 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
+<<<<<<< HEAD
 number="0.99_d"
+=======
+number="1.0.0-Rc3"
+>>>>>>> 36e4e60... new initramfs and compiling of 1.0.0-Rc3
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then

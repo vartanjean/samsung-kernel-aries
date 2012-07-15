@@ -44,5 +44,9 @@ const char linux_banner[] =
 
 const char linux_proc_banner[] =
 	"%s version %s"
+<<<<<<< HEAD
  " (Devil3_0.99_d_fascinate_CFS_BLN_VC)"
+=======
+ " (Devil3_1.0.0-Rc3_fascinate_CFS_BLN_VC)"
+>>>>>>> 36e4e60... new initramfs and compiling of 1.0.0-Rc3
 	" (" LINUX_COMPILER ") %s\n";
