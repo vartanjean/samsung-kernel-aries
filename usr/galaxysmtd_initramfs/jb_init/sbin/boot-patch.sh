@@ -185,7 +185,6 @@ echo; echo "profile"
 if [ -e "/data/local/devil/user_min_max_enable" ];then
    min_max_enable=`cat /data/local/devil/user_min_max_enable`
    if [ "$min_max_enable" -eq 1 ]; then
-	echo $min_max_enable > /sys/class/misc/devil_idle/user_min_max_enable
 	#set cpu min freq while screen off
    	if [ -e "/data/local/devil/screen_off_max" ];then
 		echo; echo "set cpu max freq while screen off"
@@ -230,7 +229,6 @@ if [ -e "/data/local/devil/user_min_max_enable" ];then
 
    else
 	echo "screen_off_user_min_max not enabled...nothing to do"
-	echo 0 > /sys/class/misc/devil_idle/user_min_max_enable
    fi
 else
 echo 0 > /data/local/devil/user_min_max_enable
@@ -257,7 +255,6 @@ fi
 # set deep_idle
 echo; echo "deep_idle"
 if [ -e "/data/local/devil/deep_idle" ];then
-<<<<<<< HEAD
 	deep_idle=`cat /data/local/devil/deep_idle`
 	if [ "$deep_idle" -eq 0 ] || [ "$deep_idle" -eq 1 ];then
     		echo "deep_idle: found valid deep_idle mode: <$deep_idle>"
@@ -269,18 +266,6 @@ if [ -e "/data/local/devil/deep_idle" ];then
 else
 	echo "deep_idle: did not find valid deep_idle mode: setting disabled"
 	deep_idle=0
-=======
-	fsync=`cat /data/local/devil/deep_idle`
-	if [ "$deep_idle" -eq 0 ] || [ "$deep_idle" -eq 1 ];then
-    		echo "deep_idle: found vaild deep_idle mode: <$deep_idle>"
-    		echo $deep_idle > /sys/devices/virtual/misc/deepidle/enabled
-	else
-		echo "deep_idle: did not find vaild deep_idle mode: setting disabled"
-		echo 0 > /sys/devices/virtual/misc/deepidle/enabled
-	fi
-else
-	echo "deep_idle: did not find vaild deep_idle mode: setting disabled"
->>>>>>> 0673608... hopefully really fixing the bootlooping issue, if bigmem config file is not present on slim ics + added deep idle (and stats) to initramfs
 	echo 0 > /data/local/devil/deep_idle
 	echo 0 > /sys/devices/virtual/misc/deepidle/enabled
 fi
@@ -289,7 +274,6 @@ fi
 echo; echo "deep_idle_stats"
 if [ "$deep_idle" -eq 1 ]; then
    if [ -e "/data/local/devil/deep_idle_stats" ];then
-<<<<<<< HEAD
 	deep_idle_stats=`cat /data/local/devil/deep_idle_stats`
 	if [ "$deep_idle_stats" -eq 0 ] || [ "$deep_idle_stats" -eq 1 ];then
     		echo "deep_idle_stats: found valid deep_idle_stats mode: <$deep_idle_stats>"
@@ -300,18 +284,6 @@ if [ "$deep_idle" -eq 1 ]; then
 	fi
     else
 	echo "deep_idle_stats: did not find valid deep_idle_stats mode: setting disabled"
-=======
-	fsync=`cat /data/local/devil/deep_idle_stats`
-	if [ "$deep_idle_stats" -eq 0 ] || [ "$deep_idle_stats" -eq 1 ];then
-    		echo "deep_idle_stats: found vaild deep_idle_stats mode: <$deep_idle_stats>"
-    		echo $deep_idle_stats > /sys/devices/virtual/misc/deepidle/stats_enabled
-	else
-		echo "deep_idle_stats: did not find vaild deep_idle_stats mode: setting disabled"
-		echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
-	fi
-    else
-	echo "deep_idle_stats: did not find vaild deep_idle_stats mode: setting disabled"
->>>>>>> 0673608... hopefully really fixing the bootlooping issue, if bigmem config file is not present on slim ics + added deep idle (and stats) to initramfs
 	echo 0 > /data/local/devil/deep_idle_stats
 	echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
    fi
@@ -358,17 +330,17 @@ echo; echo "touchwake_timeout"
 if [ "$touchwake" -eq 1 ]; then
    if [ -e "/data/local/devil/touchwake_timeout" ];then
 	touchwake_timeout=`cat /data/local/devil/touchwake_timeout`
-	if [ "$touchwake_timeout" -le 90000 ] && [ "$touchwake_timeout" -ge 0 ];then
+	if [ "$touchwake_timeout" -le 300 ] && [ "$vibrator" -ge 0 ];then
     		echo "touchwake_timeout: found valid touchwake_timeout: <$touchwake_timeout>"
     		echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
 	else
 		echo "touchwake_timeout: did not find valid touchwake_timeout: setting 30 sec."
-		touchwake_timeout=30000
+		touchwake_timeout=30
 		echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
 	fi
     else
 	echo "touchwake_timeout: did not find valid touchwake_timeout: setting 30 sec."
-	touchwake_timeout=30000
+	touchwake_timeout=30
 	echo $touchwake_timeout > /sys/devices/virtual/misc/touchwake/delay
 	echo $touchwake_timeout > /data/local/devil/touchwake_timeout
    fi
@@ -690,5 +662,4 @@ cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness
 
 echo; echo "mount system ro"
 busybox mount -o ro,remount /system
-
 
