@@ -23,7 +23,7 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
-number="1.0.0-Rc3"
+number="1.0.0-Rc4_JB"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
@@ -36,11 +36,9 @@ rm -rf usr/galaxysmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
 cp usr/init_files/init_gsm usr/galaxysmtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/galaxysmtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/galaxysmtd_initramfs/ics_init/sbin/clean_initd.sh
 
 cp usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/galaxysmtd_initramfs/jb_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/galaxysmtd_initramfs/jb_init/sbin/clean_initd.sh
 
 
@@ -48,11 +46,9 @@ rm -rf usr/galaxysbmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/galaxysbmtd_initramfs/
 cp usr/init_files/init_gsm usr/galaxysbmtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/galaxysbmtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/galaxysbmtd_initramfs/ics_init/sbin/clean_initd.sh
 
 cp usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/galaxysbmtd_initramfs/jb_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/galaxysbmtd_initramfs/jb_init/sbin/clean_initd.sh
 
 
@@ -60,11 +56,9 @@ rm -rf usr/captivatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/captivatemtd_initramfs/
 cp usr/init_files/init_gsm usr/captivatemtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/captivatemtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/captivatemtd_initramfs/ics_init/sbin/clean_initd.sh
 
 cp usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/captivatemtd_initramfs/jb_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/captivatemtd_initramfs/jb_init/sbin/clean_initd.sh
 
 
@@ -72,11 +66,9 @@ rm -rf usr/vibrantmtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/vibrantmtd_initramfs/
 cp usr/init_files/init_gsm usr/vibrantmtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/vibrantmtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/vibrantmtd_initramfs/ics_init/sbin/clean_initd.sh
 
 cp usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/vibrantmtd_initramfs/jb_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/vibrantmtd_initramfs/jb_init/sbin/clean_initd.sh
 
 
@@ -84,11 +76,9 @@ rm -rf usr/fascinatemtd_initramfs/files/*
 cp -r  usr/init_files/files/ usr/fascinatemtd_initramfs/
 cp usr/init_files/init_cdma usr/fascinatemtd_initramfs/init
 cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/fascinatemtd_initramfs/ics_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/ics_init/sbin/clean_initd.sh
 
 cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/datafix.sh usr/fascinatemtd_initramfs/jb_init/sbin/datafix.sh
 cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/jb_init/sbin/clean_initd.sh
 
 

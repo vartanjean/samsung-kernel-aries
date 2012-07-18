@@ -31,7 +31,6 @@ fi
 #	cp xl/* system/lib/ || exit 1
 #fi	
 
-	cp S30datafix system/etc/init.d/ || exit 1
 #	cp S98oc_value system/etc/init.d/ || exit 1
 #	cp S99load_default system/etc/init.d/ || exit 1
 #	cp S80profiles system/etc/init.d/ || exit 1
@@ -41,7 +40,7 @@ fi
 #	cp vibrator system/etc/devil/ || exit 1
 
 	mkdir -p system/bin
-	zip -q -r "${REL}.zip" system data backup boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
+	zip -q -r "${REL}.zip" system data datadata boot.img META-INF erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
 	sha256sum ${REL}.zip > ${REL}.sha256sum
 
 #	tar -H ustar -c zImage > "${REL}"_odin.tar
