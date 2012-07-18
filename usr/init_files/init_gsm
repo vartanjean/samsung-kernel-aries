@@ -215,7 +215,11 @@ bigmem=0
 		$BB grep -q bootmode=13 /proc/cmdline || 
 		$BB grep -q bootmode=15 /proc/cmdline; then
     		$BB echo "copying XL_mem libs"
-    		$BB mv /files/xl/* /system/lib/
+    		if $BB [ "$jb" -eq 1 ]; then
+    			$BB mv /files/xl_jb/* /system/lib/
+		else
+    			$BB mv /files/xl/* /system/lib/
+		fi
     		$BB echo 1 > /sys/kernel/bigmem/enable
 
 	elif $BB grep -q bootmode=7 /proc/cmdline || 
@@ -223,11 +227,19 @@ bigmem=0
 		$BB grep -q bootmode=17 /proc/cmdline || 
 		$BB grep -q bootmode=19 /proc/cmdline; then
     		$BB echo "copying XL_mem libs"
-    		$BB mv /files/xl/* /system/lib/
+    		if $BB [ "$jb" -eq 1 ]; then
+    			$BB mv /files/xl_jb/* /system/lib/
+		else
+    			$BB mv /files/xl/* /system/lib/
+		fi
     		$BB echo 2 > /sys/kernel/bigmem/enable
 	else
     		$BB echo "copying cm9 default libs"
-    		$BB mv /files/cm/* /system/lib/
+    		if $BB [ "$jb" -eq 1 ]; then
+    			$BB mv /files/cm_jb/* /system/lib/
+		else
+    			$BB mv /files/cm/* /system/lib/
+		fi
 	fi
 fi
 

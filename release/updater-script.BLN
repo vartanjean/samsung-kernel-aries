@@ -11,12 +11,12 @@ package_extract_file("bml_over_mtd.sh", "/tmp/bml_over_mtd.sh");
 set_perm(0, 0, 0777, "/tmp/bml_over_mtd.sh");
 #show_progress(0.200000, 10);
 package_extract_dir("data/", "/data/");
-#cleaning script
-#ui_print("Moving init.d scripts to /etc/init.d/backup");
-#package_extract_dir("backup", "/tmp");
-#set_perm(0, 0, 0700, "/tmp/move.sh");
-#run_program("/tmp/move.sh");
-#ui_print("");
+#datadata script
+ui_print("checking for /datadata partition");
+package_extract_dir("datadata", "/tmp");
+set_perm(0, 0, 0700, "/tmp/dadadata.sh");
+run_program("/tmp/dadadata.sh");
+ui_print("");
 	
 ui_print("Cleaning cache ... ");
 delete_recursive("/cache");
@@ -28,6 +28,7 @@ package_extract_dir("system/", "/system/");
 delete("/system/lib/hw/lights.goldfish.so"); 
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/init.d");
 show_progress(0.200000, 10);
+
 assert(package_extract_file("boot.img", "/tmp/boot.img"),
        write_raw_image("/tmp/boot.img", "boot"),
        run_program("/tmp/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/boot.img"),
