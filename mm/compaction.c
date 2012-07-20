@@ -340,7 +340,10 @@ static isolate_migrate_t isolate_migratepages(struct zone *zone,
 		/* Watch for unexpected holes punched in the memmap */
 		if (!memmap_valid_within(low_pfn, page, zone))
 			continue;
+		if (page_zone(page) != zone)
+			continue;
 
+		/* Skip if free */
 		if (PageBuddy(page))
 			continue;
 
