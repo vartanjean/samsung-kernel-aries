@@ -64,7 +64,7 @@ $BB mkdir /dev/block
 $BB echo "generating device nodes..."
 $BB mknod /dev/block/mmcblk0 b 179 0
 $BB mknod /dev/block/mmcblk0p1 b 179 1
-$BB mknod /dev/block/mmcblk0p1 b 179 2
+$BB mknod /dev/block/mmcblk0p2 b 179 2
 $BB mknod /dev/block/mtdblock2 b 31 2
 $BB mknod /dev/block/mtdblock3 b 31 3
 
@@ -171,34 +171,10 @@ else
 
 fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
-elif ! $BB test -e /system/build.prop ; then
-	# emergency boot
-    $BB echo "build.prop not found, starting emergency boot..."
-    $BB umount /cache
-    erase_image cache
-    $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
-    $BB mkdir /cache/recovery
-	$BB mount -t vfat /dev/block/mmcblk0p1 /sdcard	
-
-    $BB echo "checking cm9 update config /sdcard/cyanogenmod.cfg..."
-	UPDATE=$($BB cat /sdcard/cyanogenmod.cfg)
-	if $BB test -e $UPDATE ; then
-        $BB echo "cm9 update found, initializing extendedcommand..."
-		$BB echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
-  	else
-        $BB echo "cm9 update not found, doing nothing"
-    fi
-
-    $BB echo "moving ics_rec_init to /..."
-    $BB mv /ics_rec_init/* /
-	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
 
     jb=1
     [ "`$BB grep -i IMM76 /system/build.prop`" ] && jb=0
-    [ "`$BB grep -i MIUIUSV4 /system/build.prop`" ] && jb=0
-    [ "`$BB grep -i IML74K /system/build.prop`" ] && jb=0
-
     if $BB [ "$jb" -eq 1 ]; then
         $BB echo "moving jb_init to /"
     	$BB mv /jb_init/* /
@@ -239,11 +215,7 @@ bigmem=0
 		$BB grep -q bootmode=13 /proc/cmdline || 
 		$BB grep -q bootmode=15 /proc/cmdline; then
     		$BB echo "copying XL_mem libs"
-    		if $BB [ "$jb" -eq 1 ]; then
-    			$BB mv /files/xl_jb/* /system/lib/
-		else
-    			$BB mv /files/xl/* /system/lib/
-		fi
+    		$BB mv /files/xl/* /system/lib/
     		$BB echo 1 > /sys/kernel/bigmem/enable
 
 	elif $BB grep -q bootmode=7 /proc/cmdline || 
@@ -251,19 +223,11 @@ bigmem=0
 		$BB grep -q bootmode=17 /proc/cmdline || 
 		$BB grep -q bootmode=19 /proc/cmdline; then
     		$BB echo "copying XL_mem libs"
-    		if $BB [ "$jb" -eq 1 ]; then
-    			$BB mv /files/xl_jb/* /system/lib/
-		else
-    			$BB mv /files/xl/* /system/lib/
-		fi
+    		$BB mv /files/xl/* /system/lib/
     		$BB echo 2 > /sys/kernel/bigmem/enable
 	else
     		$BB echo "copying cm9 default libs"
-    		if $BB [ "$jb" -eq 1 ]; then
-    			$BB mv /files/cm_jb/* /system/lib/
-		else
-    			$BB mv /files/cm/* /system/lib/
-		fi
+    		$BB mv /files/cm/* /system/lib/
 	fi
 fi
 
@@ -293,7 +257,6 @@ $BB umount /system
 $BB umount /cache
 $BB umount /sdcard
 $BB rm -r /files
-$BB rm -r /jb_files
 $BB rm -r /sdcard
 #$BB rm /erase_image
 

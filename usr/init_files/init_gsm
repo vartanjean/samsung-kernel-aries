@@ -196,9 +196,6 @@ else
 
     jb=1
     [ "`$BB grep -i IMM76 /system/build.prop`" ] && jb=0
-    [ "`$BB grep -i MIUIUSV4 /system/build.prop`" ] && jb=0
-    [ "`$BB grep -i IML74K /system/build.prop`" ] && jb=0
-
     if $BB [ "$jb" -eq 1 ]; then
         $BB echo "moving jb_init to /"
     	$BB mv /jb_init/* /
