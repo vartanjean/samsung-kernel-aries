@@ -171,27 +171,6 @@ else
 
 fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
-elif ! $BB test -e /system/build.prop ; then
-	# emergency boot
-    $BB echo "build.prop not found, starting emergency boot..."
-    $BB umount /cache
-    erase_image cache
-    $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
-    $BB mkdir /cache/recovery
-	$BB mount -t vfat /dev/block/mmcblk0p1 /sdcard	
-
-    $BB echo "checking cm9 update config /sdcard/cyanogenmod.cfg..."
-	UPDATE=$($BB cat /sdcard/cyanogenmod.cfg)
-	if $BB test -e $UPDATE ; then
-        $BB echo "cm9 update found, initializing extendedcommand..."
-		$BB echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
-  	else
-        $BB echo "cm9 update not found, doing nothing"
-    fi
-
-    $BB echo "moving ics_rec_init to /..."
-    $BB mv /ics_rec_init/* /
-	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
 
     jb=1
@@ -290,7 +269,6 @@ $BB umount /system
 $BB umount /cache
 $BB umount /sdcard
 $BB rm -r /files
-$BB rm -r /jb_files
 $BB rm -r /sdcard
 #$BB rm /erase_image
 
