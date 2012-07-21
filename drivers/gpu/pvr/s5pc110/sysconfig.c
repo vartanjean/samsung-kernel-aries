@@ -89,17 +89,10 @@ IMG_UINT32   PVRSRV_BridgeDispatchKM( IMG_UINT32  Ioctl,
  * In arch/arm/mach-s5pv210/cpufreq.c, the bus speed is only lowered when the
  * CPU freq is below 200MHz.
  */
+#define MIN_CPU_KHZ_FREQ 200000
 
 static struct clk *g3d_clock;
 static struct regulator *g3d_pd_regulator;
-
-#define MIN_CPU_KHZ_FREQ 200000
-#define CPU_LOW_SPEED 100000
-
-#ifdef CONFIG_LIVE_OC
-extern unsigned long cpuL6freq(void);
-extern unsigned long cpuL7freq(void);
-#endif
 
 static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 					 unsigned long event, void *data)
@@ -111,31 +104,15 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 
 	/* This is our indicator of GPU activity */
 	if (regulator_is_enabled(g3d_pd_regulator))
-#ifdef CONFIG_LIVE_OC
-		cpufreq_verify_within_limits(policy, cpuL6freq(),
-					     policy->cpuinfo.max_freq);
-#else
 		cpufreq_verify_within_limits(policy, MIN_CPU_KHZ_FREQ,
 					     policy->cpuinfo.max_freq);
-#endif
 
-/*else 
-
-#ifdef CONFIG_LIVE_OC
-  		cpufreq_verify_within_limits(policy, cpuL7freq(),
-               					policy->cpuinfo.max_freq);
-#else
-  		cpufreq_verify_within_limits(policy, CPU_LOW_SPEED,
-               					policy->cpuinfo.max_freq);
-#endif
-*/
 	return 0;
 }
 
 static struct notifier_block cpufreq_limit_notifier = {
 	.notifier_call = limit_adjust_cpufreq_notifier,
 };
-
 
 static PVRSRV_ERROR EnableSGXClocks(void)
 {
@@ -270,7 +247,7 @@ PVRSRV_ERROR SysInitialise(IMG_VOID)
 
 	gpsSysData->pvSysSpecificData = (IMG_PVOID)&gsSysSpecificData;
 	OSMemSet(&gsSGXDeviceMap, 0, sizeof(SGX_DEVICE_MAP));
-
+	
 	/* Set up timing information*/
 	psTimingInfo = &gsSGXDeviceMap.sTimingInfo;
 	psTimingInfo->ui32CoreClockSpeed = SYS_SGX_CLOCK_SPEED;
@@ -373,7 +350,7 @@ PVRSRV_ERROR SysInitialise(IMG_VOID)
 				{
 #if defined(SGX_FEATURE_VARIABLE_MMU_PAGE_SIZE)
 					IMG_CHAR *pStr;
-
+								
 					switch(psDeviceMemoryHeap[i].ui32HeapID)
 					{
 						case HEAP_ID(PVRSRV_DEVICE_TYPE_SGX, SGX_GENERAL_HEAP_ID):
@@ -554,10 +531,8 @@ PVRSRV_ERROR SysFinalise(IMG_VOID)
 
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 	DisableSGXClocks();
-#ifdef CONFIG_PVR_LIMIT_MINFREQ
 	cpufreq_register_notifier(&cpufreq_limit_notifier,
 				  CPUFREQ_POLICY_NOTIFIER);
-#endif
 #endif 
 
 	return PVRSRV_OK;
@@ -697,7 +672,7 @@ IMG_DEV_PHYADDR SysCpuPAddrToDevPAddr (PVRSRV_DEVICE_TYPE eDeviceType,
 
 	/* Note: for no HW UMA system we assume DevP == CpuP */
 	DevPAddr.uiAddr = CpuPAddr.uiAddr;
-
+	
 	return DevPAddr;
 }
 

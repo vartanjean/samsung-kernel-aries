@@ -23,7 +23,7 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
-number="1.0.0-Rc6_datadata"
+number="1.0.1_datadata"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
