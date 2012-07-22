@@ -5265,7 +5265,7 @@ static struct platform_device *aries_devices[] __initdata = {
 	&samsung_asoc_dma,
 };
 
-static void check_refreshrate(void) {
+static void check_refreshrate(void) {/*
   int bootmode = __raw_readl(S5P_INFORM6);
   if ((bootmode == 17) || (bootmode == 19) || (bootmode == 13) || (bootmode == 15) || (bootmode == 11)) {
     	refreshrate = true;
@@ -5274,7 +5274,7 @@ static void check_refreshrate(void) {
   else {
     	refreshrate = false;
 	s6e63m0.freq= 56;
-  }
+  }*/
 }
 
 
