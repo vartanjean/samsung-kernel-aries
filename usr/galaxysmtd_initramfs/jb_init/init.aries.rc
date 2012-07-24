@@ -233,3 +233,6 @@ service tvouthack /system/bin/tvouthack
     user system
     group graphics
     disabled
+
+on property:dev.bootcomplete=1
+	start tvout
