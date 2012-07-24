@@ -298,7 +298,7 @@ on boot
     setprop system_init.startsurfaceflinger 0
 
 # Run sysinit
-    exec /system/bin/sysinit
+#    exec /system/bin/sysinit
 
     class_start core
     class_start main
