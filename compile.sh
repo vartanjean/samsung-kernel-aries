@@ -23,7 +23,7 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
-number="1.0.3_datadata"
+number="1.0.2_datadata"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
@@ -82,6 +82,35 @@ cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/jb_init/sbin/boot-pat
 cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/jb_init/sbin/clean_initd.sh
 
 
+if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 
+####################### prepare building for gsm device ###########################################################
+then
+	if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
+	then
+	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
+	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
+	echo "Built-in.o modem files for GSM copied"
+	else
+	echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
+	echo "******** Please build old GSM *********"
+	exit 1
+	fi
+fi
+
+if [ "$target" = "fassy"  ]
+####################### prepare building for cdma device ###########################################################
+then
+	if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
+	then
+	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
+	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
+	echo "Built-in.o modem files for CDMA copied"
+	else
+	echo "***** built-in.o.gcc4.4.3_cdma files are missing *****"
+	echo "******** Please build old CDMA *********"
+	exit 1
+	fi
+fi
 
 if [ "$target" = "i9000"  ] 
 then
@@ -111,9 +140,35 @@ fi
 
 if [ "$target" = "all"  ] 
 then
+
+####################### prepare building for gsm device ###########################################################
+if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
+then
+cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
+cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
+#cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3
+#cp drivers/misc/samsung_modemctl/modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/modemctl/built-in.o
+echo "Built-in.o modem files for GSM copied"
+else
+echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
+echo "******** Please build old GSM *********"
+exit 1
+fi
 ./i9000.sh "${number}" "${scheduler}" "${vc}"
 ./brasil.sh "${number}" "${scheduler}" "${vc}"
 ./cappy.sh "${number}" "${scheduler}" "${vc}"
 ./vibrant.sh "${number}" "${scheduler}" "${vc}"
+
+####################### prepare building for cdma device ###########################################################
+if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
+then
+cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
+cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
+echo "Built-in.o modem files for GSM copied"
+else
+echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
+echo "******** Please build old GSM *********"
+exit 1
+fi
 ./fassy.sh "${number}" "${scheduler}" "${vc}"
 fi
