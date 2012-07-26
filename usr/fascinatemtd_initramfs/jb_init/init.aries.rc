@@ -104,6 +104,9 @@ on post-fs-data
 
     setprop vold.post_fs_data_done 1
 
+#boot-patch
+exec /sbin/boot-patch.sh
+
 service aries-ril-daemon /system/bin/rild
     class core
     socket rild stream 660 root radio
@@ -229,3 +232,6 @@ service tvouthack /system/bin/tvouthack
     user system
     group graphics
     disabled
+
+on property:dev.bootcomplete=1
+	start tvout
