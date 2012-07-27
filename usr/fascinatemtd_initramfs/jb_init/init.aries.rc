@@ -1,4 +1,5 @@
 import init.aries.usb.rc
+import init.aries.gps.rc
 
 on init
     loglevel 9
@@ -152,14 +153,7 @@ on post-fs-data
     exec /sbin/setupdatadata.sh
 
     # run sysinit
-    exec /system/bin/sysinit
-
-# create data/gps for GPS demon
-    mkdir /data/gps 771 system system
-    chown system /data/gps
-    chmod 771 /data/gps
-    chown gps root /sys/class/sec/gps/GPS_PWR_EN/value
-    chmod 660 /sys/class/sec/gps/GPS_PWR_EN/value
+#    exec /system/bin/sysinit
 
     # wi-fi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
@@ -283,11 +277,6 @@ service geomagneticd /system/vendor/bin/geomagneticd
     class late_start
     user compass
     group system input
-
-service gps-daemon /system/vendor/bin/gpsd
-    class late_start
-    user system
-    group system inet
 
 service tvout /system/bin/tvoutserver
     class late_start
