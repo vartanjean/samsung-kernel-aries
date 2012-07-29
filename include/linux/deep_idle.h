@@ -5,7 +5,6 @@
 
 bool deepidle_is_enabled(void);
 bool dstats_is_enabled(void);
-bool ddebug_is_enabled(void);
-void report_idle_time(int idle_state, int idle_time, unsigned int dflags);
+void report_idle_time(int idle_state, int idle_time);
 
 #endif
