@@ -77,21 +77,6 @@ $BB touch /data/local/devil/screen_off_min
 $BB touch /data/local/devil/screen_off_max
 $BB touch /data/local/devil/governor
 
-# load datafix
-if [ -e "/data/local/devil/datafix" ]; then
-	if [ -f /data/local/datafix ]; then
-	rm /data/local/datafix
-	fi
-datafix=`$BB cat /data/local/devil/datafix`
-	echo "datafix: found: <$datafix>";
-		if [ "$datafix" -eq 1 ]; then
-echo; echo "datafix activated"
-echo "Many thx to Wendigogo for his great script"
-echo "please visit his thread: http://forum.xda-developers.com/showthread.php?t=1665742"
-		./sbin/datafix.sh
-		fi
-fi
-
 #use normal swap or zram:
 if [ -e "/data/local/devil/swap_use" ]; then
 swap_use=`$BB cat /data/local/devil/swap_use`
