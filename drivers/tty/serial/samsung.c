@@ -66,6 +66,11 @@
 /* flag to ignore all characters coming in */
 #define RXSTAT_DUMMY_READ (0x10000000)
 
+#ifdef CONFIG_CPU_DIDLE
+volatile int gps_is_running = 0;
+EXPORT_SYMBOL(gps_is_running);
+#endif
+
 static inline struct s3c24xx_uart_port *to_ourport(struct uart_port *port)
 {
 	return container_of(port, struct s3c24xx_uart_port, port);
@@ -448,16 +453,6 @@ static int s3c24xx_serial_startup(struct uart_port *port)
 
 /* power power management control */
 
-#ifdef CONFIG_CPU_DIDLE
-static bool gps_running = false;
-
-bool gps_is_running(void)
-{
-	return gps_running;
-}
-EXPORT_SYMBOL(gps_is_running);
-#endif
-
 static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 			      unsigned int old)
 {
@@ -475,7 +470,7 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 
 #ifdef CONFIG_CPU_DIDLE
 		if (ourport->port.irq == IRQ_S3CUART_RX1) 
-			gps_running = false;
+			gps_is_running = 0;
 #endif
 		clk_disable(ourport->clk);
 		break;
@@ -484,7 +479,7 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 		clk_enable(ourport->clk);
 #ifdef CONFIG_CPU_DIDLE
 		if (ourport->port.irq == IRQ_S3CUART_RX1) 
-			gps_running = true;
+			gps_is_running = 1;
 #endif
 		if (!IS_ERR(ourport->baudclk) && ourport->baudclk != NULL)
 			clk_enable(ourport->baudclk);
