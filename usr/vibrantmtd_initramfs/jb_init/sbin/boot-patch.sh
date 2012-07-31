@@ -70,27 +70,15 @@ echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
 
+#symlink data-sysparts to  system
+	./sbin/install_sys-parts.sh
+
 
 $BB touch /data/local/devil/bigmem
 $BB touch /data/local/devil/zram_size
 $BB touch /data/local/devil/screen_off_min
 $BB touch /data/local/devil/screen_off_max
 $BB touch /data/local/devil/governor
-
-# load datafix
-if [ -e "/data/local/devil/datafix" ]; then
-	if [ -f /data/local/datafix ]; then
-	rm /data/local/datafix
-	fi
-datafix=`$BB cat /data/local/devil/datafix`
-	echo "datafix: found: <$datafix>";
-		if [ "$datafix" -eq 1 ]; then
-echo; echo "datafix activated"
-echo "Many thx to Wendigogo for his great script"
-echo "please visit his thread: http://forum.xda-developers.com/showthread.php?t=1665742"
-		./sbin/datafix.sh
-		fi
-fi
 
 #use normal swap or zram:
 if [ -e "/data/local/devil/swap_use" ]; then
@@ -408,24 +396,6 @@ cat_msg_sysfile "sched_wakeup_granularity_ns: " /proc/sys/kernel/sched_wakeup_gr
 cat_msg_sysfile "sched_min_granularity_ns: " /proc/sys/kernel/sched_min_granularity_ns
 cat_msg_sysfile "panic_on_oops: " /proc/sys/kernel/panic_on_oops
 cat_msg_sysfile "panic: " /proc/sys/kernel/panic
-
-# set sdcard read_ahead
-echo; echo "read_ahead_kb"
-#cat_msg_sysfile "default: " /sys/devices/virtual/bdi/default/read_ahead_kb
-#if $BB [[ "$readahead" -eq 64 || "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512  || "$readahead" -eq 1024 || "$readahead" -eq 2048 || "$readahead" -eq 3096 ]];then
-#    echo "CPU: found valid readahead: <$readahead>"
-#else
-    readahead=256
-#fi
-echo $readahead > /sys/devices/virtual/bdi/179:0/read_ahead_kb
-echo $readahead > /sys/devices/virtual/bdi/179:8/read_ahead_kb
-cat_msg_sysfile "179.0: " /sys/devices/virtual/bdi/179:0/read_ahead_kb
-cat_msg_sysfile "179.8: " /sys/devices/virtual/bdi/179:8/read_ahead_kb
-
-# small fs read_ahead
-echo 16 > /sys/block/mtdblock2/queue/read_ahead_kb # system
-echo 16 > /sys/block/mtdblock3/queue/read_ahead_kb # cache
-echo 64 > /sys/block/mtdblock6/queue/read_ahead_kb # datadata
 
 echo; echo "$($BB date) io scheduler"
 MTD=`$BB ls -d /sys/block/mtdblock*`
