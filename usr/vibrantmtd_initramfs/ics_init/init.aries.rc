@@ -164,7 +164,6 @@ on property:init.svc.bootanim=running
     start bdaddr
 
 # The Froyo RIL won't work for some without being started later.
-on property:init.svc.bootanim=stopped
     start aries-ril-daemon
 
 service hciattach /system/bin/brcm_patchram_plus --enable_hci --enable_lpm \
