@@ -67,7 +67,6 @@ CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 
 find . -name "*.ko" -exec rm -rf {} \; 2>/dev/null || exit 1
 make -j4 modules
-
 find . -name "*.ko" -exec cp {} usr/galaxysmtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
 
 make -j4 zImage
@@ -131,8 +130,8 @@ sed -i 's/^.*FB_VOODOO.*$//' .config
 echo 'CONFIG_FB_VOODOO=y
 CONFIG_FB_VOODOO_DEBUG_LOG=n' >> .config
 ##########################################################################################################
-
 find . -name "*.ko" -exec rm -rf {} \; 2>/dev/null || exit 1
+
 make -j4 modules
 
 find . -name "*.ko" -exec cp {} usr/galaxysmtd_initramfs/files/modules/ \; 2>/dev/null || exit 1
