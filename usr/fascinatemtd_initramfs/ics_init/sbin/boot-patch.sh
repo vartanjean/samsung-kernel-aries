@@ -56,7 +56,7 @@ $BB mount -o rw,remount /system
 
     if $BB [ ! -d /data/local/devil ]; then 
 	$BB echo "creating devil folder at /data/local"
-	$BB mkdir /data/local/devil
+	$BB mkdir -p /data/local/devil
 	$BB chmod 777 /data/local/devil
     fi
 
@@ -241,6 +241,28 @@ else
 	echo 1 > /data/local/devil/fsync
 	echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 fi
+
+
+# set idle2
+echo; echo "idle2"
+if [ -e "/data/local/devil/idle2" ];then
+	idle2=`$BB cat /data/local/devil/idle2`
+	if [ "$idle2" -eq 0 ] || [ "$idle2" -eq 1 ];then
+    		echo "idle2: found valid idle2 mode: <$idle2>"
+		echo "idle2: 0 = don't disable, 1 = disable"
+    		echo $idle2 > /sys/module/cpuidle/parameters/idle2_disabled
+	else
+		echo "idle2: did not find valid idle2 mode: setting disabled"
+		echo 1 > /sys/module/cpuidle/parameters/idle2_disabled
+	fi
+else
+	echo "idle2: did not find valid idle2 mode: setting disabled"
+	echo 1 > /data/local/devil/idle2
+	echo 1 > /sys/module/cpuidle/parameters/idle2_disabled
+fi
+
+
+
 
 # set deep_idle
 echo; echo "deep_idle"
