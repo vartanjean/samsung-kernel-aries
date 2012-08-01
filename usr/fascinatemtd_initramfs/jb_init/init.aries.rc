@@ -1,9 +1,9 @@
 import init.aries.usb.rc
 
+
 on init
     loglevel 9
     export EXTERNAL_STORAGE /storage/sdcard0
-
     # FIXME: Market checks this variable for space-checking, but downloads to /datadata
     export DOWNLOAD_CACHE /data/download
 
@@ -11,6 +11,9 @@ on init
     mkdir /storage/sdcard0 0000 system system
     symlink /storage/sdcard0 /sdcard
     symlink /storage/sdcard0 /mnt/sdcard
+
+    # Increase read ahead on moviNAND
+    write /sys/devices/virtual/bdi/179:0/read_ahead_kb 1024
 
     # We will create our own ril-daemon service in class 'core' because the
     # rild doesn't like being killed. (During device encryption.)
@@ -31,7 +34,7 @@ on boot
 
 # phone
     setprop ro.telephony.call_ring.multiple 0
-
+	
 
 on property:ril.cdma.data_state=1
   restart pppd_cdma
@@ -139,6 +142,9 @@ on post-fs
 
 on post-fs-data
 
+    # run sysinit
+#    exec /system/bin/sysinit
+
 # create data/gps for GPS demon
     mkdir /data/gps 771 gps system
     chown gps system /data/gps
@@ -154,9 +160,6 @@ on post-fs-data
     mkdir /data/download 0770 system cache
 
     setprop vold.post_fs_data_done 1
-
-#boot-patch
-exec /sbin/boot-patch.sh
 
 service aries-ril-daemon /system/bin/rild
     class core
@@ -284,3 +287,4 @@ service tvout /system/bin/tvoutserver
     class main
     user root
     group root
+
