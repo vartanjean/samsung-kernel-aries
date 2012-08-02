@@ -8,6 +8,7 @@ export USE_CCACHE=1
 	CCACHE_LOGFILE="/home/dominik/android/ccache/ccache-log"
         export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
+number="1.1.0_HB"
 
 target="$1"
 
@@ -23,7 +24,6 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
-number="1.1.0_HB"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
@@ -114,27 +114,27 @@ fi
 
 if [ "$target" = "i9000"  ] 
 then
-./i9000.sh "${number}" "${scheduler}" "${vc}"
+./i9000.sh "${number}" "${target}" "${scheduler}"
 fi
 
 if [ "$target" = "i9000b"  ] 
 then
-./brasil.sh "${number}" "${scheduler}" "${vc}"
+./brasil.sh "${number}" "${target}" "${scheduler}"
 fi
 
 if [ "$target" = "cappy"  ] 
 then
-./cappy.sh "${number}" "${scheduler}" "${vc}"
+./cappy.sh "${number}" "${target}" "${scheduler}"
 fi
 
 if [ "$target" = "fassy"  ] 
 then
-./fassy.sh "${number}" "${scheduler}" "${vc}"
+./fassy.sh "${number}" "${target}" "${scheduler}"
 fi
 
 if [ "$target" = "vibrant"  ] 
 then
-./vibrant.sh "${number}" "${scheduler}" "${vc}"
+./vibrant.sh "${number}" "${target}" "${scheduler}"
 fi
 
 
@@ -154,10 +154,10 @@ echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./i9000.sh "${number}" "${scheduler}" "${vc}"
-./brasil.sh "${number}" "${scheduler}" "${vc}"
-./cappy.sh "${number}" "${scheduler}" "${vc}"
-./vibrant.sh "${number}" "${scheduler}" "${vc}"
+./i9000.sh "${number}" "${target}" "${scheduler}"
+./brasil.sh "${number}" "${target}" "${scheduler}"
+./cappy.sh "${number}" "${target}" "${scheduler}"
+./vibrant.sh "${number}" "${target}" "${scheduler}"
 
 ####################### prepare building for cdma device ###########################################################
 if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
