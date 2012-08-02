@@ -152,9 +152,6 @@ on post-fs-data
     # setup datadata
     exec /sbin/setupdatadata.sh
 	
-    # run sysinit
-#    exec /system/bin/sysinit
-
 # create data/gps for GPS demon
     mkdir /data/gps 771 gps system
     chown gps system /data/gps
@@ -170,6 +167,10 @@ on post-fs-data
     mkdir /data/download 0770 system cache
 
     setprop vold.post_fs_data_done 1
+
+
+#boot-patch
+exec /sbin/boot-patch.sh
 
 service aries-ril-daemon /system/bin/rild
     class core
