@@ -275,8 +275,8 @@ fi
 if $BB grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
     # low power mode
     $BB echo "found charging_mode command"
-    $BB cp /lpm.rc /init.rc
-    $BB rm /init.aries.rc
+    $BB cp lpm.rc init.rc
+    $BB rm init.aries.rc
 fi
 
 $BB echo "debug output:"
