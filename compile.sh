@@ -9,6 +9,8 @@ export USE_CCACHE=1
         export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
 
+number="1.1.1_JellyBean"
+
 target="$1"
 
 if [ "$2" = "vc"  ] || [ "$3" = "vc" ]
@@ -23,7 +25,6 @@ if [ "$2" = "vc"  ]
 	scheduler="$2"
 fi
 
-number="1.1.0_JellyBean"
 
 if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	then
@@ -170,5 +171,5 @@ echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./fassy.sh "${number}" "${scheduler}" "${vc}"
+./fassy.sh "${number}" "${target}" "${scheduler}"
 fi
