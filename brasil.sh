@@ -137,10 +137,6 @@ echo "launching packaging script"
 
 . ./packaging.inc
 release "${version}"
-echo "launching packaging script"
-
-. ./packaging.inc
-release "${version}"
 
 #############################################################################################################
 echo "all done!"

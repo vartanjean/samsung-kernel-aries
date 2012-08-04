@@ -8,7 +8,7 @@ export USE_CCACHE=1
 	CCACHE_LOGFILE="/home/dominik/android/ccache/ccache-log"
         export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
-number="1.1.0_HB"
+number="1.1.1_HB"
 
 target="$1"
 
@@ -170,5 +170,5 @@ echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./fassy.sh "${number}" "${scheduler}" "${vc}"
+./fassy.sh "${number}" "${target}" "${scheduler}"
 fi

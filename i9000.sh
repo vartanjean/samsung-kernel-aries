@@ -77,7 +77,9 @@ cp arch/arm/boot/zImage ./release/zImage
 cp arch/arm/boot/zImage ./release/boot.img
 if [ "$target" = "all"  ] 
 then
+echo ""
 echo "updating kernel for rom"
+echo ""
 cp arch/arm/boot/zImage ~/android/kernel/i9000/cmc/boot.img
 fi
 echo "launching packaging script"
@@ -149,13 +151,12 @@ cp arch/arm/boot/zImage ./release/zImage
 cp arch/arm/boot/zImage ./release/boot.img
 if [ "$target" = "all"  ] 
 then
+echo ""
 echo "updating kernel for rom"
+echo ""
 cp arch/arm/boot/zImage ~/android/kernel/i9000/vc/boot.img
 fi
-echo "launching packaging script"
 
-. ./packaging.inc
-release "${version}"
 echo "launching packaging script"
 
 . ./packaging.inc
