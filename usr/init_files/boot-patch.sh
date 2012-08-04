@@ -225,6 +225,25 @@ echo 0 > /data/local/devil/user_min_max_enable
 fi
 
 
+# set lock_sc_min
+echo; echo "lock_sc_min"
+if [ -e "/data/local/devil/lock_sc_min" ];then
+	lock_sc_min=`$BB cat /data/local/devil/lock_sc_min`
+	if [ "$lock_sc_min" -eq 0 ] || [ "$lock_sc_min" -eq 1 ];then
+    		echo "lock_sc_min: found valid lock_sc_min mode: <$lock_sc_min>"
+    		echo $lock_sc_min > /sys/devices/system/cpu/cpu0/cpufreq/lock_scaling_min
+	else
+		echo "lock_sc_min: did not find valid lock_sc_min mode: setting default"
+		echo 1 > /data/local/devil/lock_sc_min
+		echo 1 > /sys/devices/system/cpu/cpu0/cpufreq/lock_scaling_min
+	fi
+else
+	echo "lock_sc_min: did not find valid lock_sc_min mode: setting default"
+	echo 1 > /data/local/devil/lock_sc_min
+	echo 1 > /sys/devices/system/cpu/cpu0/cpufreq/lock_scaling_min
+fi
+
+
 # set fsync
 echo; echo "fsync"
 if [ -e "/data/local/devil/fsync" ];then
