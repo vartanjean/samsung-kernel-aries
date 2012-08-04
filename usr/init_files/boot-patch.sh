@@ -629,6 +629,60 @@ echo; echo "init.d"
     fi
     echo $($BB date) USER INIT DONE from /system/etc/init.d
 
+# set live_oc_value
+echo; echo "live_oc_value"
+if [ -e "/data/local/devil/live_oc_value" ];then
+	live_oc_value=`$BB cat /data/local/devil/live_oc_value`
+	if [ "$live_oc_value" -le 150 ] && [ "$live_oc_value" -ge 90 ];then
+    		echo "live_oc_value: found valid live_oc_value mode: <$live_oc_value>"
+    		echo $live_oc_value > /sys/devices/virtual/misc/liveoc/oc_value
+		oc_enabled=1
+	else
+		echo "live_oc_value: did not find valid live_oc_value mode: setting default"
+		echo "live_oc_value has to be betwenn 90 and 150"
+		echo 100 > /sys/devices/virtual/misc/liveoc/oc_value
+		oc_enabled=0
+	fi
+else
+	echo "live_oc_value: did not find valid live_oc_value mode: doing nothing"
+ 	oc_enabled=0
+fi
+
+# set live_oc_target
+echo; echo "live_oc_target"
+if [ $oc_enabled -eq 1 ];then
+if [ -e "/data/local/devil/live_oc_target_low" ];then
+	live_oc_target_low=`$BB cat /data/local/devil/live_oc_target_low`
+	if [ "$live_oc_target_low" -le 1400000 ] || [ "$live_oc_target_low" -ge 100000 ];then
+    		echo "live_oc_target: found valid live_oc_target_low: <$live_oc_target_low>"
+    		echo $live_oc_target_low > /sys/devices/virtual/misc/liveoc/target_low
+	else
+		echo "live_oc_target: did not find valid live_oc_target_low: setting default"
+		echo 100000 > /sys/devices/virtual/misc/liveoc/target_low
+	fi
+else
+	echo "live_oc_target_low: did not find valid live_oc_target mode: setting default"
+	echo 100000 > /data/local/devil/live_oc_target_low
+	echo 100000 > /sys/devices/virtual/misc/liveoc/target_low
+fi
+
+if [ -e "/data/local/devil/live_oc_target_high" ];then
+	live_oc_target_high=`$BB cat /data/local/devil/live_oc_target_high`
+	if [ "$live_oc_target_high" -le 1400000 ] || [ "$live_oc_target_high" -ge 100000 ];then
+    		echo "live_oc_target: found valid live_oc_target_high: <$live_oc_target_high>"
+    		echo $live_oc_target_high > /sys/devices/virtual/misc/liveoc/target_high
+	else
+		echo "live_oc_target: did not find valid live_oc_target_high: setting default"
+		echo 800000 > /sys/devices/virtual/misc/liveoc/target_high
+	fi
+else
+	echo "live_oc_target_high: did not find valid live_oc_target mode: setting default"
+	echo 800000 > /data/local/devil/live_oc_target_high
+	echo 800000 > /sys/devices/virtual/misc/liveoc/target_high
+fi
+fi
+
+
 # governor specific settings:
 echo; echo "governor settings"
     governor=`$BB cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
