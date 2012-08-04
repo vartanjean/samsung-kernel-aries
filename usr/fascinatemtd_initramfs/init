@@ -73,6 +73,7 @@ $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
 $BB mount -t yaffs2 /dev/block/mtdblock2 /system
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
+$BB mount -t ext4 /dev/block/mmcblk0p1 /data
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"
@@ -129,14 +130,12 @@ else
     $BB mv /files/hw/* /system/lib/hw/
     $BB chmod 644 /system/lib/hw/lights.aries.so
 
-    $BB mount -t ext4 /dev/block/mmcblk0p1 /data
     if $BB [ -f /data/local/logger.ko ]; then
 	$BB echo "found /data/local/logger.ko, updating..."
 	$BB cp /system/lib/modules/logger.ko /data/local/logger.ko
     else
 	$BB echo "/data/local/logger.ko, not found, skipping..."
     fi
-    $BB umount /data
     
 
 fi
@@ -145,7 +144,8 @@ $BB echo "command line:"
 $BB cat /proc/cmdline
 
 $BB echo "starting bootmode detection..."
-if $BB test -e /cache/.startrecovery ||
+if $BB test -e /cache/.startrecovery || \
+	$BB test -e /data/.startrecovery || \
 	$BB grep -q bootmode=2 /proc/cmdline || 
 	$BB grep -q bootmode=9 /proc/cmdline || 
 	$BB grep -q bootmode=5 /proc/cmdline ||
@@ -155,6 +155,7 @@ if $BB test -e /cache/.startrecovery ||
     # recovery boot
     $BB echo "found recovery command, preparing boot..."
 	$BB rm -fr /cache/.startrecovery
+	$BB rm -fr /data/.startrecovery
 
 if $BB [ -e /cache/twrp ] ; then
     $BB echo "moving twrp to /"
@@ -178,7 +179,7 @@ elif ! $BB test -e /system/build.prop ; then
     erase_image cache
     $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
     $BB mkdir /cache/recovery
-	$BB mount -t vfat /dev/block/mmcblk0p1 /sdcard	
+	$BB mount -t vfat /dev/block/mmcblk1p1 /sdcard
 
     $BB echo "checking cm9 update config /sdcard/cyanogenmod.cfg..."
 	UPDATE=$($BB cat /sdcard/cyanogenmod.cfg)
@@ -214,13 +215,15 @@ bigmem=0
 
 [ "`$BB grep -i Slim /system/build.prop`" ] && xl=1
 
-    $BB mount -t ext4 /dev/block/mmcblk0p1 /data
 	if $BB [ -e /data/local/devil/bigmem ] ; then
 	bigmem=`$BB cat /data/local/devil/bigmem`
 		if $BB grep -q bootmode=0 /proc/cmdline; then
 			if $BB [ "$bigmem" -eq 1 ] || $BB [ "$bigmem" -eq 2 ] ; then
 				$BB echo $bigmem > /sys/kernel/bigmem/enable
     				$BB umount /data
+    				$BB umount /cache
+    				$BB umount /system
+    				$BB umount /sdcard
 				/system/bin/toolbox reboot
 			fi
 		fi
@@ -229,9 +232,11 @@ bigmem=0
 		$BB mkdir -p /data/local/devil
 		$BB echo 1 > /data/local/devil/bigmem
     		$BB umount /data
+    		$BB umount /cache
+    		$BB umount /system
+    		$BB umount /sdcard
 		/system/bin/toolbox reboot
 	fi
-    $BB umount /data
 ##############################################################################################################	
 
 	if $BB grep -q bootmode=3 /proc/cmdline || 
@@ -270,8 +275,8 @@ fi
 if $BB grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
     # low power mode
     $BB echo "found charging_mode command"
-    $BB cp /lpm.rc /init.rc
-    $BB rm /init.aries.rc
+    $BB cp lpm.rc init.rc
+    $BB rm init.aries.rc
 fi
 
 $BB echo "debug output:"
@@ -291,11 +296,12 @@ $BB umount /sys
 $BB umount /proc
 $BB umount /system
 $BB umount /cache
+$BB umount /data
 $BB umount /sdcard
 $BB rm -r /files
 $BB rm -r /jb_files
 $BB rm -r /sdcard
-#$BB rm /erase_image
+$BB rm /erase_image
 
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
