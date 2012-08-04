@@ -73,6 +73,7 @@ $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
 $BB mount -t yaffs2 /dev/block/mtdblock2 /system
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
+$BB mount -t ext4 /dev/block/mmcblk0p2 /data
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"
@@ -129,16 +130,13 @@ else
     $BB mv /files/hw/* /system/lib/hw/
     $BB chmod 644 /system/lib/hw/lights.aries.so
 
-    $BB mount -t ext4 /dev/block/mmcblk0p2 /data
     if $BB [ -f /data/local/logger.ko ]; then
 	$BB echo "found /data/local/logger.ko, updating..."
 	$BB cp /system/lib/modules/logger.ko /data/local/logger.ko
     else
 	$BB echo "/data/local/logger.ko, not found, skipping..."
     fi
-    $BB umount /data
-    
-
+  
 fi
 
 $BB echo "command line:"
@@ -214,13 +212,15 @@ bigmem=0
 
 [ "`$BB grep -i Slim /system/build.prop`" ] && xl=1
 
-    $BB mount -t ext4 /dev/block/mmcblk0p2 /data
 	if $BB [ -e /data/local/devil/bigmem ] ; then
 	bigmem=`$BB cat /data/local/devil/bigmem`
 		if $BB grep -q bootmode=0 /proc/cmdline; then
 			if $BB [ "$bigmem" -eq 1 ] || $BB [ "$bigmem" -eq 2 ] ; then
 				$BB echo $bigmem > /sys/kernel/bigmem/enable
     				$BB umount /data
+    				$BB umount /cache
+    				$BB umount /system
+    				$BB umount /sdcard
 				/system/bin/toolbox reboot
 			fi
 		fi
@@ -229,9 +229,11 @@ bigmem=0
 		$BB mkdir -p /data/local/devil
 		$BB echo 1 > /data/local/devil/bigmem
     		$BB umount /data
+    		$BB umount /cache
+    		$BB umount /system
+    		$BB umount /sdcard
 		/system/bin/toolbox reboot
 	fi
-    $BB umount /data
 ##############################################################################################################	
 
 	if $BB grep -q bootmode=3 /proc/cmdline || 
@@ -291,11 +293,12 @@ $BB umount /sys
 $BB umount /proc
 $BB umount /system
 $BB umount /cache
+$BB umount /data
 $BB umount /sdcard
 $BB rm -r /files
 $BB rm -r /jb_files
 $BB rm -r /sdcard
-#$BB rm /erase_image
+$BB rm /erase_image
 
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
