@@ -34,7 +34,7 @@
 
 #include <trace/events/power.h>
 
-static unsigned int lock_sc_min = 0;
+static unsigned int lock_sc_min = 1;
 extern unsigned long cpuL7freq(void);
 extern unsigned long cpuL3freq(void);
 extern unsigned long get_user_max(void);
