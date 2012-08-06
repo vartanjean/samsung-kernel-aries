@@ -1,15 +1,14 @@
 #!/bin/sh
 
 export USE_CCACHE=1
-
         CCACHE=ccache
         CCACHE_COMPRESS=1
-        CCACHE_DIR="/home/dominik/android/ccache"
-	CCACHE_LOGFILE="/home/dominik/android/ccache/ccache-log"
+        CCACHE_DIR="/home/dominik/.ccache"
+	CCACHE_LOGFILE="/home/dominik/.ccache/ccache-log"
         export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
 
-number="1.1.1_JellyBean"
+number="1.1.2_JellyBean"
 
 target="$1"
 
