@@ -170,5 +170,5 @@ echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
 echo "******** Please build old GSM *********"
 exit 1
 fi
-./fassy.sh "${number}" "${target}" "${scheduler}"
+./fassy.sh "${number}" "${scheduler}" "${vc}"
 fi
