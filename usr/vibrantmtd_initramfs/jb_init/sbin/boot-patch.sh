@@ -655,30 +655,30 @@ if [ -e "/data/local/devil/live_oc_target_low" ];then
 	live_oc_target_low=`$BB cat /data/local/devil/live_oc_target_low`
 	if [ "$live_oc_target_low" -le 1400000 ] || [ "$live_oc_target_low" -ge 100000 ];then
     		echo "live_oc_target: found valid live_oc_target_low: <$live_oc_target_low>"
-    		echo $live_oc_target_low > /sys/devices/virtual/misc/liveoc/target_low
+    		echo $live_oc_target_low > /sys/devices/virtual/misc/liveoc/oc_target_low
 	else
 		echo "live_oc_target: did not find valid live_oc_target_low: setting default"
-		echo 100000 > /sys/devices/virtual/misc/liveoc/target_low
+		echo 800000 > /sys/devices/virtual/misc/liveoc/oc_target_low
 	fi
 else
 	echo "live_oc_target_low: did not find valid live_oc_target mode: setting default"
-	echo 100000 > /data/local/devil/live_oc_target_low
-	echo 100000 > /sys/devices/virtual/misc/liveoc/target_low
+	echo 800000 > /data/local/devil/live_oc_target_low
+	echo 800000 > /sys/devices/virtual/misc/liveoc/oc_target_low
 fi
 
 if [ -e "/data/local/devil/live_oc_target_high" ];then
 	live_oc_target_high=`$BB cat /data/local/devil/live_oc_target_high`
 	if [ "$live_oc_target_high" -le 1400000 ] || [ "$live_oc_target_high" -ge 100000 ];then
     		echo "live_oc_target: found valid live_oc_target_high: <$live_oc_target_high>"
-    		echo $live_oc_target_high > /sys/devices/virtual/misc/liveoc/target_high
+    		echo $live_oc_target_high > /sys/devices/virtual/misc/liveoc/oc_target_high
 	else
 		echo "live_oc_target: did not find valid live_oc_target_high: setting default"
-		echo 800000 > /sys/devices/virtual/misc/liveoc/target_high
+		echo 1400000 > /sys/devices/virtual/misc/liveoc/oc_target_high
 	fi
 else
 	echo "live_oc_target_high: did not find valid live_oc_target mode: setting default"
-	echo 800000 > /data/local/devil/live_oc_target_high
-	echo 800000 > /sys/devices/virtual/misc/liveoc/target_high
+	echo 1400000 > /data/local/devil/live_oc_target_high
+	echo 1400000 > /sys/devices/virtual/misc/liveoc/oc_target_high
 fi
 fi
 
