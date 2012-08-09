@@ -231,25 +231,6 @@ idle2_freq=DEFAULT_IDLE2_FREQ
 	}
 }
 
-inline static bool s5p_vic_interrupt_pending(void)
-{
-	if ((__raw_readl(S5P_VIC0REG(VIC_RAW_STATUS)) & vic_regs[0]) |
-		(__raw_readl(S5P_VIC1REG(VIC_RAW_STATUS)) & vic_regs[1]) |
-		(__raw_readl(S5P_VIC2REG(VIC_RAW_STATUS)) & vic_regs[2]) |
-		(__raw_readl(S5P_VIC3REG(VIC_RAW_STATUS)) & vic_regs[3]))
-		return true;
-	else
-		return false;
-}
-
-inline static void s5p_wfi_until_interrupt(void)
-{
-retry:
-	s5p_idle2();
-	if (!s5p_vic_interrupt_pending())
-		goto retry;
-}
-
 /*
  * Before entering, idle2 mode GPIO Power Down Mode
  * Configuration register has to be set with same state
@@ -334,7 +315,7 @@ inline static void s5p_enter_idle2(void)
 	__raw_writel(tmp, S5P_PWR_CFG);
 
 	/* To check VIC Status register before enter idle2 mode */
-	if (unlikely(s5p_vic_interrupt_pending())) {
+	if (unlikely(__raw_readl(S5P_VIC2REG(VIC_RAW_STATUS)) & 0x10000)) {
 #ifdef CONFIG_S5P_IDLE2_DEBUG
 		printk(KERN_WARNING "%s: VIC interrupt active, bailing!\n", __func__);
 #endif
@@ -352,9 +333,7 @@ inline static void s5p_enter_idle2(void)
 		printk(KERN_INFO "*** Entering IDLE2 TOP OFF mode\n");
 #endif
 		flush_cache_all();
-retry:
 		s5p_idle2();
-		s5p_wfi_until_interrupt();
 	}
 skipped_idle2:
 	__raw_writel(save_eint_mask, S5P_EINT_WAKEUP_MASK);
@@ -435,7 +414,7 @@ inline static void s5p_enter_idle2_topon(void)
 	__raw_writel(tmp, S5P_PWR_CFG);
 
 	/* To check VIC Status register before enter idle2 mode */
-	if (unlikely(s5p_vic_interrupt_pending())) {
+	if (unlikely(__raw_readl(S5P_VIC2REG(VIC_RAW_STATUS)) & 0x10000)) {
 #ifdef CONFIG_S5P_IDLE2_DEBUG
 		printk(KERN_WARNING "%s: VIC interrupt active, bailing!\n", __func__);
 #endif
@@ -453,7 +432,7 @@ inline static void s5p_enter_idle2_topon(void)
 		printk(KERN_INFO "*** Entering IDLE2 TOP ON mode\n");
 #endif
 		flush_cache_all();
-		s5p_wfi_until_interrupt();
+		s5p_idle2();
 	}
 skipped_idle2:
 	__raw_writel(save_eint_mask, S5P_EINT_WAKEUP_MASK);
