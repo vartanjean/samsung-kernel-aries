@@ -59,10 +59,6 @@
 #include <linux/blx.h>
 #endif
 
-#ifdef CONFIG_S5P_IDLE2
-#include <mach/cpuidle.h>
-#endif /* CONFIG_S5P_IDLE2 */
-
 #define POLLING_INTERVAL	1000
 #define ADC_TOTAL_COUNT		10
 #define ADC_DATA_ARR_SIZE	6
@@ -628,17 +624,11 @@ static int s3c_cable_status_update(struct chg_data *chg)
 	}
 
 update:
-	if ((chg->cable_status == CABLE_TYPE_USB) && vdc_status) {
+	if ((chg->cable_status == CABLE_TYPE_USB) && vdc_status)
 		wake_lock(&chg->vbus_wake_lock);
-#ifdef CONFIG_S5P_IDLE2
-		idle2_external_active();
-#endif
-	} else {
+	else
 		wake_lock_timeout(&chg->vbus_wake_lock, HZ / 2);
-#ifdef CONFIG_S5P_IDLE2
-		idle2_external_inactive(10 * HZ);
-#endif
-	}
+
 	return 0;
 err:
 	return ret;

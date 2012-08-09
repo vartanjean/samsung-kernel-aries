@@ -1,7 +1,7 @@
 /* arch/arm/mach-s5pv210/include/mach/cpuidle.h
  *
- * Copyright (c) 2010 Samsung Electronics - Jaecheol Lee <jc.lee@samsung>
- * Copyright (c) 2012 Will Tisdale - <willtisdale@gmail.com>
+ * Copyright 2010 Samsung Electronics
+ *	Jaecheol Lee <jc.lee@samsung>
  *
  * S5PV210 - CPUIDLE support
  *
@@ -10,15 +10,7 @@
  * published by the Free Software Foundation.
 */
 
-#ifdef CONFIG_S5P_IDLE2
-extern int s5p_idle2_save(unsigned long *saveblk);
-extern void s5p_idle2_resume(void);
-extern void s5p_idle2(void);
-extern void idle2_enable(unsigned long delay);
-extern void idle2_disable(void);
-extern void idle2_external_active(void);
-extern void idle2_external_inactive(unsigned long delay);
-extern void earlysuspend_active_fn(bool flag);
-extern void idle2_cancel_topon(unsigned long delay);
-extern void idle2_needs_topon(void);
-#endif
+extern int  s5pv210_didle_save(unsigned long *saveblk);
+extern void s5pv210_didle_resume(void);
+extern void i2sdma_getpos(dma_addr_t *src);
+extern unsigned int get_rtc_cnt(void);
