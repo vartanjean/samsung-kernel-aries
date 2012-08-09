@@ -15,15 +15,6 @@
 #include <asm/assembler.h>
 #include <asm/memory.h>
 
-
-ENTRY(s5p_idle2)
-	dmb
-	dsb
-	wfi
-
-	b	.
-
-
 	.text
 	/* s5p_idle2_save
 	 *
