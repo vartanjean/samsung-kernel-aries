@@ -415,11 +415,8 @@ static ssize_t store_scaling_min_freq
 	unsigned int ret = -EINVAL;
 	struct cpufreq_policy new_policy;
 
-	if (lock_sc_min){
-	policy->min = policy->cpuinfo.min_freq = cpuL7freq();
-	policy->user_policy.min = policy->min;
+	if (lock_sc_min)
 		return -EINVAL;
-	}
 
 	ret = cpufreq_get_policy(&new_policy, policy->cpu);
 	if (ret)
