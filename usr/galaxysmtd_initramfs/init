@@ -176,16 +176,6 @@ elif ! $BB test -e /system/build.prop ; then
     erase_image cache
     $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
     $BB mkdir /cache/recovery
-	$BB mount -t vfat /dev/block/mmcblk0p1 /sdcard	
-
-    $BB echo "checking cm9 update config /sdcard/cyanogenmod.cfg..."
-	UPDATE=$($BB cat /sdcard/cyanogenmod.cfg)
-	if $BB test -e $UPDATE ; then
-        $BB echo "cm9 update found, initializing extendedcommand..."
-		$BB echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
-  	else
-        $BB echo "cm9 update not found, doing nothing"
-    fi
 
     $BB echo "moving ics_rec_init to /..."
     $BB mv /ics_rec_init/* /
