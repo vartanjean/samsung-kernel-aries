@@ -34,7 +34,7 @@
 
 #include <trace/events/power.h>
 
-static unsigned int lock_sc_min = 0;
+static unsigned int lock_sc_min = 1;
 extern unsigned long cpuL7freq(void);
 extern unsigned long cpuL3freq(void);
 extern unsigned long get_user_max(void);
@@ -1875,7 +1875,14 @@ if(min_max_enable()){
 		if (cpufreq_get_policy(&new_policy, cpu))
 			goto out;
 		orig_user_max = new_policy.max;
+
+		if (lock_sc_min){
+		orig_user_min = cpuL7freq();
+		}
+		else{
 		orig_user_min = new_policy.min;
+		}
+
 	if(!proximity_active()){
 		user_max = get_user_max();
 		user_min = get_user_min();
@@ -1919,7 +1926,12 @@ if(min_max_enable()){
 
 		__cpufreq_set_policy(cpu_policy, &new_policy);
 		cpu_policy->user_policy.max = cpu_policy->max;
+		if (lock_sc_min){
+		cpu_policy->user_policy.min = cpuL7freq();
+		}
+		else{
 		cpu_policy->user_policy.min = cpu_policy->min;
+		}
 	out:
 		cpufreq_cpu_put(cpu_policy);
 	}
