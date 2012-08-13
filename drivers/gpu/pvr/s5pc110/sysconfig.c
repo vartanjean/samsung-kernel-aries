@@ -117,16 +117,6 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 					     policy->cpuinfo.max_freq);
 #endif
 }
-else{
-#ifdef CONFIG_LIVE_OC
-  		cpufreq_verify_within_limits(policy, cpuL7freq(),
-               					policy->cpuinfo.max_freq);
-#else
-  		cpufreq_verify_within_limits(policy, CPU_LOW_SPEED,
-               					policy->cpuinfo.max_freq);
-#endif
-}
-
 	return 0;
 }
 
