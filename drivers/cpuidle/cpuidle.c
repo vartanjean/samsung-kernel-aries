@@ -133,10 +133,16 @@ int cpuidle_idle_call(void)
 
 	dev->last_residency = target_state->enter(dev, target_state);
 
+<<<<<<< HEAD
 	RCU_NONIDLE(
 		trace_power_end(dev->cpu);
 		trace_cpu_idle(PWR_EVENT_EXIT, dev->cpu);
 	);
+=======
+	trace_power_end(dev->cpu);
+	trace_cpu_idle(PWR_EVENT_EXIT, dev->cpu);
+	trace_cpu_residency(dev->last_residency);
+>>>>>>> 7964538... cpuidle: Add last_residency trace event for residency profiling
 
 	if (dev->last_state)
 		target_state = dev->last_state;
