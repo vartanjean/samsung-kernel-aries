@@ -154,10 +154,10 @@ if $BB test -e /cache/.startrecovery ||
     $BB echo "found recovery command, preparing boot..."
 	$BB rm -fr /cache/.startrecovery
 
-if $BB [ -e /cache/twrp ] ; then
-    $BB echo "moving twrp to /"
-    $BB mv /twrp/* /
-else
+#if $BB [ -e /cache/twrp ] ; then
+#    $BB echo "moving twrp to /"
+#    $BB mv /twrp/* /
+#else
     $BB echo "moving ics_rec_init to /"
     $BB mv /ics_rec_init/* /
     $BB chmod 777 /sbin/fix_permissions
@@ -167,7 +167,7 @@ else
     $BB chmod 777 /sbin/fix_permissions
     $BB chmod 777 /sbin/sdparted
 
-fi
+#fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 elif ! $BB test -e /system/build.prop ; then
 	# emergency boot
