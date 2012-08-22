@@ -719,6 +719,3 @@ swappiness=`$BB cat /proc/sys/vm/swappiness`
 echo $swappiness > /data/local/devil/swappiness
 fi
 cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
-
-echo; echo "mount system ro"
-$BB mount -o ro,remount /system
