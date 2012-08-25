@@ -259,6 +259,9 @@ on boot
     start lvm_vgscan
     start lvm_vgchange
 
+# LVM: Mount volumes once they become available
+    mount ext4 /dev/lvpool/system /system wait
+
 # LVM services
 # Scan for LVM physical volumes and set up volume groups
 service lvm_vgscan /lvm/sbin/lvm vgscan --mknodes --ignorelockingfailure

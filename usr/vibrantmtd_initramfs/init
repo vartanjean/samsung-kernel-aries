@@ -72,10 +72,16 @@ $BB echo "mounting devices..."
 $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
 #$BB mount -t yaffs2 /dev/block/mtdblock2 /system
-$BB mount -t ext4 /dev/block/mmcblk0p2 /system
-$BB mount -t yaffs2 /dev/block/mtdblock2 /data
+#$BB mount -t ext4 /dev/block/mmcblk0p2 /system
+#$BB mount -t yaffs2 /dev/block/mtdblock2 /data
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
+
+/lvm/sbin/lvm vgscan --mknodes --ignorelockingfailure
+/lvm/sbin/lvm vgchange -aly --ignorelockingfailure
+
+$BB mount -t ext4 /dev/lvpool/system /system
+$BB mount -t ext4 /dev/lvpool/userdata /data
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"
@@ -293,6 +299,7 @@ $BB rm -rf /ics_init
 $BB rm -rf /jb_init
 $BB rm -rf /ics_rec_init
 $BB rm -rf /twrp
+
 
 $BB date >>boot.txt
 $BB rm -fr /dev/*

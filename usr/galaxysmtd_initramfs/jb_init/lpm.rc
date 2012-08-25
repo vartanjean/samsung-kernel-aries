@@ -101,7 +101,7 @@ on fs
     start lvm_vgchange
 
 # LVM: Mount volumes once they become available
-    mount ext4 /dev/lvpool/system /system wait ro noatime nodev nomblk_io_submit wait errors=panic
+    mount ext4 /dev/lvpool/system /system wait ro noatime nodev nomblk_io_submit errors=panic
 
 # mount mtd partitions
     #mount yaffs2 mtd@cache /cache
