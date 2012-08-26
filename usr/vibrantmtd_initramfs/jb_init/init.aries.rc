@@ -1,5 +1,5 @@
 import init.aries.usb.rc
-import init.aries.gps.rc
+#import init.aries.gps.rc
 
 on init
     loglevel 9
@@ -107,6 +107,17 @@ on post-fs-data
     # setup datadata    
     exec /sbin/setupdatadata.sh
 
+    #boot-patch
+    exec /sbin/boot-patch.sh
+
+   #create data/gps for gps daemon
+    mkdir /data/gps 775 gps system
+    chown gps system /data/gps
+    chown gps gps /sys/class/sec/gps/GPS_PWR_EN/value
+    chmod 664 /sys/class/sec/gps/GPS_PWR_EN/value
+    chown gps gps /sys/class/sec/gps/GPS_nRST/value
+    chmod 664 /sys/class/sec/gps/GPS_nRST/value
+
     # wi-fi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/dhcp 0770 dhcp dhcp
@@ -133,9 +144,6 @@ service lvm_vgchange /lvm/sbin/lvm vgchange -aly --ignorelockingfailure
     disabled
     oneshot
 
-#boot-patch
-exec /sbin/boot-patch.sh
-
 service aries-ril-daemon /system/bin/rild
     class core
     socket rild stream 660 root radio
@@ -150,6 +158,14 @@ service pvrsrvinit /system/vendor/bin/pvrsrvinit
     user root
     group root
     oneshot
+
+# ST-Ericsson GNS7560
+service gpsd /system/vendor/bin/gpsd
+    class late_start
+    user gps
+    group system inet
+    oneshot
+    disabled
 
 # FIXME
 # service p2p_supplicant /system/bin/wpa_supplicant \
@@ -266,3 +282,4 @@ service tvouthack /system/bin/tvouthack
 
 on property:dev.bootcomplete=1
 	start tvout
+	start gpsd
