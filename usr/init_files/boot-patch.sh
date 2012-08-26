@@ -70,9 +70,6 @@ echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
 
-#symlink data-sysparts to  system
-	./sbin/install_sys-parts.sh
-
 
 $BB touch /data/local/devil/bigmem
 $BB touch /data/local/devil/zram_size
