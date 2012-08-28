@@ -261,6 +261,7 @@ service geomagneticd /system/vendor/bin/geomagneticd
     class late_start
     user compass
     group system input
+    disabled
 
 service tvout /system/bin/tvoutserver
     class late_start
@@ -277,3 +278,4 @@ service tvouthack /system/bin/tvouthack
 on property:dev.bootcomplete=1
 	start tvout
 	start gpsd
+	start geomagneticd

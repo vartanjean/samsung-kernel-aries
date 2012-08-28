@@ -302,6 +302,7 @@ service geomagneticd /system/vendor/bin/geomagneticd
     class main
     user compass
     group system input
+    disabled
 
 service gpsd /system/vendor/bin/gpsd
     class main
@@ -324,3 +325,4 @@ service tvout /system/bin/tvoutserver
 on property:dev.bootcomplete=1
 	start gpsd
 	start gpsfix
+        start geomagneticd

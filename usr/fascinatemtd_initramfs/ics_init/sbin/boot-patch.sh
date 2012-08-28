@@ -19,7 +19,7 @@ exec 2>&1
 # start logfile output
 echo
 echo "************************************************"
-echo "DEVIL-ICS BOOT LOG (thanks Mialwe)"
+echo "DEVIL BOOT LOG (thanks Mialwe)"
 echo "************************************************"
 echo
 
@@ -43,16 +43,13 @@ BB="/system/xbin/busybox"
 
 # partitions
 echo; echo "mount"
-#busybox mount -o remount,noatime,barrier=0,nobh /system
-#busybox mount -o remount,noatime,barrier=0,nobh /cache
-#busybox mount -o remount,noatime /data
-#for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
-#    busybox mount -o remount,noatime $i
-#done
-#mount
-
-#echo; echo "mount system rw"
-$BB mount -o rw,remount /system
+busybox mount -o rw,remount,noatime,barrier=0,nobh /system
+busybox mount -o rw,remount,noatime,barrier=0,nobh /cache
+busybox mount -o remount,noatime /data
+for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
+    busybox mount -o remount,noatime $i
+done
+mount
 
     if $BB [ ! -d /data/local/devil ]; then 
 	$BB echo "creating devil folder at /data/local"
@@ -69,9 +66,6 @@ if [ -e "/cache/clean_initd" ]; then
 echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
-
-#symlink data-sysparts to  system
-	./sbin/install_sys-parts.sh
 
 
 $BB touch /data/local/devil/bigmem
@@ -719,3 +713,5 @@ swappiness=`$BB cat /proc/sys/vm/swappiness`
 echo $swappiness > /data/local/devil/swappiness
 fi
 cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
+
+busybox mount -o ro,remount,noatime,barrier=0,nobh /system
