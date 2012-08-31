@@ -47,8 +47,8 @@ function migrate_cache {
 CRYPTO_STATE="`getprop ro.crypto.state`"
 VOLD_DECRYPT="`getprop vold.decrypt`"
 
-if test "$CRYPTO_STATE" = "unencrypted" ; then
-    if test "$VOLD_DECRYPT" = "" ; then
+#if test "$CRYPTO_STATE" = "unencrypted" ; then
+#    if test "$VOLD_DECRYPT" = "" ; then
         # Normal unencrypted boot
         if test -e /data/data/.nodatadata ; then
             migrate_datadata
@@ -61,12 +61,12 @@ if test "$CRYPTO_STATE" = "unencrypted" ; then
             # GMail stores attachments in here
             migrate_cache com.google.android.gm
         fi
-    fi
+#    fi
     # else: Encrypting, do nothing
-else
-    if test "$VOLD_DECRYPT" = "trigger_post_fs_data" ; then
+#else
+#    if test "$VOLD_DECRYPT" = "trigger_post_fs_data" ; then
         # Encrypted boot (after decryption)
-        migrate_datadata
-    fi
+#        migrate_datadata
+#    fi
     # else: Encrypted boot (before decryption), do nothing
-fi
+#fi
