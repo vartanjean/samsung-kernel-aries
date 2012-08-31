@@ -999,7 +999,6 @@ static int s5pv210_cpu_init(struct cpufreq_policy *policy)
 	return ret;
 }
 
-#ifndef CONFIG_S5P_IDLE2
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 		unsigned long event, void *ptr)
 {
@@ -1017,6 +1016,8 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 		if (ret < 0)
 			return NOTIFY_BAD;
 		return NOTIFY_OK;
+/* Don't re-enable cpufreq if idle2 is built in */
+#ifndef CONFIG_S5P_IDLE2
 	case PM_POST_RESTORE:
 	case PM_POST_SUSPEND:
 #ifdef CONFIG_LIVE_OC
@@ -1029,10 +1030,10 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 				ENABLE_FURTHER_CPUFREQ);
 #endif
 		return NOTIFY_OK;
+#endif
 	}
 	return NOTIFY_DONE;
 }
-#endif
 
 static int s5pv210_cpufreq_reboot_notifier_event(struct notifier_block *this,
 		unsigned long event, void *ptr)
@@ -1071,11 +1072,9 @@ static struct cpufreq_driver s5pv210_driver = {
 #endif
 };
 
-#ifndef CONFIG_S5P_IDLE2
 static struct notifier_block s5pv210_cpufreq_notifier = {
 	.notifier_call = s5pv210_cpufreq_notifier_event,
 };
-#endif
 
 static struct notifier_block s5pv210_cpufreq_reboot_notifier = {
 	.notifier_call	= s5pv210_cpufreq_reboot_notifier_event,
@@ -1115,9 +1114,7 @@ error:
 	pr_warn("Cannot get vddarm or vddint. CPUFREQ Will not"
 		       " change the voltage.\n");
 finish:
-#ifndef CONFIG_S5P_IDLE2
 	register_pm_notifier(&s5pv210_cpufreq_notifier);
-#endif
 	register_reboot_notifier(&s5pv210_cpufreq_reboot_notifier);
 
 	return cpufreq_register_driver(&s5pv210_driver);
