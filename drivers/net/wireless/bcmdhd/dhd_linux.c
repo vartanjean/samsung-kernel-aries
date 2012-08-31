@@ -336,7 +336,6 @@ module_param(uiFastWifi, uint, 0664);
 
 /* ARP offload agent mode : enable ARP Peer Auto-Reply */
 uint dhd_arp_mode = ARP_OL_AGENT | ARP_OL_PEER_AUTO_REPLY;
-
 module_param(dhd_arp_mode, uint, 0);
 
 /* ARP offload enable */
