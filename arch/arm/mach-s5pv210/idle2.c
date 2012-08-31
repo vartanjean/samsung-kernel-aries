@@ -30,7 +30,7 @@
 #include <mach/regs-gpio.h>
 #include <mach/power-domain.h>
 #include <mach/gpio.h>
-#include <mach/gpio-herring.h>
+#include <mach/gpio-aries.h>
 #include <linux/cpufreq.h>
 #include <linux/interrupt.h>
 #include <mach/pm-core.h>
