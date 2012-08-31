@@ -1016,8 +1016,6 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 		if (ret < 0)
 			return NOTIFY_BAD;
 		return NOTIFY_OK;
-/* Don't re-enable cpufreq if idle2 is built in */
-#ifndef CONFIG_S5P_IDLE2
 	case PM_POST_RESTORE:
 	case PM_POST_SUSPEND:
 #ifdef CONFIG_LIVE_OC
@@ -1030,7 +1028,6 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 				ENABLE_FURTHER_CPUFREQ);
 #endif
 		return NOTIFY_OK;
-#endif
 	}
 	return NOTIFY_DONE;
 }
