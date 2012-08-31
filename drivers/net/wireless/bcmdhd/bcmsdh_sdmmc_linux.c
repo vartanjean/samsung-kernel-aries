@@ -21,7 +21,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
+<<<<<<< HEAD
  * $Id: bcmsdh_sdmmc_linux.c 331154 2012-05-04 00:41:40Z $
+=======
+ * $Id: bcmsdh_sdmmc_linux.c 312783 2012-02-03 22:53:56Z $
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
  */
 
 #include <typedefs.h>
@@ -188,6 +192,10 @@ static int bcmsdh_sdmmc_suspend(struct device *pdev)
 
 	if (dhd_os_check_wakelock(bcmsdh_get_drvdata()))
 		return -EBUSY;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 	sdio_flags = sdio_get_host_pm_caps(func);
 
 	if (!(sdio_flags & MMC_PM_KEEP_POWER)) {
@@ -201,6 +209,10 @@ static int bcmsdh_sdmmc_suspend(struct device *pdev)
 		sd_err(("%s: error while trying to keep power\n", __FUNCTION__));
 		return ret;
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 #if defined(OOB_INTR_ONLY)
 	bcmsdh_oob_intr_set(0);
 #endif	/* defined(OOB_INTR_ONLY) */

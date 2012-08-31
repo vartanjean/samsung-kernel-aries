@@ -22,7 +22,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
+<<<<<<< HEAD
  * $Id: sdioh.h 345478 2012-07-18 06:45:15Z $
+=======
+ * $Id: sdioh.h 300017 2011-12-01 20:30:27Z $
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
  */
 
 #ifndef	_SDIOH_H

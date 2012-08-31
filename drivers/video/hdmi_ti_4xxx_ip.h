@@ -49,6 +49,7 @@ struct hdmi_reg { u16 idx; };
 #define HDMI_WP_AUDIO_DATA			HDMI_WP_REG(0x8C)
 #define HDMI_WP_IRQSTATUS_CORE			0x1
 #define HDMI_WP_IRQENABLE_CORE			0x1
+#define HDMI_WP_AUDIO_FIFO_UNDERFLOW		(0x1 << 8)
 
 /* HDMI IP Core System */
 #define HDMI_CORE_SYS_REG(idx)			HDMI_REG(idx)
@@ -86,7 +87,6 @@ struct hdmi_reg { u16 idx; };
 #define HDMI_CORE_CTRL1_POWER_DOWN     0x1
 #define HDMI_CORE_SYSTEM_INTR2__BCAP	0x80
 #define HDMI_CORE_SYSTEM_INTR3__RI_ERR	0xF0
-#define HDMI_CORE_SYSTEM_INTR4_CEC	0x08
 
 /* HDMI DDC E-DID */
 #define HDMI_CORE_DDC_CMD			HDMI_CORE_SYS_REG(0x3CC)

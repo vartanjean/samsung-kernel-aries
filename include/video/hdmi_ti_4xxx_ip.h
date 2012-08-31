@@ -21,13 +21,10 @@
 #ifndef _HDMI_TI_4xxx_
 #define _HDMI_TI_4xxx_
 
-#include <video/cec.h>
-
 #define HDMI_HPD_LOW		0x10
 #define HDMI_HPD_HIGH		0x20
 #define HDMI_BCAP		0x40
 #define HDMI_RI_ERR		0x80
-#define HDMI_CEC_INT		0x100
 enum hdmi_pll_pwr {
 	HDMI_PLLPWRCMD_ALLOFF = 0,
 	HDMI_PLLPWRCMD_PLLONLY = 1,
@@ -358,7 +355,34 @@ enum hdmi_core_infoframe {
 	HDMI_INFOFRAME_AUDIO_DB5_DM_INH_PERMITTED = 0,
 	HDMI_INFOFRAME_AUDIO_DB5_DM_INH_PROHIBITED = 1
 };
+struct cec_dev {
+	int device_id;
+	int clear_existing_device;
+	int phy_addr;
+};
 
+struct cec_tx_data {
+	char   dest_device_id;
+	char   initiator_device_id;
+	char   send_ping;
+	char   retry_count;
+	char   tx_cmd;
+	char   tx_count;
+	char   tx_operand[15];
+};
+struct cec_rx_data {
+	char   init_device_id;
+	char   dest_device_id;
+	char   rx_cmd;
+	char   rx_count;
+	char   rx_operand[15];
+};
+
+enum hdmi_aksv_err {
+	HDMI_AKSV_ZERO = 0,
+	HDMI_AKSV_ERROR = 1,
+	HDMI_AKSV_VALID = 2
+};
 
 
 int hdmi_ti_4xxx_phy_init(struct hdmi_ip_data *ip_data);
@@ -385,9 +409,11 @@ void hdmi_ti_4xxx_core_audio_config(struct hdmi_ip_data *ip_data,
 					struct hdmi_core_audio_config *cfg);
 void hdmi_ti_4xxx_core_audio_infoframe_config(struct hdmi_ip_data *ip_data,
 		struct hdmi_core_infoframe_audio *info_aud);
-void hdmi_ti_4xxx_audio_enable(struct hdmi_ip_data *ip_data, bool idle);
+void hdmi_ti_4xxx_audio_transfer_en(struct hdmi_ip_data *ip_data,
+						bool idle);
+void hdmi_ti_4xxx_wp_audio_enable(struct hdmi_ip_data *ip_data, bool idle);
+
 int hdmi_ti_4xxx_set_wait_soft_reset(struct hdmi_ip_data *ip_data);
-bool hdmi_ti_4xx_check_aksv_data(struct hdmi_ip_data *ip_data);
 int hdmi_ti_4xx_cec_get_rx_cmd(struct hdmi_ip_data *ip_data,
 		char *rx_cmd);
 int hdmi_ti_4xx_cec_read_rx_cmd(struct hdmi_ip_data *ip_data,
@@ -402,5 +428,5 @@ int hdmi_ti_4xxx_cec_add_listening_device(struct hdmi_ip_data *ip_data,
 		int device_id, int clear);
 int hdmi_ti_4xxx_cec_set_listening_mask(struct hdmi_ip_data *ip_data,
 		int mask);
-
+int hdmi_ti_4xx_check_aksv_data(struct hdmi_ip_data *ip_data);
 #endif

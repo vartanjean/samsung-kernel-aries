@@ -24,7 +24,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
+<<<<<<< HEAD
  * $Id: wlioctl.h 353331 2012-08-27 06:04:47Z $
+=======
+ * $Id: wlioctl.h 331292 2012-05-04 09:04:23Z $
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
  */
 
 
@@ -774,10 +778,17 @@ typedef struct wlc_iov_trx_s {
 #ifdef WLC_HIGH_ONLY
 #define WLC_SAMPLECOLLECT_MAXLEN    1024    
 #define WLC_SAMPLECOLLECT_MAXLEN_LCN40  1024
+<<<<<<< HEAD
 #else
 #if defined(LCNCONF) || defined(LCN40CONF)
 #define WLC_SAMPLECOLLECT_MAXLEN	8192	
 #else
+=======
+#else
+#if defined(LCNCONF) || defined(LCN40CONF)
+#define WLC_SAMPLECOLLECT_MAXLEN	8192	
+#else
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 #define WLC_SAMPLECOLLECT_MAXLEN	10240	
 #endif
 #define WLC_SAMPLECOLLECT_MAXLEN_LCN40  8192

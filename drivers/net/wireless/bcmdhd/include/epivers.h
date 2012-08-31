@@ -33,6 +33,7 @@
 
 #define	EPI_RC_NUMBER		195
 
+<<<<<<< HEAD
 #define	EPI_INCREMENTAL_NUMBER	104
 
 #define	EPI_BUILD_NUMBER	0
@@ -40,10 +41,23 @@
 #define	EPI_VERSION		5, 90, 195, 104
 
 #define	EPI_VERSION_NUM		0x055ac368
+=======
+#define	EPI_INCREMENTAL_NUMBER	75
+
+#define	EPI_BUILD_NUMBER	0
+
+#define	EPI_VERSION		5, 90, 195, 75
+
+#define	EPI_VERSION_NUM		0x055ac34b
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 
 #define EPI_VERSION_DEV		5.90.195
 
 
+<<<<<<< HEAD
 #define	EPI_VERSION_STR		"5.90.195.104"
+=======
+#define	EPI_VERSION_STR		"5.90.195.75"
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 
 #endif 

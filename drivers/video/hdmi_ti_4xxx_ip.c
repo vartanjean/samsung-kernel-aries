@@ -802,7 +802,8 @@ void hdmi_ti_4xxx_basic_configure(struct hdmi_ip_data *ip_data,
 		&avi_cfg,
 		&repeat_cfg);
 
-	hdmi_wp_core_interrupt_set(ip_data, HDMI_WP_IRQENABLE_CORE);
+	hdmi_wp_core_interrupt_set(ip_data, HDMI_WP_IRQENABLE_CORE |
+				HDMI_WP_AUDIO_FIFO_UNDERFLOW);
 
 	hdmi_wp_video_init_format(&video_format, &video_timing, cfg);
 
@@ -881,7 +882,7 @@ EXPORT_SYMBOL(hdmi_ti_4xxx_basic_configure);
 u32 hdmi_ti_4xxx_irq_handler(struct hdmi_ip_data *ip_data)
 {
 	u32 val, sys_stat = 0, core_state = 0;
-	u32 intr2 = 0, intr3 = 0, intr4 = 0, r = 0;
+	u32 intr2 = 0, intr3 = 0, r = 0;
 	void __iomem *wp_base = hdmi_wp_base(ip_data);
 	void __iomem *core_base = hdmi_core_sys_base(ip_data);
 
@@ -895,7 +896,6 @@ u32 hdmi_ti_4xxx_irq_handler(struct hdmi_ip_data *ip_data)
 						 HDMI_CORE_SYS_SYS_STAT);
 			intr2 = hdmi_read_reg(core_base, HDMI_CORE_SYS_INTR2);
 			intr3 = hdmi_read_reg(core_base, HDMI_CORE_SYS_INTR3);
-			intr4 = hdmi_read_reg(core_base, HDMI_CORE_SYS_INTR4);
 
 			pr_debug("HDMI_CORE_SYS_SYS_STAT = 0x%x\n", sys_stat);
 			pr_debug("HDMI_CORE_SYS_INTR2 = 0x%x\n", intr2);
@@ -903,12 +903,14 @@ u32 hdmi_ti_4xxx_irq_handler(struct hdmi_ip_data *ip_data)
 
 			hdmi_write_reg(core_base, HDMI_CORE_SYS_INTR2, intr2);
 			hdmi_write_reg(core_base, HDMI_CORE_SYS_INTR3, intr3);
-			hdmi_write_reg(core_base, HDMI_CORE_SYS_INTR4, intr4);
 
 			hdmi_read_reg(core_base, HDMI_CORE_SYS_INTR2);
 			hdmi_read_reg(core_base, HDMI_CORE_SYS_INTR3);
 		}
 	}
+
+	if (val & HDMI_WP_AUDIO_FIFO_UNDERFLOW)
+		pr_err("HDMI_WP_AUDIO_FIFO_UNDERFLOW\n");
 
 	pr_debug("HDMI_WP_IRQSTATUS = 0x%x\n", val);
 	pr_debug("HDMI_CORE_SYS_INTR_STATE = 0x%x\n", core_state);
@@ -918,9 +920,6 @@ u32 hdmi_ti_4xxx_irq_handler(struct hdmi_ip_data *ip_data)
 
 	if (intr3 & HDMI_CORE_SYSTEM_INTR3__RI_ERR)
 		r |= HDMI_RI_ERR;
-
-	if (intr4 & HDMI_CORE_SYSTEM_INTR4_CEC)
-		r |= HDMI_CEC_INT;
 
 	/* Ack other interrupts if any */
 	hdmi_write_reg(wp_base, HDMI_WP_IRQSTATUS, val);
@@ -1245,6 +1244,8 @@ void hdmi_ti_4xxx_core_audio_config(struct hdmi_ip_data *ip_data,
 	r = FLD_MOD(r, cfg->i2s_cfg.shift, 0, 0);
 	hdmi_write_reg(hdmi_av_base(ip_data), HDMI_CORE_AV_I2S_IN_CTRL, r);
 
+	hdmi_write_reg(hdmi_av_base(ip_data), HDMI_CORE_AV_SWAP_I2S, 0x29);
+
 	r = hdmi_read_reg(hdmi_av_base(ip_data), HDMI_CORE_AV_I2S_CHST5);
 	r = FLD_MOD(r, cfg->freq_sample, 7, 4);
 	r = FLD_MOD(r, cfg->i2s_cfg.word_length, 3, 1);
@@ -1318,23 +1319,28 @@ void hdmi_ti_4xxx_core_audio_infoframe_config(struct hdmi_ip_data *ip_data,
 }
 EXPORT_SYMBOL(hdmi_ti_4xxx_core_audio_infoframe_config);
 
-
-void hdmi_ti_4xxx_audio_enable(struct hdmi_ip_data *ip_data, bool enable)
+void hdmi_ti_4xxx_audio_transfer_en(struct hdmi_ip_data *ip_data,
+						bool enable)
 {
-
-	REG_FLD_MOD(hdmi_av_base(ip_data),
-			HDMI_CORE_AV_AUD_MODE, enable, 0, 0);
-	REG_FLD_MOD(hdmi_wp_base(ip_data),
-			HDMI_WP_AUDIO_CTRL, enable, 31, 31);
 	REG_FLD_MOD(hdmi_wp_base(ip_data),
 			HDMI_WP_AUDIO_CTRL, enable, 30, 30);
+	REG_FLD_MOD(hdmi_av_base(ip_data),
+			HDMI_CORE_AV_AUD_MODE, enable, 0, 0);
 }
-EXPORT_SYMBOL(hdmi_ti_4xxx_audio_enable);
+EXPORT_SYMBOL(hdmi_ti_4xxx_audio_transfer_en);
 
-bool hdmi_ti_4xx_check_aksv_data(struct hdmi_ip_data *ip_data)
+
+void hdmi_ti_4xxx_wp_audio_enable(struct hdmi_ip_data *ip_data, bool enable)
+{
+	REG_FLD_MOD(hdmi_wp_base(ip_data),
+			HDMI_WP_AUDIO_CTRL, enable, 31, 31);
+}
+EXPORT_SYMBOL(hdmi_ti_4xxx_wp_audio_enable);
+
+int hdmi_ti_4xx_check_aksv_data(struct hdmi_ip_data *ip_data)
 {
 	u32 aksv_data[5];
-	int i, j;
+	int i, j, ret;
 	int one = 0, zero = 0;
 	/* check if HDCP AKSV registers are populated.
 	 * If not load the keys and reset the wrapper.
@@ -1348,13 +1354,10 @@ bool hdmi_ti_4xx_check_aksv_data(struct hdmi_ip_data *ip_data)
 		pr_debug("%x ", aksv_data[i] & 0xFF);
 	}
 
-	if (one != zero)
-		pr_warn("HDCP: invalid AKSV\n");
+	ret = (one == zero) ? HDMI_AKSV_VALID :
+		(one == 0) ? HDMI_AKSV_ZERO : HDMI_AKSV_ERROR;
 
-	if (one == zero)
-		return true;
-	else
-		return false;
+	return ret;
 
 }
 EXPORT_SYMBOL(hdmi_ti_4xx_check_aksv_data);

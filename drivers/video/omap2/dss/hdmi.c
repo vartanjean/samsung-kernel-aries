@@ -57,7 +57,6 @@
 #define EDID_TIMING_DESCRIPTOR_SIZE		0x12
 #define EDID_DESCRIPTOR_BLOCK0_ADDRESS		0x36
 #define EDID_DESCRIPTOR_BLOCK1_ADDRESS		0x80
-#define EDID_HDMI_VENDOR_SPECIFIC_DATA_BLOCK	128
 #define EDID_SIZE_BLOCK0_TIMING_DESCRIPTOR	4
 #define EDID_SIZE_BLOCK1_TIMING_DESCRIPTOR	4
 
@@ -89,13 +88,9 @@ static struct {
 	bool set_mode;
 	bool wp_reset_done;
 
-	int source_physical_address;
 	void (*hdmi_start_frame_cb)(void);
 	void (*hdmi_irq_cb)(int);
 	bool (*hdmi_power_on_cb)(void);
-	void (*hdmi_cec_enable_cb)(int status);
-	void (*hdmi_cec_irq_cb)(void);
-	void (*hdmi_cec_hpd)(int phy_addr, int status);
 } hdmi;
 
 static const u8 edid_header[8] = {0x0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0};
@@ -262,40 +257,6 @@ void hdmi_get_monspecs(struct fb_monspecs *specs)
 		specs->modedb[j++] = specs->modedb[i];
 	}
 	specs->modedb_len = j;
-
-
-	/* Find out the Source Physical address for the CEC
-	CEC physical address will be part of VSD block from
-	TV Physical address is 2 bytes after 24 bit IEEE
-	registration identifier (0x000C03)
-	*/
-	i = EDID_HDMI_VENDOR_SPECIFIC_DATA_BLOCK;
-	while (i < (HDMI_EDID_MAX_LENGTH - 5)) {
-		if ((edid[i] == 0x03) && (edid[i+1] == 0x0c) &&
-			(edid[i+2] == 0x00)) {
-			hdmi.source_physical_address = (edid[i+3] << 8) |
-				edid[i+4];
-			break;
-		}
-		i++;
-
-	}
-}
-
-void hdmi_inform_hpd_to_cec(int status)
-{
-	if (!status)
-		hdmi.source_physical_address = 0;
-
-	if (hdmi.hdmi_cec_hpd)
-		(*hdmi.hdmi_cec_hpd)(hdmi.source_physical_address,
-			status);
-}
-
-void hdmi_inform_power_on_to_cec(int status)
-{
-	if (hdmi.hdmi_cec_enable_cb)
-		(*hdmi.hdmi_cec_enable_cb)(status);
 }
 
 u8 *hdmi_read_edid(struct omap_video_timings *dp)
@@ -382,17 +343,38 @@ static void hdmi_compute_pll(struct omap_dss_device *dssdev, int phy,
 
 static void hdmi_load_hdcp_keys(struct omap_dss_device *dssdev)
 {
+	int aksv;
+	int retries = 5;
 	DSSDBG("hdmi_load_hdcp_keys\n");
 	/* load the keys and reset the wrapper to populate the AKSV registers*/
 	if (hdmi.hdmi_power_on_cb) {
-		if (!hdmi_ti_4xx_check_aksv_data(&hdmi.hdmi_data) &&
+		aksv = hdmi_ti_4xx_check_aksv_data(&hdmi.hdmi_data);
+		if ((aksv == HDMI_AKSV_ZERO) &&
 		    hdmi.custom_set &&
 		    hdmi.hdmi_power_on_cb()) {
 			hdmi_ti_4xxx_set_wait_soft_reset(&hdmi.hdmi_data);
-			hdmi.wp_reset_done = true;
+
+			while (retries) {
+				aksv = hdmi_ti_4xx_check_aksv_data(&hdmi.hdmi_data);
+				if (aksv == HDMI_AKSV_VALID)
+					break;
+				msleep(50);
+				retries--;
+			}
+
+			hdmi.wp_reset_done = (aksv == HDMI_AKSV_VALID) ?
+				true : false;
 			DSSINFO("HDMI_WRAPPER RESET DONE\n");
-		}
+		} else if (aksv == HDMI_AKSV_VALID)
+			hdmi.wp_reset_done = true;
+		else if (aksv == HDMI_AKSV_ERROR)
+			hdmi.wp_reset_done = false;
+
+		if (!hdmi.wp_reset_done)
+			DSSERR("*** INVALID AKSV: "
+				"Do not perform HDCP AUTHENTICATION\n");
 	}
+
 }
 
 static int hdmi_power_on(struct omap_dss_device *dssdev)
@@ -537,25 +519,6 @@ int omapdss_hdmi_register_hdcp_callbacks(void (*hdmi_start_frame_cb)(void),
 }
 EXPORT_SYMBOL(omapdss_hdmi_register_hdcp_callbacks);
 
-int omapdss_hdmi_register_cec_callbacks(void (*hdmi_cec_enable_cb)(int status),
-					void (*hdmi_cec_irq_cb)(void),
-					void (*hdmi_cec_hpd)(int phy_addr,
-						int status))
-{
-	hdmi.hdmi_cec_enable_cb = hdmi_cec_enable_cb;
-	hdmi.hdmi_cec_irq_cb = hdmi_cec_irq_cb;
-	hdmi.hdmi_cec_hpd = hdmi_cec_hpd;
-	return 0;
-}
-EXPORT_SYMBOL(omapdss_hdmi_register_cec_callbacks);
-
-int omapdss_hdmi_unregister_cec_callbacks(void)
-{
-	hdmi.hdmi_cec_enable_cb = NULL;
-	hdmi.hdmi_cec_irq_cb = NULL;
-	hdmi.hdmi_cec_hpd = NULL;
-	return 0;
-}
 void omapdss_hdmi_set_deepcolor(int val)
 {
 	hdmi.deep_color = val;
@@ -588,9 +551,6 @@ static irqreturn_t hdmi_irq_handler(int irq, void *arg)
 	r = hdmi_ti_4xxx_irq_handler(&hdmi.hdmi_data);
 
 	DSSDBG("Received HDMI IRQ = %08x\n", r);
-
-	if (hdmi.hdmi_cec_irq_cb && (r & HDMI_CEC_INT))
-		hdmi.hdmi_cec_irq_cb();
 
 	if (hdmi.hdmi_irq_cb)
 		hdmi.hdmi_irq_cb(r);
@@ -719,8 +679,7 @@ void omapdss_hdmi_display_disable(struct omap_dss_device *dssdev)
 		goto done;
 
 	hdmi.enabled = false;
-	if (dssdev->state == OMAP_DSS_DISPLAY_SUSPENDED)
-		hdmi.wp_reset_done = false;
+	hdmi.wp_reset_done = false;
 
 	hdmi_power_off(dssdev);
 	if (dssdev->sync_lost_error == 0)

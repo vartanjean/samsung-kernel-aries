@@ -22,7 +22,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
+<<<<<<< HEAD
  * $Id: dhd_linux.c 352789 2012-08-24 00:01:33Z $
+=======
+ * $Id: dhd_linux.c 333885 2012-05-18 00:39:03Z $
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
  */
 
 #include <typedefs.h>
@@ -295,6 +299,7 @@ typedef struct dhd_info {
 char firmware_path[MOD_PARAM_PATHLEN];
 char nvram_path[MOD_PARAM_PATHLEN];
 
+<<<<<<< HEAD
 /* load firmware and/or nvram values from the filesystem */
 module_param_string(firmware_path, firmware_path, MOD_PARAM_PATHLEN, 0660);
 module_param_string(nvram_path, nvram_path, MOD_PARAM_PATHLEN, 0);
@@ -302,6 +307,8 @@ module_param_string(nvram_path, nvram_path, MOD_PARAM_PATHLEN, 0);
 char info_string[MOD_PARAM_INFOLEN];
 module_param_string(info_string, info_string, MOD_PARAM_INFOLEN, 0444);
 
+=======
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 int op_mode = 0;
 module_param(op_mode, int, 0644);
 extern int wl_control_wl_start(struct net_device *dev);
@@ -1039,7 +1046,11 @@ dhd_op_if(dhd_if_t *ifp)
 #endif
 			netif_stop_queue(ifp->net);
 			unregister_netdev(ifp->net);
+<<<<<<< HEAD
 			ret = DHD_DEL_IF;	/* Make sure the free_netdev() is called */
+=======
+			ret = DHD_DEL_IF;
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 
 #ifdef WL_CFG80211
 			if (dhd->dhd_state & DHD_ATTACH_STATE_CFG80211) {
@@ -3243,7 +3254,10 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 	setbit(eventmask, WLC_E_MIC_ERROR);
 	setbit(eventmask, WLC_E_ASSOC_REQ_IE);
 	setbit(eventmask, WLC_E_ASSOC_RESP_IE);
+<<<<<<< HEAD
 #ifndef WL_CFG80211
+=======
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 	setbit(eventmask, WLC_E_PMKID_CACHE);
 	setbit(eventmask, WLC_E_TXFAIL);
 #endif
@@ -3336,8 +3350,11 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 		/* Print fw version info */
 		DHD_ERROR(("Firmware version = %s\n", buf));
 
+<<<<<<< HEAD
 		dhd_set_version_info(dhd, buf);
 
+=======
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 		DHD_BLOG(buf, strlen(buf) + 1);
 		DHD_BLOG(dhd_version, strlen(dhd_version) + 1);
 
@@ -3956,10 +3973,21 @@ int
 dhd_os_ioctl_resp_wait(dhd_pub_t *pub, uint *condition, bool *pending)
 {
 	dhd_info_t * dhd = (dhd_info_t *)(pub->info);
+<<<<<<< HEAD
 	int timeout;
 
 	/* Convert timeout in millsecond to jiffies */
 	timeout = msecs_to_jiffies(dhd_ioctl_timeout_msec);
+=======
+	int timeout = dhd_ioctl_timeout_msec;
+
+	/* Convert timeout in millsecond to jiffies */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
+	timeout = msecs_to_jiffies(timeout);
+#else
+	timeout = timeout * HZ / 1000;
+#endif
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 
 	timeout = wait_event_timeout(dhd->ioctl_resp_wait, (*condition), timeout);
 	return timeout;
@@ -4320,7 +4348,15 @@ void dhd_wait_for_event(dhd_pub_t *dhd, bool *lockvar)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 	struct dhd_info *dhdinfo =  dhd->info;
+<<<<<<< HEAD
 	int timeout = msecs_to_jiffies(2000);
+=======
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
+	int timeout = msecs_to_jiffies(2000);
+#else
+	int timeout = 2 * HZ;
+#endif
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 	dhd_os_sdunlock(dhd);
 	wait_event_timeout(dhdinfo->ctrl_wait, (*lockvar == FALSE), timeout);
 	dhd_os_sdlock(dhd);
@@ -4450,10 +4486,17 @@ int dhd_os_set_packet_filter(dhd_pub_t *dhdp, int val)
 int net_os_set_packet_filter(struct net_device *dev, int val)
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
+<<<<<<< HEAD
 
 	return dhd_os_set_packet_filter(&dhd->pub, val);
 }
 
+=======
+
+	return dhd_os_set_packet_filter(&dhd->pub, val);
+}
+
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 int
 dhd_dev_init_ioctl(struct net_device *dev)
 {
@@ -4517,10 +4560,35 @@ dhd_dev_get_pno_status(struct net_device *dev)
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 static void dhd_hang_process(struct work_struct *work)
+<<<<<<< HEAD
+=======
 {
 	dhd_info_t *dhd;
 	struct net_device *dev;
 
+	dhd = (dhd_info_t *)container_of(work, dhd_info_t, work_hang);
+	dev = dhd->iflist[0]->net;
+
+	if (dev) {
+		rtnl_lock();
+		dev_close(dev);
+		rtnl_unlock();
+#if defined(WL_WIRELESS_EXT)
+		wl_iw_send_priv_event(dev, "HANG");
+#endif
+#if defined(WL_CFG80211)
+		wl_cfg80211_hang(dev, WLAN_REASON_UNSPECIFIED);
+#endif
+	}
+}
+
+int net_os_send_hang_message(struct net_device *dev)
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
+{
+	dhd_info_t *dhd;
+	struct net_device *dev;
+
+<<<<<<< HEAD
 	dhd = (dhd_info_t *)container_of(work, dhd_info_t, work_hang);
 	dev = dhd->iflist[0]->net;
 
@@ -4548,10 +4616,17 @@ int dhd_os_send_hang_message(dhd_pub_t *dhdp)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 			schedule_work(&dhdp->info->work_hang);
 #endif
+=======
+	if (dhd) {
+		if (!dhd->pub.hang_was_sent) {
+			dhd->pub.hang_was_sent = 1;
+			schedule_work(&dhd->work_hang);
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 		}
 	}
 	return ret;
 }
+#endif
 
 int net_os_send_hang_message(struct net_device *dev)
 {
@@ -4568,6 +4643,7 @@ void dhd_bus_country_set(struct net_device *dev, wl_country_t *cspec)
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
 
+<<<<<<< HEAD
 	if (dhd && dhd->pub.up) {
 		memcpy(&dhd->pub.dhd_cspec, cspec, sizeof(wl_country_t));
 #ifdef WL_CFG80211
@@ -4587,6 +4663,12 @@ void dhd_bus_band_set(struct net_device *dev, uint band)
 	}
 }
 
+=======
+	if (dhd && dhd->pub.up)
+		memcpy(&dhd->pub.dhd_cspec, cspec, sizeof(wl_country_t));
+}
+
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 void dhd_net_if_lock(struct net_device *dev)
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
@@ -4781,6 +4863,7 @@ int dhd_os_wake_lock_ctrl_timeout_enable(dhd_pub_t *pub, int val)
 }
 
 int net_os_wake_lock_rx_timeout_enable(struct net_device *dev, int val)
+<<<<<<< HEAD
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
 	int ret = 0;
@@ -4791,11 +4874,26 @@ int net_os_wake_lock_rx_timeout_enable(struct net_device *dev, int val)
 }
 
 int net_os_wake_lock_ctrl_timeout_enable(struct net_device *dev, int val)
+=======
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
 	int ret = 0;
 
 	if (dhd)
+<<<<<<< HEAD
+=======
+		ret = dhd_os_wake_lock_rx_timeout_enable(&dhd->pub, val);
+	return ret;
+}
+
+int net_os_wake_lock_ctrl_timeout_enable(struct net_device *dev, int val)
+{
+	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
+	int ret = 0;
+
+	if (dhd)
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 		ret = dhd_os_wake_lock_ctrl_timeout_enable(&dhd->pub, val);
 	return ret;
 }
@@ -4868,6 +4966,7 @@ int dhd_os_check_wakelock(void *dhdp)
 }
 
 int net_os_wake_unlock(struct net_device *dev)
+<<<<<<< HEAD
 {
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
 	int ret = 0;
@@ -4887,6 +4986,8 @@ int dhd_os_check_if_up(void *dhdp)
 }
 
 void dhd_set_version_info(dhd_pub_t *dhdp, char *fw)
+=======
+>>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 {
 	int i;
 
@@ -4898,6 +4999,15 @@ void dhd_set_version_info(dhd_pub_t *dhdp, char *fw)
 	i = snprintf(&info_string[i], sizeof(info_string) - i,
 		"\n  Chip: %x Rev %x Pkg %x", dhd_bus_chip_id(dhdp),
 		dhd_bus_chiprev_id(dhdp), dhd_bus_chippkg_id(dhdp));
+}
+
+int dhd_os_check_if_up(void *dhdp)
+{
+	dhd_pub_t *pub = (dhd_pub_t *)dhdp;
+
+	if (!pub)
+		return 0;
+	return pub->up;
 }
 
 int dhd_ioctl_entry_local(struct net_device *net, wl_ioctl_t *ioc, int cmd)
