@@ -38,7 +38,7 @@
 #include "aries.h"
 
 #ifdef CONFIG_S5P_IDLE2
-#include <mach/cpuidle.h>
+#include <mach/idle2.h>
 #endif /* CONFIG_S5P_IDLE2 */
 
 #define IRQ_BT_HOST_WAKE      IRQ_EINT(21)
@@ -166,12 +166,12 @@ irqreturn_t bt_host_wake_irq_handler(int irq, void *dev_id)
 	if (gpio_get_value(GPIO_BT_HOST_WAKE)) {
 		wake_lock(&rfkill_wake_lock);
 #ifdef CONFIG_S5P_IDLE2
-		idle2_needs_topon();
+		idle2_bluetooth_active();
 #endif
 	} else {
 		wake_lock_timeout(&rfkill_wake_lock, HZ);
 #ifdef CONFIG_S5P_IDLE2
-		idle2_cancel_topon(10 * HZ);
+		idle2_bluetooth_timeout(10 * HZ);
 #endif
 	}
 
@@ -193,7 +193,7 @@ static const struct rfkill_ops bt_rfkill_ops = {
 	.set_block = bt_rfkill_set_block,
 };
 
-static int __init aries_rfkill_probe(struct platform_device *pdev)
+static int aries_rfkill_probe(struct platform_device *pdev)
 {
 	int irq;
 	int ret;
