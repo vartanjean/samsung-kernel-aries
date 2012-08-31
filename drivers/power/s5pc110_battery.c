@@ -60,7 +60,7 @@
 #endif
 
 #ifdef CONFIG_S5P_IDLE2
-#include <mach/idle2.h>
+#include <mach/cpuidle.h>
 #endif /* CONFIG_S5P_IDLE2 */
 
 #define POLLING_INTERVAL	1000
