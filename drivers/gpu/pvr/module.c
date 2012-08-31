@@ -35,7 +35,7 @@
 #if defined(SUPPORT_DRI_DRM) && !defined(SUPPORT_DRI_DRM_PLUGIN)
 #define	PVR_MOD_STATIC
 #else
-
+	
 	#if defined(LDM_PLATFORM)
 		#define	PVR_LDM_PLATFORM_MODULE
 		#define	PVR_LDM_MODULE
@@ -79,6 +79,10 @@
 #include <asm/uaccess.h>
 #endif
 
+#if defined(PVR_LDM_MODULE) || defined(PVR_DRI_DRM_PLATFORM_DEV)
+#include <asm/atomic.h>
+#endif
+
 #include "img_defs.h"
 #include "services.h"
 #include "kerneldisplay.h"
@@ -99,6 +103,7 @@
 #include "private_data.h"
 #include "lock.h"
 #include "linkage.h"
+#include "buffer_manager.h"
 
 #if defined(SUPPORT_DRI_DRM)
 #include "pvr_drm.h"
@@ -264,7 +269,7 @@ static int __devinit PVRSRVDriverProbe(LDM_DEV *pDevice, const struct pci_device
 		return -EINVAL;
 	}
 #endif	
-
+	
 	psSysData = SysAcquireDataNoCheck();
 	if (psSysData == IMG_NULL)
 	{
@@ -308,7 +313,7 @@ static void __devexit PVRSRVDriverRemove(LDM_DEV *pDevice)
 #endif
 
 	SysAcquireData(&psSysData);
-
+	
 #if defined(DEBUG) && defined(PVR_MANUAL_POWER_CONTROL)
 	if (gPVRPowerLevel != 0)
 	{
@@ -347,9 +352,17 @@ void PVRSRVDriverShutdown(struct drm_device *pDevice)
 PVR_MOD_STATIC void PVRSRVDriverShutdown(LDM_DEV *pDevice)
 #endif
 {
+	static atomic_t sDriverIsShutdown = ATOMIC_INIT(1);
+
 	PVR_TRACE(("PVRSRVDriverShutdown(pDevice=%p)", pDevice));
 
-	(void) PVRSRVSetPowerStateKM(PVRSRV_SYS_POWER_STATE_D3);
+	if (atomic_dec_and_test(&sDriverIsShutdown))
+	{
+		
+		LinuxLockMutex(&gPVRSRVLock);
+
+		(void) PVRSRVSetPowerStateKM(PVRSRV_SYS_POWER_STATE_D3);
+	}
 }
 
 #endif 
@@ -528,7 +541,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 		{
 			PVRSRV_KERNEL_MEM_INFO *psKernelMemInfo;
 
-
+			
 			if(PVRSRVLookupHandle(KERNEL_HANDLE_BASE,
 								  (IMG_PVOID *)&psKernelMemInfo,
 								  psPrivateData->hKernelMemInfo,
@@ -539,7 +552,13 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 				goto err_unlock;
 			}
 
+			
+			if (psKernelMemInfo->sShareMemWorkaround.bInUse)
+			{
+				BM_XProcIndexRelease(psKernelMemInfo->sShareMemWorkaround.ui32ShareIndex);
+			}
 
+			
 			if(FreeMemCallBackCommon(psKernelMemInfo, 0,
 									 PVRSRV_FREE_CALLBACK_ORIGIN_EXTERNAL) != PVRSRV_OK)
 			{
@@ -549,7 +568,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 			}
 		}
 
-
+		
 		gui32ReleasePID = psPrivateData->ui32OpenPID;
 		PVRSRVProcessDisconnect(psPrivateData->ui32OpenPID);
 		gui32ReleasePID = 0;
@@ -589,7 +608,7 @@ static int __init PVRCore_Init(void)
 #endif
 
 #if !defined(SUPPORT_DRI_DRM)
-
+	
 	PVRDPFInit();
 #endif
 	PVR_TRACE(("PVRCore_Init"));
@@ -653,7 +672,7 @@ static int __init PVRCore_Init(void)
 #endif 
 
 #if !defined(PVR_LDM_MODULE)
-
+	
 	if ((eError = SysInitialise()) != PVRSRV_OK)
 	{
 		error = -ENODEV;
@@ -682,7 +701,7 @@ static int __init PVRCore_Init(void)
 	PVR_TRACE(("PVRCore_Init: major device %d", AssignedMajorNumber));
 
 #if defined(PVR_LDM_MODULE)
-
+	
 	psPvrClass = class_create(THIS_MODULE, "pvr");
 
 	if (IS_ERR(psPvrClass))
@@ -730,7 +749,7 @@ sys_deinit:
 #endif
 
 #else	
-
+	
 	{
 		SYS_DATA *psSysData;
 
@@ -812,7 +831,7 @@ static void __exit PVRCore_Cleanup(void)
 		}
 	}
 #endif
-
+	
 	(void) SysDeinitialise(psSysData);
 #endif 
 
