@@ -69,7 +69,6 @@ do {										\
 			printk args;						\
 		} 								\
 } while (0)
-<<<<<<< HEAD
 #else /* defined(DHD_DEBUG) */
 #define	WL_ERR(args)								\
 do {										\
@@ -80,8 +79,6 @@ do {										\
 } while (0)
 #endif /* defined(DHD_DEBUG) */
 
-=======
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 #ifdef WL_INFO
 #undef WL_INFO
 #endif
@@ -147,26 +144,17 @@ do {									\
 #define WL_SCAN_TIMER_INTERVAL_MS	8000 /* Scan timeout */
 #define WL_CHANNEL_SYNC_RETRY 	3
 #define WL_ACT_FRAME_RETRY 4
-<<<<<<< HEAD
 
 #define WL_INVALID 		-1
 
-=======
-
-#define WL_INVALID 		-1
-
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 
 /* Bring down SCB Timeout to 20secs from 60secs default */
 #ifndef WL_SCB_TIMEOUT
 #define WL_SCB_TIMEOUT 20
 #endif
 
-<<<<<<< HEAD
 #define WLAN_REASON_DRIVER_ERROR 	WLAN_REASON_UNSPECIFIED
 
-=======
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 /* driver status */
 enum wl_status {
 	WL_STATUS_READY = 0,
@@ -412,11 +400,7 @@ struct afx_hdl {
 };
 
 /* private data of cfg80211 interface */
-<<<<<<< HEAD
 typedef struct wl_priv {
-=======
-struct wl_priv {
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 	struct wireless_dev *wdev;	/* representing wl cfg80211 device */
 
 	struct wireless_dev *p2p_wdev;	/* representing wl cfg80211 device for P2P */
@@ -485,16 +469,11 @@ struct wl_priv {
 	bool sched_scan_running;	/* scheduled scan req status */
 	u16 hostapd_chan;            /* remember chan requested by framework for hostapd  */
 	u16 deauth_reason;           /* Place holder to save deauth/disassoc reasons */
-<<<<<<< HEAD
 	u16 scan_busy_count;
 	struct work_struct work_scan_timeout;
 } wl_priv_t;
 
 
-=======
-};
-
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 static inline struct wl_bss_info *next_bss(struct wl_scan_results *list, struct wl_bss_info *bss)
 {
 	return bss = bss ?
@@ -602,7 +581,6 @@ wl_get_status_by_netdev(struct wl_priv *wl, s32 status,
 	list_for_each_entry_safe(_net_info, next, &wl->net_list, list) {
 				if (ndev && (_net_info->ndev == ndev))
 					return test_bit(status, &_net_info->sme_state);
-<<<<<<< HEAD
 	}
 	return 0;
 }
@@ -628,39 +606,9 @@ wl_set_mode_by_netdev(struct wl_priv *wl, struct net_device *ndev,
 	list_for_each_entry_safe(_net_info, next, &wl->net_list, list) {
 				if (ndev && (_net_info->ndev == ndev))
 					_net_info->mode = mode;
-=======
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
-	}
-	return 0;
-}
-
-<<<<<<< HEAD
-=======
-static inline s32
-wl_get_mode_by_netdev(struct wl_priv *wl, struct net_device *ndev)
-{
-	struct net_info *_net_info, *next;
-
-	list_for_each_entry_safe(_net_info, next, &wl->net_list, list) {
-				if (ndev && (_net_info->ndev == ndev))
-					return _net_info->mode;
-	}
-	return -1;
-}
-
-static inline void
-wl_set_mode_by_netdev(struct wl_priv *wl, struct net_device *ndev,
-	s32 mode)
-{
-	struct net_info *_net_info, *next;
-
-	list_for_each_entry_safe(_net_info, next, &wl->net_list, list) {
-				if (ndev && (_net_info->ndev == ndev))
-					_net_info->mode = mode;
 	}
 }
 
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 static inline struct wl_profile *
 wl_get_profile_by_netdev(struct wl_priv *wl, struct net_device *ndev)
 {

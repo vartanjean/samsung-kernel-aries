@@ -21,11 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
  * $Id: dhd_sdio.c 352730 2012-08-23 20:55:11Z $
-=======
- * $Id: dhd_sdio.c 326662 2012-04-10 06:38:08Z $
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
  */
 
 #include <typedefs.h>
@@ -1491,11 +1487,7 @@ dhd_bus_rxctl(struct dhd_bus *bus, uchar *msg, uint msglen)
 		dhd_os_sdunlock(bus->dhd);
 #endif /* DHD_DEBUG */
 	} else if (pending == TRUE) {
-<<<<<<< HEAD
 		/* possibly fw hangs so never responsed back */
-=======
-		/* signal pending */
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 		DHD_ERROR(("%s: signal pending\n", __FUNCTION__));
 		return -EINTR;
 	} else {
@@ -6333,7 +6325,6 @@ uint dhd_bus_chip_id(dhd_pub_t *dhdp)
 {
 	dhd_bus_t *bus = dhdp->bus;
 
-<<<<<<< HEAD
 	return bus->sih->chip;
 }
 
@@ -6351,9 +6342,6 @@ uint dhd_bus_chippkg_id(dhd_pub_t *dhdp)
 	dhd_bus_t *bus = dhdp->bus;
 
 	return bus->sih->chippkg;
-=======
-	return  bus->sih->chip;
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 }
 
 int

@@ -5,11 +5,7 @@
  * JTAG, 0/1/2 UARTs, clock frequency control, a watchdog interrupt timer,
  * GPIO interface, extbus, and support for serial and parallel flashes.
  *
-<<<<<<< HEAD
  * $Id: sbchipc.h 343982 2012-07-11 00:29:37Z $
-=======
- * $Id: sbchipc.h 333924 2012-05-18 04:48:52Z $
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
  *
  * Copyright (C) 1999-2011, Broadcom Corporation
  * 
@@ -1730,14 +1726,11 @@ typedef volatile struct {
 #define SECI_MODE_SHIFT		4 
 #define SECI_UPD_SECI		(1 << 7)
 
-<<<<<<< HEAD
 #define SECI_SLIP_ESC_CHAR	0xDB
 #define SECI_SIGNOFF_0		SECI_SLIP_ESC_CHAR
 #define SECI_SIGNOFF_1		0
 #define SECI_REFRESH_REQ	0xDA
 
-=======
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 
 #define CLKCTL_STS_SECI_CLK_REQ		(1 << 8)
 #define CLKCTL_STS_SECI_CLK_AVAIL	(1 << 24)

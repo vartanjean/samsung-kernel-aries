@@ -790,7 +790,6 @@ wl_cfgp2p_escan(struct wl_priv *wl, struct net_device *dev, u16 active,
 
 	ret = wldev_iovar_setbuf_bsscfg(pri_dev, "p2p_scan",
 		memblk, memsize, wl->ioctl_buf, WLC_IOCTL_MAXLEN, bssidx, &wl->ioctl_buf_sync);
-<<<<<<< HEAD
 	return ret;
 }
 
@@ -838,55 +837,6 @@ exit:
 	return ret;
 }
 
-=======
-	return ret;
-}
-
-/* search function to reach at common channel to send action frame
- * Parameters:
- * @wl       : wl_private data
- * @ndev     : net device for bssidx
- * @bssidx   : bssidx for BSS
- * Returns 0 if success.
- */
-s32
-wl_cfgp2p_act_frm_search(struct wl_priv *wl, struct net_device *ndev,
-	s32 bssidx, s32 channel)
-{
-	s32 ret = 0;
-	u32 chan_cnt = 0;
-	u16 *default_chan_list = NULL;
-	if (!p2p_is_on(wl))
-		return -BCME_ERROR;
-	CFGP2P_ERR((" Enter\n"));
-	if (bssidx == P2PAPI_BSSCFG_PRIMARY)
-		bssidx =  wl_to_p2p_bss_bssidx(wl, P2PAPI_BSSCFG_DEVICE);
-	if (channel)
-		chan_cnt = 1;
-	else
-		chan_cnt = SOCIAL_CHAN_CNT;
-	default_chan_list = kzalloc(chan_cnt * sizeof(*default_chan_list), GFP_KERNEL);
-	if (default_chan_list == NULL) {
-		CFGP2P_ERR(("channel list allocation failed \n"));
-		ret = -ENOMEM;
-		goto exit;
-	}
-	if (channel) {
-		default_chan_list[0] = channel;
-	} else {
-		default_chan_list[0] = SOCIAL_CHAN_1;
-		default_chan_list[1] = SOCIAL_CHAN_2;
-		default_chan_list[2] = SOCIAL_CHAN_3;
-	}
-	ret = wl_cfgp2p_escan(wl, ndev, true, SOCIAL_CHAN_CNT,
-		default_chan_list, WL_P2P_DISC_ST_SEARCH,
-		WL_SCAN_ACTION_START, bssidx);
-	kfree(default_chan_list);
-exit:
-	return ret;
-}
-
->>>>>>> 6c22b1ff9b3fb98ad88d61b60487916f709637f2
 /* Check whether pointed-to IE looks like WPA. */
 #define wl_cfgp2p_is_wpa_ie(ie, tlvs, len)	wl_cfgp2p_has_ie(ie, tlvs, len, \
 		(const uint8 *)WPS_OUI, WPS_OUI_LEN, WPA_OUI_TYPE)
