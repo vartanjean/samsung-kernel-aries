@@ -86,10 +86,8 @@ static void early_suspend(struct work_struct *work)
 
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPEND_REQUESTED) {
-		earlysuspend_active_fn(true);
+	if (state == SUSPEND_REQUESTED)
 		state |= SUSPENDED;
-	}
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);
@@ -100,6 +98,7 @@ static void early_suspend(struct work_struct *work)
 		mutex_unlock(&early_suspend_lock);
 		goto abort;
 	}
+	earlysuspend_active_fn(true);
 
 	if (debug_mask & DEBUG_SUSPEND)
 		pr_info("early_suspend: call handlers\n");
@@ -132,10 +131,8 @@ static void late_resume(struct work_struct *work)
 
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPENDED) {
-		earlysuspend_active_fn(false);
+	if (state == SUSPENDED)
 		state &= ~SUSPENDED;
-	}
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);
@@ -155,6 +152,7 @@ static void late_resume(struct work_struct *work)
 			pos->resume(pos);
 		}
 	}
+	earlysuspend_active_fn(false);
 	if (debug_mask & DEBUG_SUSPEND)
 		pr_info("late_resume: done\n");
 abort:
