@@ -20,10 +20,9 @@
 #include <linux/interrupt.h>
 
 #define MAX_CHK_DEV			5
-#define DEFAULT_IDLE2_FREQ			(800 * 1000) /* Use 800MHz when entering idle2 */
+#define IDLE2_FREQ			(800 * 1000) /* Use 800MHz when entering idle2 */
 #define DISABLE_FURTHER_CPUFREQ 	0x10
 #define ENABLE_FURTHER_CPUFREQ 		0x20
-static unsigned long idle2_freq;
 
 /*
  * For saving & restoring VIC register before entering
@@ -199,33 +198,26 @@ inline static bool enter_idle2_check(void)
 inline static void idle2_set_cpufreq_lock(bool flag)
 {
 	int ret;
-#ifdef CONFIG_LIVE_OC
-extern unsigned long cpuL4freq(void);
-idle2_freq=cpuL4freq();
-#else
-idle2_freq=DEFAULT_IDLE2_FREQ
-#endif
-
 	if (flag) {
 		preempt_enable();
 		local_irq_enable();
-		ret = cpufreq_driver_target(cpufreq_cpu_get(0), idle2_freq,
+		ret = cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 				DISABLE_FURTHER_CPUFREQ);
 		if (ret < 0)
 			printk(KERN_WARNING "%s: Error %d locking CPUfreq\n", __func__, ret);
 		else
-			printk(KERN_INFO "%s: CPUfreq locked to %luMHz \n", __func__, idle2_freq);
+			printk(KERN_INFO "%s: CPUfreq locked to 800MHz\n", __func__);
 		local_irq_disable();
 		preempt_disable();
 	} else {
 		preempt_enable();
 		local_irq_enable();
-		ret = cpufreq_driver_target(cpufreq_cpu_get(0), idle2_freq,
+		ret = cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 				ENABLE_FURTHER_CPUFREQ);
 		if (ret < 0)
 			printk(KERN_WARNING "%s: Error %d unlocking CPUfreq\n", __func__, ret);
 		else
-			printk(KERN_INFO "%s: CPUfreq unlocked from %luMHz\n", __func__, idle2_freq);
+			printk(KERN_INFO "%s: CPUfreq unlocked from 800MHz\n", __func__);
 		local_irq_disable();
 		preempt_disable();
 	}
