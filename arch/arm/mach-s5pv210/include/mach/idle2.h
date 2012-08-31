@@ -252,7 +252,6 @@ inline static void idle2_post_wake_cfg_reset(void)
 
 	/* Restore the EINT Wakeup mask */
 	__raw_writel(save_eint_mask, S5P_EINT_WAKEUP_MASK);
->>>>>>> b6b2adf... idle2: v0.300
 }
 
 /*
