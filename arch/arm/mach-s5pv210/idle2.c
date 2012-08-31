@@ -39,13 +39,18 @@
 #include <linux/suspend.h>
 #include <linux/workqueue.h>
 
-#define MAX_CHK_DEV		5
-#define IDLE2_FREQ		(800 * 1000) /* 800MHz when screen off */
+/*
+ * WARNING: Do not change IDLE2_FREQ because it it also SLEEP_FREQ as we no
+ * longer set that explicity in cpufreq.c.
+ * Unfdefined behaviour may result, you have been warned!
+ */
+#define IDLE2_FREQ		(800 * 1000) /* 800MHz Screen off / Suspend */
 #define DISABLE_FURTHER_CPUFREQ	0x10
 #define ENABLE_FURTHER_CPUFREQ	0x20
 #define STATE_C1	1
 #define STATE_C2	2
 #define STATE_C3	3
+#define MAX_CHK_DEV		5
 
 /* IDLE2 control flags */
 static u16 idle2_flags;
