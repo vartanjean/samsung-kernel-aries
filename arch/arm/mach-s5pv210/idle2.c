@@ -44,13 +44,17 @@
  * longer set that explicity in cpufreq.c.
  * Unfdefined behaviour may result, you have been warned!
  */
-#define IDLE2_FREQ		(800 * 1000) /* 800MHz Screen off / Suspend */
+#define IDLE2_FREQ		(800 * 1000) /* 800MHz Screen off ( L4) / Suspend */
 #define DISABLE_FURTHER_CPUFREQ	0x10
 #define ENABLE_FURTHER_CPUFREQ	0x20
 #define STATE_C1	1
 #define STATE_C2	2
 #define STATE_C3	3
 #define MAX_CHK_DEV		5
+
+#ifdef CONFIG_LIVE_OC
+extern unsigned long cpuL4freq(void); /* to replace hardcoded 800 mhz with live_oc'ed freq */
+#endif
 
 /* IDLE2 control flags */
 static u16 idle2_flags;
@@ -570,17 +574,28 @@ restore_interrupts:
 
 static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
 {
+#ifdef CONFIG_LIVE_OC
+	cpufreq_driver_target(cpufreq_cpu_get(0), cpuL4freq(),
+			DISABLE_FURTHER_CPUFREQ);
+	pr_info("%s: CPUfreq locked to %dKHz\n", __func__, cpuL4freq());
+#else
 	cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 			DISABLE_FURTHER_CPUFREQ);
-	pr_info("%s: CPUfreq locked to %dKHz\n", __func__, IDLE2_FREQ);
+#endif
 //	idle2_flags |= CPUFREQ_LOCK_ACTIVE;
 }
 
 static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 {
+#ifdef CONFIG_LIVE_OC
+	cpufreq_driver_target(cpufreq_cpu_get(0), cpuL4freq(),
+			ENABLE_FURTHER_CPUFREQ);
+	pr_info("%s: CPUfreq unlocked from %dKHz\n", __func__, cpuL4freq());
+#else
 	cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 			ENABLE_FURTHER_CPUFREQ);
 	pr_info("%s: CPUfreq unlocked from %dKHz\n", __func__, IDLE2_FREQ);
+#endif
 //	idle2_flags &= ~CPUFREQ_LOCK_ACTIVE;
 }
 
