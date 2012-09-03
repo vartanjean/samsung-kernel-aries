@@ -54,7 +54,6 @@
 
 #ifdef CONFIG_LIVE_OC
 extern unsigned long cpuL4freq(void); /* to replace hardcoded 800 mhz with live_oc'ed freq */
-extern bool pllbus_changing;
 #endif
 
 /* IDLE2 control flags */
@@ -589,7 +588,6 @@ static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
 static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 {
 #ifdef CONFIG_LIVE_OC
-	pllbus_changing = true;
 	cpufreq_driver_target(cpufreq_cpu_get(0), cpuL4freq(),
 			ENABLE_FURTHER_CPUFREQ);
 	pr_info("%s: CPUfreq unlocked from %dKHz\n", __func__, cpuL4freq());
