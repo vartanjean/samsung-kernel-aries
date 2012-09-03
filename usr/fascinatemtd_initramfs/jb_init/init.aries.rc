@@ -306,15 +306,8 @@ service geomagneticd /system/vendor/bin/geomagneticd
 
 service gpsd /system/vendor/bin/gpsd
     class main
-    user gps
+    user system
     group system inet
-    disabled
-
-service gpsfix /system/bin/gpsfix
-    class main
-    user root
-    group root
-    oneshot
     disabled
 
 service tvout /system/bin/tvoutserver
@@ -324,5 +317,4 @@ service tvout /system/bin/tvoutserver
 
 on property:dev.bootcomplete=1
 	start gpsd
-	start gpsfix
         start geomagneticd
