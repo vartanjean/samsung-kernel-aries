@@ -224,17 +224,19 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 	int scancode;
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
 
-  for ( i = 0; i < 10; ++i )
-  {
-    ret = gpio_get_value(_3_GPIO_TOUCH_INT);
-  
-    if ( ret & 1 )
-    {
-      // the int pin is high on a falling edge triggered interrupt. Something ain't right here.
-      // probably EMI / phantom key press.  So throw it away.
-      goto err;
-    }
-  }
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	for (i = 0; i < 10; ++i)
+	{
+		ret = gpio_get_value(_3_GPIO_TOUCH_INT);
+
+		if (ret & 1) {
+			//dev_err(&devdata->client->dev, "%s: possible phantom key press... "
+			//		"ignore it!\n", __func__);
+			goto err;
+		}
+	}
+#endif
+
 	ret = i2c_touchkey_read_byte(devdata, &data);
 	if (ret || (data & ESD_STATE_MASK)) {
 		ret = recovery_routine(devdata);
