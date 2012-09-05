@@ -60,8 +60,12 @@ $BB mount -o rw,remount /system
 	$BB chmod 777 /data/local/devil
     fi
 
-if [ -e "/system/vendor/bin/samsung-gpsd" ]; then
+vibrant=0
+[ "`$BB grep -i vibrant /system/build.prop`" ] && vibrant=1
+if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
     echo 2 > /proc/sys/kernel/randomize_va_space
+else
+    echo 0 > /proc/sys/kernel/randomize_va_space    	
 fi
 
 #clean init.d from known files
@@ -69,9 +73,6 @@ if [ -e "/cache/clean_initd" ]; then
 echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
-
-#symlink data-sysparts to  system
-	./sbin/install_sys-parts.sh
 
 
 $BB touch /data/local/devil/bigmem
