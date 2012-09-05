@@ -72,13 +72,7 @@ make -j4 zImage
 echo "creating boot.img"
 cp arch/arm/boot/zImage ./release/zImage
 cp arch/arm/boot/zImage ./release/boot.img
-if [ "$target" = "all"  ] 
-then
-echo ""
-echo "updating kernel for rom"
-echo ""
-cp arch/arm/boot/zImage ~/android/kernel/i9000b/cmc/boot.img
-fi
+
 echo "launching packaging script"
 
 . ./packaging.inc
@@ -141,13 +135,7 @@ make -j4 zImage
 echo "creating boot.img"
 cp arch/arm/boot/zImage ./release/zImage
 cp arch/arm/boot/zImage ./release/boot.img
-if [ "$target" = "all"  ] 
-then
-echo ""
-echo "updating kernel for rom"
-echo ""
-cp arch/arm/boot/zImage ~/android/kernel/i9000b/vc/boot.img
-fi
+
 echo "launching packaging script"
 
 . ./packaging.inc
