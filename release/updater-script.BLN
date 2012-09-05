@@ -1,9 +1,8 @@
 show_progress(0.500000, 0);
-run_program("/sbin/busybox", "mount", "/system");
+run_program("/sbin/busybox", "mount", "/data");
 package_extract_dir("system/xbin", "/system/xbin");
 set_perm(0, 0, 0755, "/system/xbin/busybox");
-mount("yaffs2", "MTD", "system/", "/system");
-run_program("/sbin/mount", "/dev/block/mmcblk0p2", "/data");
+run_program("/sbin/mount", "/dev/block/mmcblk0p2", "/system");
 #show_progress(0.200000, 0);
 package_extract_file("bml_over_mtd", "/tmp/bml_over_mtd");
 set_perm(0, 0, 0777, "/tmp/bml_over_mtd");
