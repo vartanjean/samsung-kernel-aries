@@ -71,11 +71,9 @@ $BB mknod /dev/block/mtdblock3 b 31 3
 $BB echo "mounting devices..."
 $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
-#$BB mount -t yaffs2 /dev/block/mtdblock2 /system
-$BB mount -t ext4 /dev/block/mmcblk0p2 /system
-$BB mount -t yaffs2 /dev/block/mtdblock2 /data
+$BB mount -t yaffs2 /dev/block/mtdblock2 /system
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
-
+$BB mount -t ext4 /dev/block/mmcblk0p2 /data
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"
@@ -156,10 +154,10 @@ if $BB test -e /cache/.startrecovery ||
     $BB echo "found recovery command, preparing boot..."
 	$BB rm -fr /cache/.startrecovery
 
-#if $BB [ -e /cache/twrp ] ; then
-#    $BB echo "moving twrp to /"
-#    $BB mv /twrp/* /
-#else
+if $BB [ -e /cache/twrp ] ; then
+    $BB echo "moving twrp to /"
+    $BB mv /twrp/* /
+else
     $BB echo "moving ics_rec_init to /"
     $BB mv /ics_rec_init/* /
     $BB chmod 777 /sbin/fix_permissions
@@ -169,7 +167,7 @@ if $BB test -e /cache/.startrecovery ||
     $BB chmod 777 /sbin/fix_permissions
     $BB chmod 777 /sbin/sdparted
 
-#fi
+fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 elif ! $BB test -e /system/build.prop ; then
 	# emergency boot
@@ -178,24 +176,23 @@ elif ! $BB test -e /system/build.prop ; then
     erase_image cache
     $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
     $BB mkdir /cache/recovery
+	$BB mount -t vfat /dev/block/mmcblk0p1 /sdcard	
+
+    $BB echo "checking cm9 update config /sdcard/cyanogenmod.cfg..."
+	UPDATE=$($BB cat /sdcard/cyanogenmod.cfg)
+	if $BB test -e $UPDATE ; then
+        $BB echo "cm9 update found, initializing extendedcommand..."
+		$BB echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
+  	else
+        $BB echo "cm9 update not found, doing nothing"
+    fi
 
     $BB echo "moving ics_rec_init to /..."
     $BB mv /ics_rec_init/* /
 	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
-
-    jb=1
-    [ "`$BB grep -i IMM76 /system/build.prop`" ] && jb=0
-    [ "`$BB grep -i MIUIUSV4 /system/build.prop`" ] && jb=0
-    [ "`$BB grep -i IML74K /system/build.prop`" ] && jb=0
-
-    if $BB [ "$jb" -eq 1 ]; then
-        $BB echo "moving jb_init to /"
-    	$BB mv /jb_init/* /
-    else
         $BB echo "moving ics_init to /"
         $BB mv /ics_init/* /
-    fi
 
 ################ apply bigmem at first boot ##################################################################
 
@@ -210,6 +207,9 @@ bigmem=0
 			if $BB [ "$bigmem" -eq 1 ] || $BB [ "$bigmem" -eq 2 ] ; then
 				$BB echo $bigmem > /sys/kernel/bigmem/enable
     				$BB umount /data
+    				$BB umount /cache
+    				$BB umount /system
+    				$BB umount /sdcard
 				/system/bin/toolbox reboot
 			fi
 		fi
@@ -218,9 +218,11 @@ bigmem=0
 		$BB mkdir -p /data/local/devil
 		$BB echo 1 > /data/local/devil/bigmem
     		$BB umount /data
+    		$BB umount /cache
+    		$BB umount /system
+    		$BB umount /sdcard
 		/system/bin/toolbox reboot
 	fi
-
 ##############################################################################################################	
 
 	if $BB grep -q bootmode=3 /proc/cmdline || 
@@ -228,11 +230,7 @@ bigmem=0
 		$BB grep -q bootmode=13 /proc/cmdline || 
 		$BB grep -q bootmode=15 /proc/cmdline; then
     		$BB echo "copying XL_mem libs"
-    		if $BB [ "$jb" -eq 1 ]; then
-    			$BB mv /files/xl_jb/* /system/lib/
-		else
-    			$BB mv /files/xl/* /system/lib/
-		fi
+    		$BB mv /files/xl/* /system/lib/
     		$BB echo 1 > /sys/kernel/bigmem/enable
 
 	elif $BB grep -q bootmode=7 /proc/cmdline || 
@@ -240,19 +238,11 @@ bigmem=0
 		$BB grep -q bootmode=17 /proc/cmdline || 
 		$BB grep -q bootmode=19 /proc/cmdline; then
     		$BB echo "copying XL_mem libs"
-    		if $BB [ "$jb" -eq 1 ]; then
-    			$BB mv /files/xl_jb/* /system/lib/
-		else
-    			$BB mv /files/xl/* /system/lib/
-		fi
+   		$BB mv /files/xl/* /system/lib/
     		$BB echo 2 > /sys/kernel/bigmem/enable
 	else
     		$BB echo "copying cm9 default libs"
-    		if $BB [ "$jb" -eq 1 ]; then
-    			$BB mv /files/cm_jb/* /system/lib/
-		else
-    			$BB mv /files/cm/* /system/lib/
-		fi
+    		$BB mv /files/cm/* /system/lib/
 	fi
 fi
 
@@ -283,16 +273,15 @@ $BB umount /cache
 $BB umount /data
 $BB umount /sdcard
 $BB rm -r /files
-$BB rm -r /jb_files
 $BB rm -r /sdcard
 $BB rm /erase_image
 
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
 $BB rm -rf /ics_init
-$BB rm -rf /jb_init
 $BB rm -rf /ics_rec_init
 $BB rm -rf /twrp
+$BB rm -rf /jb_init
 
 $BB date >>boot.txt
 $BB rm -fr /dev/*

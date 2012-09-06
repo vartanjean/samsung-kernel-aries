@@ -339,7 +339,7 @@ on boot
     setprop system_init.startsurfaceflinger 0
 
 # Run sysinit
-#    exec /system/bin/sysinit
+    exec /system/bin/sysinit
 
     class_start core
     class_start main
@@ -370,6 +370,13 @@ on property:vold.decrypt=trigger_shutdown_framework
     class_reset late_start
     class_reset main
 
+    start semaboot
+
+# Semaphore boot patch
+service semaboot /sbin/boot-patch.sh
+	user root
+	oneshot
+	disabled
 
 ## Daemon processes to be run by init.
 ##
@@ -522,7 +529,6 @@ service mdnsd /system/bin/mdnsd
 on property:service.adb.tcp.port=5555
     stop adbd
     start adbd
-
 on property:service.adb.tcp.port=-1
     stop adbd
     start adbd
