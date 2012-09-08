@@ -30,14 +30,17 @@
  */
 
 #define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
-#define DEF_FREQUENCY_UP_THRESHOLD		(85)
-#define DEF_SAMPLING_DOWN_FACTOR		(1)
+#define DEF_FREQUENCY_UP_THRESHOLD		(80)
+#define DEF_SAMPLING_DOWN_FACTOR		(10)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(85)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
+#define DEFAULT_FREQ_BOOST_TIME			(1000000)
+
+u64 freq_boosted_time;
 
 #define UP_THRESHOLD_AT_MIN_FREQ    (60)
 #define FREQ_FOR_RESPONSIVENESS      (400000)
@@ -142,7 +145,8 @@ static struct dbs_tuners {
 	unsigned int up_threshold_medium_freq;
 	unsigned int medium_freq;
 	int early_suspend;
-
+	unsigned int boosted;
+	unsigned int freq_boost_time;
 } dbs_tuners_ins = {
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
 	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
@@ -155,6 +159,7 @@ static struct dbs_tuners {
 	.up_threshold_medium_freq= (2 * UP_THRESHOLD_AT_MIN_FREQ + 3 * DEF_FREQUENCY_UP_THRESHOLD)/5,
 	.medium_freq = DEF_MEDIUM_FREQ,
 	.early_suspend = -1,
+	.freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
 };
 
 
@@ -349,6 +354,23 @@ static ssize_t store_up_threshold_medium_freq(struct kobject *a, struct attribut
 }
 
 
+show_one(boostpulse, boosted);
+show_one(boosttime, freq_boost_time);
+
+static ssize_t store_boosttime(struct kobject *kobj, struct attribute *attr,
+				const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+
+	dbs_tuners_ins.freq_boost_time = input;
+	return count;
+}
+
 static ssize_t store_responsiveness_freq(struct kobject *a, struct attribute *b,
 				  const char *buf, size_t count)
 {
@@ -380,6 +402,21 @@ static ssize_t store_medium_freq(struct kobject *a, struct attribute *b,
 		return -EINVAL;
 	}
 	dbs_tuners_ins.medium_freq = input;
+	return count;
+}
+
+static ssize_t store_boostpulse(struct kobject *kobj, struct attribute *attr,
+				const char *buf, size_t count)
+{
+	int ret;
+	unsigned long val;
+
+	ret = kstrtoul(buf, 0, &val);
+	if (ret < 0)
+		return ret;
+
+	dbs_tuners_ins.boosted = 1;
+	freq_boosted_time = ktime_to_us(ktime_get());
 	return count;
 }
 
@@ -495,7 +532,10 @@ static ssize_t store_powersave_bias(struct kobject *a, struct attribute *b,
 	return count;
 }
 
-define_one_global_rw(sampling_rate);
+static struct global_attr sampling_rate = __ATTR(sampling_rate, 0666,
+		show_sampling_rate, store_sampling_rate);
+static struct global_attr boostpulse = __ATTR(boostpulse, 0666,
+		show_boostpulse, store_boostpulse);
 define_one_global_rw(io_is_busy);
 define_one_global_rw(up_threshold);
 define_one_global_rw(sampling_down_factor);
@@ -506,6 +546,7 @@ define_one_global_rw(up_threshold_min_freq);
 define_one_global_rw(responsiveness_freq);
 define_one_global_rw(up_threshold_medium_freq);
 define_one_global_rw(medium_freq);
+define_one_global_rw(boosttime);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -520,7 +561,8 @@ static struct attribute *dbs_attributes[] = {
 	&responsiveness_freq.attr,
 	&up_threshold_medium_freq.attr,
 	&medium_freq.attr,
-
+	&boostpulse.attr,
+	&boosttime.attr,
 	NULL
 };
 
@@ -569,7 +611,7 @@ else if(powersave_governors()){
 	if(status != status_old){
                 dbs_tuners_ins.up_threshold = 95;
                 dbs_tuners_ins.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
-                dbs_tuners_ins.down_differential =                      MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
+                dbs_tuners_ins.down_differential =  MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
 	}
 }
 else{
@@ -577,13 +619,21 @@ else{
 	if(status != status_old){
                 dbs_tuners_ins.up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
                 dbs_tuners_ins.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
-                dbs_tuners_ins.down_differential =                      MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
+                dbs_tuners_ins.down_differential = MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
 	}
 }
 status_old = status;
 #endif
 
 	int up_threshold = dbs_tuners_ins.up_threshold;
+
+	/* Only core0 controls the boost */
+	if (dbs_tuners_ins.boosted && policy->cpu == 0) {
+		if (ktime_to_us(ktime_get()) - freq_boosted_time >=
+					dbs_tuners_ins.freq_boost_time) {
+			dbs_tuners_ins.boosted = 0;
+		}
+	}
 
 	/*
 	 * Every sampling_rate, we check, if current idle time is less
@@ -705,6 +755,12 @@ status_old = status;
 		return;
 	}
 
+	/* check for frequency boost */
+	if (dbs_tuners_ins.boosted && policy->cur < policy->max) {
+		dbs_freq_increase(policy, policy->max);
+		return;
+	}
+
 	/* Check for frequency decrease */
 #ifdef CONFIG_DEVIL_TWEAKS
 	/*
@@ -739,6 +795,10 @@ status_old = status;
 				(dbs_tuners_ins.up_threshold -
 				 dbs_tuners_ins.down_differential);
 
+		if (dbs_tuners_ins.boosted &&
+				freq_next < policy->max) {
+			freq_next = policy->max;
+		}
 		/* No longer fully busy, reset rate_mult */
 		this_dbs_info->rate_mult = 1;
 
