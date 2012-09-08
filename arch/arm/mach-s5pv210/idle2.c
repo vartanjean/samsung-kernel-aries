@@ -515,7 +515,7 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
  */
 
 static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
-{
+{/*
 #ifdef CONFIG_LIVE_OC
 	cpufreq_driver_target(cpufreq_cpu_get(0), cpuL4freq(),
 			DISABLE_FURTHER_CPUFREQ);
@@ -524,11 +524,11 @@ static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
 	cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 			DISABLE_FURTHER_CPUFREQ);
 	pr_info("%s: CPUfreq locked to %dKHz\n", __func__, IDLE2_FREQ);
-#endif
+#endif*/
 }
 
 static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
-{
+{/*
 #ifdef CONFIG_LIVE_OC
 	cpufreq_driver_target(cpufreq_cpu_get(0), cpuL4freq(),
 			ENABLE_FURTHER_CPUFREQ);
@@ -537,7 +537,7 @@ static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 	cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 			ENABLE_FURTHER_CPUFREQ);
 	pr_info("%s: CPUfreq unlocked from %dKHz\n", __func__, IDLE2_FREQ);
-#endif
+#endif*/
 }
 
 static void idle2_early_suspend(struct early_suspend *handler)
