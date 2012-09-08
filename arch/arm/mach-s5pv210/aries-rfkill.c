@@ -165,7 +165,6 @@ irqreturn_t bt_host_wake_irq_handler(int irq, void *dev_id)
 
   if (gpio_get_value(GPIO_BT_HOST_WAKE)) {
     wake_lock(&rfkill_wake_lock);
-  else
 #ifdef CONFIG_S5P_IDLE2
     idle2_bluetooth_active();
 #endif
