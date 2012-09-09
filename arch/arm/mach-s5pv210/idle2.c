@@ -77,7 +77,7 @@ struct delayed_work idle2_cancel_topon_work;
 struct delayed_work idle2_lock_cpufreq_work;
 struct work_struct idle2_unlock_cpufreq_work;
 
-static bool idle2_disabled __read_mostly;
+static bool idle2_disabled __read_mostly=true;
 
 /*
  * For saving & restoring state
