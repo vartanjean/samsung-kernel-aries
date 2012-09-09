@@ -311,5 +311,7 @@ service tvout /system/bin/tvoutserver
     class main
     user root
     group root
+    disabled
 
 on property:dev.bootcomplete=1
+    start tvout
