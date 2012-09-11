@@ -196,7 +196,7 @@ static u32 clkdiv_val[8][11] = {
 #ifdef CONFIG_LIVE_OC
 extern void cpufreq_stats_reset(void);
 
-static bool pllbus_changing = false;
+bool pllbus_changing = false;
 extern int get_oc_value(void); 
 extern unsigned long get_oc_low_freq(void);
 extern unsigned long get_oc_high_freq(void);
