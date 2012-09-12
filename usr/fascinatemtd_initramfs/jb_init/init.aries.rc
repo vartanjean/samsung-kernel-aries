@@ -1,6 +1,5 @@
 import init.aries.usb.rc
 
-
 on init
     loglevel 9
     export EXTERNAL_STORAGE /storage/sdcard0
@@ -155,13 +154,6 @@ on post-fs-data
     #boot-patch
     exec /sbin/boot-patch.sh
 
-# create data/gps for GPS demon
-    mkdir /data/gps 771 gps system
-    chown gps system /data/gps
-    chmod 771 /data/gps
-    chown gps root /sys/class/sec/gps/GPS_PWR_EN/value
-    chmod 660 /sys/class/sec/gps/GPS_PWR_EN/value
-
     # wi-fi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/dhcp 0770 dhcp dhcp
@@ -264,10 +256,6 @@ service iprenew_bnep0 /system/bin/dhcpcd -n
     disabled
     oneshot
 
-on property:init.svc.bootanim=running
-    start gpsd
-    start geomagneticd
-
 service hciattach /system/bin/brcm_patchram_plus --enable_hci --enable_lpm \
     --baudrate 3000000 --patchram /vendor/firmware/bcm4329.hcd /dev/s3c2410_serial0
     class main
@@ -299,14 +287,7 @@ service geomagneticd /system/vendor/bin/geomagneticd
     class main
     user compass
     group system input
-    disabled
-
-service gpsd /system/vendor/bin/gpsd
-    class main
-    user system
-    group system inet
-    disabled
-
+    
 service tvout /system/bin/tvoutserver
     class main
     user root

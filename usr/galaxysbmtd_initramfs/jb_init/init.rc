@@ -371,6 +371,15 @@ on property:vold.decrypt=trigger_shutdown_framework
     class_reset main
 
 
+
+# boot-patch boot patch
+
+#service bootpatch /sbin/boot-patch.sh
+#	user root
+#	group root
+#	oneshot
+
+
 ## Daemon processes to be run by init.
 ##
 service ueventd /sbin/ueventd
@@ -518,11 +527,12 @@ service mdnsd /system/bin/mdnsd
     disabled
     oneshot
 
+
 # adb over network
 on property:service.adb.tcp.port=5555
     stop adbd
     start adbd
-
 on property:service.adb.tcp.port=-1
     stop adbd
     start adbd
+

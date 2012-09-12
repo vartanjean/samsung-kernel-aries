@@ -1,5 +1,5 @@
 import init.aries.usb.rc
-#import init.aries.gps.rc
+import init.aries.gps.rc
 
 on init
     loglevel 9
@@ -159,14 +159,6 @@ service pvrsrvinit /system/vendor/bin/pvrsrvinit
     group root
     oneshot
 
-# ST-Ericsson GNS7560
-service gpsd /system/vendor/bin/gpsd
-    class late_start
-    user gps
-    group system inet
-    oneshot
-    disabled
-
 # FIXME
 # service p2p_supplicant /system/bin/wpa_supplicant \
 #   -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -N \
@@ -241,8 +233,6 @@ service bdaddr /system/bin/bdaddr_read
 on property:init.svc.bootanim=running
     start bdaddr
     start aries-ril-daemon
-    start gpsd
-    start geomagneticd
 
 service hciattach /system/bin/brcm_patchram_plus --enable_hci --enable_lpm \
     --baudrate 3000000 --patchram /vendor/firmware/bcm4329.hcd /dev/s3c2410_serial0
@@ -260,19 +250,18 @@ service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
     keycodes 114 115 116
 
 service orientationd /system/vendor/bin/orientationd
-    class late_start
+    class main
     user compass
     group system input
     disabled
 
 service geomagneticd /system/vendor/bin/geomagneticd
-    class late_start
+    class main
     user compass
     group system input
-    disabled
 
 service tvout /system/bin/tvoutserver
-    class late_start
+    class main
     user system
     group graphics
     disabled
