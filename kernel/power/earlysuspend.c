@@ -1,8 +1,6 @@
 /* kernel/power/earlysuspend.c
  *
  * Copyright (C) 2005-2008 Google, Inc.
- * Copyright (c) 2010 Samsung Electronics
- * Copyright (c) 2012 Will Tisdale - <willtisdale@gmail.com>
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -24,11 +22,6 @@
 #include <linux/workqueue.h>
 
 #include "power.h"
-
-#ifdef CONFIG_S5P_IDLE2
-#include <mach/idle2.h>
-#endif /* CONFIG_S5P_IDLE2 */
-
 
 enum {
 	DEBUG_USER_STATE = 1U << 0,
@@ -86,12 +79,8 @@ static void early_suspend(struct work_struct *work)
 
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPEND_REQUESTED) {
-#ifdef CONFIG_S5P_IDLE2
-		earlysuspend_active_fn(true);
-#endif
+	if (state == SUSPEND_REQUESTED)
 		state |= SUSPENDED;
-	}
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);
@@ -133,12 +122,8 @@ static void late_resume(struct work_struct *work)
 
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPENDED) {
-#ifdef CONFIG_S5P_IDLE2
-		earlysuspend_active_fn(false);
-#endif
+	if (state == SUSPENDED)
 		state &= ~SUSPENDED;
-	}
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);

@@ -19,6 +19,7 @@
 #include <linux/cpuidle.h>
 #include <linux/suspend.h>
 #include <linux/workqueue.h>
+#include <linux/earlysuspend.h>
 
 #include <mach/regs-irq.h>
 #include <mach/regs-clock.h>
@@ -60,7 +61,6 @@ static u16 idle2_flags;
 #define UART_TIMEOUT		(1 << 10)
 #define UART_REQUEST		(1 << 11)
 #define TOP_BLOCK_ON		(1 << 12)
-#define IDLE2_EXT_KILL		(1 << 13)
 
 
 #ifdef CONFIG_S5P_IDLE2_STATS
@@ -75,8 +75,7 @@ struct delayed_work idle2_external_inactive_work;
 struct work_struct idle2_enable_topon_work;
 struct delayed_work idle2_cancel_topon_work;
 struct delayed_work idle2_lock_cpufreq_work;
-struct delayed_work idle2_unlock_cpufreq_work;
-struct delayed_work idle2_timeout_kill_work;
+struct work_struct idle2_unlock_cpufreq_work;
 
 static bool idle2_disabled __read_mostly=true;
 
@@ -515,29 +514,6 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
  * Workqueue related functions which control IDLE2 invocation.
  */
 
-void idle2_kill(bool kill, u16 timeout)
-{
-	if (kill && timeout) {
-		cancel_delayed_work_sync(&idle2_timeout_kill_work);
-		idle2_flags |= IDLE2_EXT_KILL;
-		pr_info("idle2: |= IDLE2_EXT_KILL - Timeout: %u\n", timeout);
-		schedule_delayed_work(&idle2_timeout_kill_work, timeout);
-	} else if (kill) {
-		cancel_delayed_work_sync(&idle2_timeout_kill_work);
-		if (!(idle2_flags & IDLE2_EXT_KILL)) {
-			idle2_flags |= IDLE2_EXT_KILL;
-			pr_info("idle2: |= IDLE2_EXT_KILL\n");
-		}
-	} else
-		schedule_delayed_work(&idle2_timeout_kill_work, timeout);
-}
-
-static void idle2_timeout_kill_work_fn(struct work_struct *work)
-{
-	idle2_flags &= ~IDLE2_EXT_KILL;
-	pr_info("idle2: &= ~IDLE2_EXT_KILL\n");
-}
-
 static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
 {
 #ifdef CONFIG_LIVE_OC
@@ -564,18 +540,24 @@ static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 #endif
 }
 
-void earlysuspend_active_fn(bool flag)
+static void idle2_early_suspend(struct early_suspend *handler)
 {
-	if (flag) {
-		idle2_flags |= EARLYSUSPEND_ACTIVE;
-		schedule_delayed_work(&idle2_lock_cpufreq_work, 0);
-		pr_info("idle2: |= EARLYSUSPEND_ACTIVE\n");
-	} else {
-		idle2_flags &= ~EARLYSUSPEND_ACTIVE;
-		schedule_delayed_work(&idle2_unlock_cpufreq_work, 0);
-		pr_info("idle2: &= ~EARLYSUSPEND_ACTIVE\n");
-	}
+	idle2_flags |= EARLYSUSPEND_ACTIVE;
+	schedule_delayed_work(&idle2_lock_cpufreq_work, 0);
+	pr_info("%s: |= EARLYSUSPEND_ACTIVE\n", __func__);
 }
+
+static void idle2_late_resume(struct early_suspend *handler)
+{
+	idle2_flags &= ~EARLYSUSPEND_ACTIVE;
+	schedule_work(&idle2_unlock_cpufreq_work);
+	pr_info("%s: &= ~EARLYSUSPEND_ACTIVE\n", __func__);
+}
+
+static struct early_suspend idle2_earlysuspend_handler = {
+	.suspend = idle2_early_suspend,
+	.resume = idle2_late_resume,
+};
 
 static void idle2_external_active_work_fn(struct work_struct *work)
 {
@@ -706,27 +688,48 @@ void idle2_uart_timeout(unsigned long delay)
 	}
 }
 
+static int idle2_pm_notify(struct notifier_block *nb,
+	unsigned long event, void *dummy)
+{
+	if (event == PM_SUSPEND_PREPARE) {
+		disable_hlt();
+		pr_info("%s: disable_hlt()\n", __func__);
+	}
+	else if (event == PM_POST_SUSPEND) {
+		enable_hlt();
+		pr_info("%s: enable_hlt()\n", __func__);
+	}
+	return NOTIFY_OK;
+}
+
+static struct notifier_block idle2_pm_notifier = {
+	.notifier_call = idle2_pm_notify,
+};
+
 /*
  * Functions which are called from cpuidle.c.
  */
 
 inline int s5p_idle_prepare(struct cpuidle_device *device)
 {
-	if (unlikely((idle2_flags & IDLE2_DISABLED)
-		|| (idle2_flags & IDLE2_EXT_KILL))) {
+	if (unlikely(idle2_flags & IDLE2_DISABLED)) {
 		/*
 		 * Ignore DEEP-IDLE states
 		 */
 		device->states[1].flags |= CPUIDLE_FLAG_IGNORE;
 		device->states[2].flags |= CPUIDLE_FLAG_IGNORE;
-	} else if (unlikely((idle2_flags & NEEDS_TOPON)
+		return 0;
+	}
+
+	if ((idle2_flags & NEEDS_TOPON)
 		|| !(idle2_flags & EARLYSUSPEND_ACTIVE)
-		|| (idle2_flags & EXTERNAL_ACTIVE))) {
+		|| (idle2_flags & EXTERNAL_ACTIVE)) {
 		/*
 		 * Ignore DEEP-IDLE TOP block OFF state
 		 */
 		device->states[1].flags &= ~CPUIDLE_FLAG_IGNORE;
 		device->states[2].flags |= CPUIDLE_FLAG_IGNORE;
+		return 0;
 	} else {
 		/*
 		 * Enable both DEEP-IDLE states and allow
@@ -743,10 +746,9 @@ void s5p_init_idle2_work(void)
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_cancel_topon_work, idle2_cancel_topon_work_fn);
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_external_inactive_work, idle2_external_inactive_work_fn);
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_lock_cpufreq_work, idle2_lock_cpufreq_work_fn);
-	INIT_DELAYED_WORK_DEFERRABLE(&idle2_unlock_cpufreq_work, idle2_unlock_cpufreq_work_fn);
-	INIT_DELAYED_WORK_DEFERRABLE(&idle2_timeout_kill_work, idle2_timeout_kill_work_fn);
 	INIT_WORK(&idle2_enable_topon_work, idle2_enable_topon_work_fn);
 	INIT_WORK(&idle2_external_active_work, idle2_external_active_work_fn);
+	INIT_WORK(&idle2_unlock_cpufreq_work, idle2_unlock_cpufreq_work_fn);
 	idle2_flags |= WORK_INITIALISED;
 }
 
@@ -757,6 +759,9 @@ int s5p_idle2_post_init(void)
 	struct resource *res;
 
 	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.%d by <willtisdale@gmail.com>\n", IDLE2_VERSION);
+
+	register_pm_notifier(&idle2_pm_notifier);
+	register_early_suspend(&idle2_earlysuspend_handler);
 
 	/*
 	 * Allocate memory region to access HSMMC & OneNAND registers
