@@ -1,4 +1,5 @@
 import init.aries.usb.rc
+import init.aries.gps.rc
 
 on init
     loglevel 9
