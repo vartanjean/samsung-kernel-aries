@@ -745,21 +745,7 @@ status_old = status;
 	}
 
 	/* Check for frequency decrease */
-#ifdef CONFIG_DEVIL_TWEAKS
-	/*
-	* if touchscreen still pressed, don't reduce frequency
-	*/
-	if(smooth_ui() && touch_state_val && 
-	max_load_freq < dbs_tuners_ins.up_threshold * policy->cur){
-		unsigned int freq_next;
-		if(cpuL3freq() > policy->max)
-		freq_next = policy->max;
-		else
-		freq_next = cpuL3freq();
-		__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_L);
-		return;
-	}
-#endif
+
 	/* if we cannot reduce the frequency anymore, break out early */
 	if (policy->cur == policy->min)
 		return;
@@ -778,8 +764,23 @@ status_old = status;
 				(dbs_tuners_ins.up_threshold -
 				 dbs_tuners_ins.down_differential);
 
+	#ifdef CONFIG_DEVIL_TWEAKS
+	/*
+	* if touchscreen still pressed, don't reduce frequency
+	*/
+		if(smooth_ui() && touch_state_val) {
+			if(cpuL3freq() > policy->max)
+			freq_next = policy->max;
+			else
+			freq_next = cpuL3freq();
+		}
+
+		else if (dbs_tuners_ins.boosted &&
+				freq_next < policy->max) {
+	#else
 		if (dbs_tuners_ins.boosted &&
 				freq_next < policy->max) {
+	#endif
 			freq_next = policy->max;
 		}
 		/* No longer fully busy, reset rate_mult */
@@ -787,18 +788,6 @@ status_old = status;
 
 		if (freq_next < policy->min)
 			freq_next = policy->min;
-
-if(dbs_tuners_ins.up_threshold_min_freq != 100){
-	down_thres = dbs_tuners_ins.up_threshold_min_freq - dbs_tuners_ins.down_differential;
-    	if (freq_next < dbs_tuners_ins.responsiveness_freq && (max_load_freq / freq_next) > down_thres && dbs_tuners_ins.early_suspend == -1)
-      freq_next = dbs_tuners_ins.responsiveness_freq;
-}
-
-if(dbs_tuners_ins.up_threshold_medium_freq != 100){
-	down_thres = dbs_tuners_ins.up_threshold_medium_freq - dbs_tuners_ins.down_differential;
-    	if (freq_next < dbs_tuners_ins.medium_freq && (max_load_freq / freq_next) > down_thres && dbs_tuners_ins.early_suspend == -1)
-      freq_next = dbs_tuners_ins.medium_freq;
-}
 
 		if (!dbs_tuners_ins.powersave_bias) {
 			__cpufreq_driver_target(policy, freq_next,
