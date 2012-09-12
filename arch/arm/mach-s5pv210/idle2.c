@@ -28,7 +28,6 @@
 #include <plat/pm.h>
 #include <plat/devs.h>
 
-#include <asm/cacheflush.h>
 
 /*
  * WARNING: Do not change IDLE2_FREQ because it it also SLEEP_FREQ as we no
@@ -54,10 +53,14 @@ static u16 idle2_flags;
 #define INACTIVE_PENDING	(1 << 3)
 #define EARLYSUSPEND_ACTIVE	(1 << 4)
 #define NEEDS_TOPON		(1 << 5)
-#define BLUETOOTH_REQUEST	(1 << 6)
-#define UART_REQUEST		(1 << 7)
-#define TOP_BLOCK_ON		(1 << 8)
-#define IDLE2_EXT_KILL		(1 << 9)
+#define TOPON_CANCEL_PENDING	(1 << 6)
+#define TOPON_CONC_REQ		(1 << 7)
+#define BLUETOOTH_TIMEOUT	(1 << 8)
+#define BLUETOOTH_REQUEST	(1 << 9)
+#define UART_TIMEOUT		(1 << 10)
+#define UART_REQUEST		(1 << 11)
+#define TOP_BLOCK_ON		(1 << 12)
+#define IDLE2_EXT_KILL		(1 << 13)
 
 
 #ifdef CONFIG_S5P_IDLE2_STATS
@@ -69,7 +72,8 @@ u64 time_in_state[3];
 /* Work function declarations */
 struct work_struct idle2_external_active_work;
 struct delayed_work idle2_external_inactive_work;
-struct delayed_work idle2_bluetooth_irq_timeout_work;
+struct work_struct idle2_enable_topon_work;
+struct delayed_work idle2_cancel_topon_work;
 struct delayed_work idle2_lock_cpufreq_work;
 struct delayed_work idle2_unlock_cpufreq_work;
 struct delayed_work idle2_timeout_kill_work;
@@ -176,7 +180,7 @@ inline static bool idle2_pre_entry_check(void)
 		return true;
 	}
 	tmp = __raw_readl(S5P_CLKGATE_IP1);
-	if (unlikely(tmp & S5P_CLKGATE_IP1_USBHOST)) {
+	if (tmp & S5P_CLKGATE_IP1_USBHOST) {
 		return true;
 	}
 
@@ -220,7 +224,7 @@ inline static int s5p_enter_idle2(void)
 		return -EBUSY;
 
 	/* GPIO Power Down Control */
-	if (likely(!(idle2_flags & TOP_BLOCK_ON))) {
+	if (!(idle2_flags & TOP_BLOCK_ON)) {
 		void __iomem *gpio_base = S5PV210_GPA0_BASE;
 		do {
 			/* Keep the previous state in idle2 mode */
@@ -243,7 +247,7 @@ inline static int s5p_enter_idle2(void)
 	 * This unsets the TL, TM & L2 bits
 	 */
 	tmp &= ~(0x3f << 26);
-	if (likely(!(idle2_flags & TOP_BLOCK_ON)))
+	if (!(idle2_flags & TOP_BLOCK_ON))
 		/*
 		 * TOP block OFF configuration
 		 * TOP logic retention, TOP memory retention
@@ -281,6 +285,12 @@ inline static int s5p_enter_idle2(void)
 	 *
 	 * EINT 1,2 & 30 are permanently pending
 	 * causing continual wakeups.
+	 *
+	 * We also don't reset the wakeup mask
+	 * after we have set it here, as these
+	 * spurious wakeups will also affect
+	 * C1 residencies so it's best to keep
+	 * these masked.
 	 */
 	tmp &= ~0xffffffff;
 	tmp |= ((1 << 1) | (1 << 2) | (1 << 30));
@@ -319,13 +329,11 @@ inline static int s5p_enter_idle2(void)
 
 	/*
 	 * We have resumed from IDLE and returned.
-	 * Use platform CPU init code to continue and
-	 * flush caches to be sure.
+	 * Use platform CPU init code to continue.
 	 */
 	cpu_init();
-	flush_cache_all();
 
-	if (likely(!(idle2_flags & TOP_BLOCK_ON))) {
+	if (!(idle2_flags & TOP_BLOCK_ON)) {
 		/*
 		 * Release retention of GPIO/MMC/UART IO pads
 		 */
@@ -347,12 +355,6 @@ inline static int s5p_enter_idle2(void)
 	tmp = __raw_readl(S5P_PWR_CFG);
 	tmp &= S5P_CFG_WFI_CLEAN;
 	__raw_writel(tmp, S5P_PWR_CFG);
-
-	/*
-	 * Reset EINT wakeup mask for NORMAL mode
-	 */
-	tmp &= ~0xffffffff;
-	__raw_writel(tmp, S5P_EINT_WAKEUP_MASK);
 
 	return 0;
 }
@@ -515,18 +517,13 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
 
 void idle2_kill(bool kill, u16 timeout)
 {
-	if (!(idle2_flags & WORK_INITIALISED))
-		return;
 	if (kill && timeout) {
-		if (delayed_work_pending(&idle2_timeout_kill_work))
-			cancel_delayed_work(&idle2_timeout_kill_work);
-
+		cancel_delayed_work_sync(&idle2_timeout_kill_work);
 		idle2_flags |= IDLE2_EXT_KILL;
 		pr_info("idle2: |= IDLE2_EXT_KILL - Timeout: %u\n", timeout);
 		schedule_delayed_work(&idle2_timeout_kill_work, timeout);
 	} else if (kill) {
-		if (delayed_work_pending(&idle2_timeout_kill_work))
-			cancel_delayed_work(&idle2_timeout_kill_work);
+		cancel_delayed_work_sync(&idle2_timeout_kill_work);
 		if (!(idle2_flags & IDLE2_EXT_KILL)) {
 			idle2_flags |= IDLE2_EXT_KILL;
 			pr_info("idle2: |= IDLE2_EXT_KILL\n");
@@ -539,12 +536,6 @@ static void idle2_timeout_kill_work_fn(struct work_struct *work)
 {
 	idle2_flags &= ~IDLE2_EXT_KILL;
 	pr_info("idle2: &= ~IDLE2_EXT_KILL\n");
-}
-
-static void idle2_bluetooth_irq_timeout_work_fn(struct work_struct *work)
-{
-	idle2_flags &= ~BLUETOOTH_REQUEST;
-	pr_info("idle2: &= ~BLUETOOTH_REQUEST\n");
 }
 
 static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
@@ -575,8 +566,6 @@ static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 
 void earlysuspend_active_fn(bool flag)
 {
-	if (!(idle2_flags & WORK_INITIALISED))
-		return;
 	if (flag) {
 		idle2_flags |= EARLYSUSPEND_ACTIVE;
 		schedule_delayed_work(&idle2_lock_cpufreq_work, 0);
@@ -590,7 +579,7 @@ void earlysuspend_active_fn(bool flag)
 
 static void idle2_external_active_work_fn(struct work_struct *work)
 {
-	cancel_delayed_work(&idle2_external_inactive_work);
+	cancel_delayed_work_sync(&idle2_external_inactive_work);
 	idle2_flags |= EXTERNAL_ACTIVE;
 	pr_info("idle2: |= EXTERNAL_ACTIVE\n");
 }
@@ -599,6 +588,54 @@ static void idle2_external_inactive_work_fn(struct work_struct *work)
 {
 	idle2_flags &= ~EXTERNAL_ACTIVE;
 	pr_info("idle2: &= ~EXTERNAL_ACTIVE\n");
+}
+
+static void idle2_enable_topon_work_fn(struct work_struct *work)
+{
+	/*
+	 * If the flag is already set, it is
+	 * a second request, so deal with it
+	 * by setting a flag.
+	 */
+	if (idle2_flags & NEEDS_TOPON) {
+		idle2_flags |= TOPON_CONC_REQ;
+		pr_info("idle2: |= TOPON_CONC_REQ\n");
+	} else {
+		idle2_flags |= NEEDS_TOPON;
+		pr_info("idle2: |= NEEDS_TOPON\n");
+	}
+}
+
+static void idle2_cancel_topon_work_fn(struct work_struct *work)
+{
+	/*
+	 * Figure out what the cancel was called by
+	 */
+	if (idle2_flags & BLUETOOTH_TIMEOUT) {
+		idle2_flags &= ~BLUETOOTH_TIMEOUT;
+		idle2_flags &= ~BLUETOOTH_REQUEST;
+	} else if (idle2_flags & UART_TIMEOUT) {
+		idle2_flags &= ~UART_TIMEOUT;
+		idle2_flags &= ~UART_REQUEST;
+	}
+	/*
+	 * If a second request is active
+	 * clear that flag first.
+	 */
+	if (idle2_flags & TOPON_CONC_REQ) {
+		idle2_flags &= ~TOPON_CONC_REQ;
+		pr_info("idle2: &= ~TOPON_CONC_REQ\n");
+	} else {
+		idle2_flags &= ~NEEDS_TOPON;
+		pr_info("idle2: &= ~NEEDS_TOPON\n");
+	}
+	/*
+	 * If no timeout flags are set, clear the cancel
+	 * pending flag.
+	 */
+	if (!((idle2_flags & UART_TIMEOUT)
+		&& (idle2_flags & BLUETOOTH_TIMEOUT)))
+		idle2_flags &= ~TOPON_CANCEL_PENDING;
 }
 
 /*
@@ -630,30 +667,42 @@ void idle2_external_inactive(unsigned long delay)
  * They also ignore the large number of active calls you can
  * get whilst bluetooth is active.
  */
-
-void idle2_bluetooth_irq_active(bool kill, u16 timeout)
+void idle2_bluetooth_active(void)
 {
-	if ((idle2_flags & WORK_INITIALISED) && kill && timeout) {
-		if (delayed_work_pending(&idle2_bluetooth_irq_timeout_work))
-			cancel_delayed_work(&idle2_bluetooth_irq_timeout_work);
-
+	if (idle2_flags & WORK_INITIALISED) {
+		if (idle2_flags & BLUETOOTH_REQUEST)
+			return;
+		schedule_work(&idle2_enable_topon_work);
 		idle2_flags |= BLUETOOTH_REQUEST;
-		pr_info("idle2: |= BLUETOOTH_REQUEST - Timeout: %u\n", timeout);
-		schedule_delayed_work(&idle2_bluetooth_irq_timeout_work, timeout);
+	}
+}
+
+void idle2_bluetooth_timeout(unsigned long delay)
+{
+	if (idle2_flags & WORK_INITIALISED) {
+		idle2_flags |= BLUETOOTH_TIMEOUT;
+		schedule_delayed_work(&idle2_cancel_topon_work, delay);
 	}
 }
 
 /*
  * uart functions are called when the GPS is active
  */
-void idle2_uart_active(bool flag)
+void idle2_uart_active(void)
 {
-	if (flag) {
+	if (idle2_flags & WORK_INITIALISED) {
+		if (idle2_flags & UART_REQUEST)
+			return;
+		schedule_work(&idle2_enable_topon_work);
 		idle2_flags |= UART_REQUEST;
-		pr_info("idle2: |= UART_REQUEST\n");
-	} else {
-		idle2_flags &= ~UART_REQUEST;
-		pr_info("idle2: &= ~UART_REQUEST\n");
+	}
+}
+
+void idle2_uart_timeout(unsigned long delay)
+{
+	if (idle2_flags & WORK_INITIALISED) {
+		idle2_flags |= UART_TIMEOUT;
+		schedule_delayed_work(&idle2_cancel_topon_work, delay);
 	}
 }
 
@@ -664,16 +713,15 @@ void idle2_uart_active(bool flag)
 inline int s5p_idle_prepare(struct cpuidle_device *device)
 {
 	if (unlikely((idle2_flags & IDLE2_DISABLED)
-		|| (!(idle2_flags & EARLYSUSPEND_ACTIVE))
 		|| (idle2_flags & IDLE2_EXT_KILL))) {
 		/*
 		 * Ignore DEEP-IDLE states
 		 */
 		device->states[1].flags |= CPUIDLE_FLAG_IGNORE;
 		device->states[2].flags |= CPUIDLE_FLAG_IGNORE;
-	} else if (unlikely((idle2_flags & EXTERNAL_ACTIVE)
-		|| (idle2_flags & UART_REQUEST)
-		|| (idle2_flags & BLUETOOTH_REQUEST))) {
+	} else if (unlikely((idle2_flags & NEEDS_TOPON)
+		|| !(idle2_flags & EARLYSUSPEND_ACTIVE)
+		|| (idle2_flags & EXTERNAL_ACTIVE))) {
 		/*
 		 * Ignore DEEP-IDLE TOP block OFF state
 		 */
@@ -692,11 +740,12 @@ inline int s5p_idle_prepare(struct cpuidle_device *device)
 
 void s5p_init_idle2_work(void)
 {
-	INIT_DELAYED_WORK_DEFERRABLE(&idle2_bluetooth_irq_timeout_work, idle2_bluetooth_irq_timeout_work_fn);
+	INIT_DELAYED_WORK_DEFERRABLE(&idle2_cancel_topon_work, idle2_cancel_topon_work_fn);
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_external_inactive_work, idle2_external_inactive_work_fn);
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_lock_cpufreq_work, idle2_lock_cpufreq_work_fn);
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_unlock_cpufreq_work, idle2_unlock_cpufreq_work_fn);
 	INIT_DELAYED_WORK_DEFERRABLE(&idle2_timeout_kill_work, idle2_timeout_kill_work_fn);
+	INIT_WORK(&idle2_enable_topon_work, idle2_enable_topon_work_fn);
 	INIT_WORK(&idle2_external_active_work, idle2_external_active_work_fn);
 	idle2_flags |= WORK_INITIALISED;
 }
