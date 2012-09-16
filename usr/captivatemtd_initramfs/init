@@ -71,9 +71,6 @@ $BB mknod /dev/block/mtdblock3 b 31 3
 $BB echo "mounting devices..."
 $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
-#$BB mount -t yaffs2 /dev/block/mtdblock2 /system
-#$BB mount -t ext4 /dev/block/mmcblk0p2 /system
-#$BB mount -t yaffs2 /dev/block/mtdblock2 /data
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
 
@@ -82,6 +79,9 @@ $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
 $BB mount -t ext4 /dev/lvpool/system /system
 $BB mount -t ext4 /dev/lvpool/userdata /data
+
+$BB mkdir -p /data/local/devil
+$BB touch /data/local/devil/gsm
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"
