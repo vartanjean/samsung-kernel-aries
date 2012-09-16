@@ -40,33 +40,53 @@ BB="/system/xbin/busybox"
     $BB cat $SYSFILE
 }
 
+# ensure sd card gets mounted
+check_mount() {
+    if ! $BB grep -q $1 /proc/mounts ; then
+        $BB mkdir -p $1
+        $BB umount -l $2
+        if ! $BB mount -t $3 $2 $1 ; then
+            $BB echo "Cannot mount $1."
+        fi
+	$BB ln -s /mnt/sdcard $1
+	$BB ln -s /sdcard $1
+    fi
+}
+
 
 # partitions
 echo; echo "mount"
-#busybox mount -o remount,noatime,barrier=0,nobh /system
-#busybox mount -o remount,noatime,barrier=0,nobh /cache
-#busybox mount -o remount,noatime /data
-#for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
-#    busybox mount -o remount,noatime $i
-#done
-#mount
+busybox mount -o rw,remount,noatime,barrier=0 /system
+busybox mount -o rw,remount,noatime,barrier=0 /cache
+busybox mount -o remount,noatime /data
+for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
+    busybox mount -o remount,noatime $i
+done
+mount
 
-#echo; echo "mount system rw"
-$BB mount -o rw,remount /system
-
-    if $BB [ ! -d /data/local/devil ]; then 
+if $BB [ ! -d /data/local/devil ]; then 
 	$BB echo "creating devil folder at /data/local"
 	$BB mkdir -p /data/local/devil
 	$BB chmod 777 /data/local/devil
-    fi
+fi
 
 vibrant=0
 [ "`$BB grep -i vibrant /system/build.prop`" ] && vibrant=1
 if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
     echo 2 > /proc/sys/kernel/randomize_va_space
 else
-    echo 0 > /proc/sys/kernel/randomize_va_space    	
+    echo 0 > /proc/sys/kernel/randomize_va_space
+fi    	
+
+if $BB [ -e /data/local/devil/gsm ]; then
+	# GSM mode
+	SD_PART='/dev/block/mmcblk0p1'
+else
+	# CDMA mode
+	SD_PART='/dev/block/mmcblk1p1'
 fi
+
+check_mount /storage/sdcard0 $SD_PART vfat
 
 #clean init.d from known files
 if [ -e "/cache/clean_initd" ]; then
