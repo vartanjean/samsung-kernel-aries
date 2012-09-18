@@ -67,6 +67,14 @@ if $BB [ ! -d /data/local/devil ]; then
 	$BB chmod 777 /data/local/devil
 fi
 
+vibrant=0
+[ "`$BB grep -i vibrant /system/build.prop`" ] && vibrant=1
+if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
+    echo 2 > /proc/sys/kernel/randomize_va_space
+else
+    echo 0 > /proc/sys/kernel/randomize_va_space
+fi  
+
 if $BB [ -e /data/local/devil/gsm ]; then
 	# GSM mode
 	SD_PART='/dev/block/mmcblk0p1'
