@@ -44,23 +44,20 @@ BB="/system/xbin/busybox"
 check_mount() {
     if ! $BB grep -q $1 /proc/mounts ; then
         $BB mkdir -p $1
-        $BB umount -l $2
         if ! $BB mount -t $3 $2 $1 ; then
             $BB echo "Cannot mount $1."
         fi
-	$BB ln -s /mnt/sdcard $1
-	$BB ln -s /sdcard $1
     fi
 }
 
 
 # partitions
 echo; echo "mount"
-busybox mount -o rw,remount,noatime,barrier=0 /system
-busybox mount -o rw,remount,noatime,barrier=0 /cache
-busybox mount -o remount,noatime /data
-for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
-    busybox mount -o remount,noatime $i
+busybox mount -o rw,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /system
+busybox mount -o rw,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /cache
+busybox mount -o remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /data
+for i in $($BB mount | $BB grep relatime | $BB cut -d " " -f3);do
+    busybox mount -o remount,noatime,noauto_da_alloc,nodiratime,barrier=0 $i
 done
 mount
 
@@ -78,7 +75,6 @@ else
 	SD_PART='/dev/block/mmcblk1p1'
 fi
 
-check_mount /storage/sdcard0 $SD_PART vfat
 
 #clean init.d from known files
 if [ -e "/cache/clean_initd" ]; then
@@ -459,7 +455,7 @@ MMC=`$BB ls -d /sys/block/mmc*`
 # set IO scheduler
 if [ -e "/data/local/devil/iosched" ];then
 	iosched=`$BB cat /data/local/devil/iosched`
-	if $BB [ "$iosched" == "noop" ] || $BB [ "$iosched" == "deadline" ] || $BB [ "$iosched" == "cfq" ] || $BB [ "$iosched" == "sio" ] || $BB [ "$iosched" == "vr" ] || $BB [ "$iosched" == "fiops" ]; then
+	if $BB [ "$iosched" == "noop" ] || $BB [ "$iosched" == "deadline" ] || $BB [ "$iosched" == "cfq" ] || $BB [ "$iosched" == "sio" ] || $BB [ "$iosched" == "vr" ] || $BB [ "$iosched" == "bfq" ]  || $BB [ "$iosched" == "fiops" ]; then
     		echo "iosched: found valid io scheduler: <$iosched>";
 	else
     		echo "iosched: did not find valid io scheduler: setting sio";
@@ -598,6 +594,8 @@ else
     	echo "your current governor is: $governor"
 fi
 
+# ensure sdcard gets mounted:
+check_mount /storage/sdcard0 $SD_PART vfat
 
 # init.d support 
 # executes <0-9><0-9>scriptname, <E>scriptname, <S>scriptname 
