@@ -19,7 +19,7 @@ exec 2>&1
 # start logfile output
 echo
 echo "************************************************"
-echo "DEVIL BOOT LOG (thanks Mialwe)"
+echo "DEVIL-ICS BOOT LOG (thanks Mialwe)"
 echo "************************************************"
 echo
 
@@ -38,16 +38,6 @@ BB="/system/xbin/busybox"
     SYSFILE=$2
     echo -n "$MSG"
     $BB cat $SYSFILE
-}
-
-# ensure sd card gets mounted
-check_mount() {
-    if ! $BB grep -q $1 /proc/mounts ; then
-        $BB mkdir -p $1
-        if ! $BB mount -t $3 $2 $1 ; then
-            $BB echo "Cannot mount $1."
-        fi
-    fi
 }
 
 
@@ -73,7 +63,7 @@ if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
     echo 2 > /proc/sys/kernel/randomize_va_space
 else
     echo 0 > /proc/sys/kernel/randomize_va_space
-fi  
+fi    	
 
 if $BB [ -e /data/local/devil/gsm ]; then
 	# GSM mode
@@ -602,8 +592,6 @@ else
     	echo "your current governor is: $governor"
 fi
 
-# ensure sdcard gets mounted:
-check_mount /storage/sdcard0 $SD_PART vfat
 
 # init.d support 
 # executes <0-9><0-9>scriptname, <E>scriptname, <S>scriptname 
@@ -738,5 +726,3 @@ swappiness=`$BB cat /proc/sys/vm/swappiness`
 echo $swappiness > /data/local/devil/swappiness
 fi
 cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
-
-busybox mount -o ro,remount,noatime,barrier=0,nobh /system

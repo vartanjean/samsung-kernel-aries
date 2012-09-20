@@ -19,7 +19,7 @@ exec 2>&1
 # start logfile output
 echo
 echo "************************************************"
-echo "DEVIL BOOT LOG (thanks Mialwe)"
+echo "DEVIL-ICS BOOT LOG (thanks Mialwe)"
 echo "************************************************"
 echo
 
@@ -40,27 +40,14 @@ BB="/system/xbin/busybox"
     $BB cat $SYSFILE
 }
 
-# ensure sd card gets mounted
-check_mount() {
-    if ! $BB grep -q $1 /proc/mounts ; then
-        $BB mkdir -p $1
-        $BB umount -l $2
-        if ! $BB mount -t $3 $2 $1 ; then
-            $BB echo "Cannot mount $1."
-        fi
-	$BB ln -s /mnt/sdcard $1
-	$BB ln -s /sdcard $1
-    fi
-}
-
 
 # partitions
 echo; echo "mount"
-busybox mount -o rw,remount,noatime,barrier=0 /system
-busybox mount -o rw,remount,noatime,barrier=0 /cache
-busybox mount -o remount,noatime /data
-for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
-    busybox mount -o remount,noatime $i
+busybox mount -o rw,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /system
+busybox mount -o rw,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /cache
+busybox mount -o remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /data
+for i in $($BB mount | $BB grep relatime | $BB cut -d " " -f3);do
+    busybox mount -o remount,noatime,noauto_da_alloc,nodiratime,barrier=0 $i
 done
 mount
 
@@ -70,6 +57,14 @@ if $BB [ ! -d /data/local/devil ]; then
 	$BB chmod 777 /data/local/devil
 fi
 
+vibrant=0
+[ "`$BB grep -i vibrant /system/build.prop`" ] && vibrant=1
+if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
+    echo 2 > /proc/sys/kernel/randomize_va_space
+else
+    echo 0 > /proc/sys/kernel/randomize_va_space
+fi    	
+
 if $BB [ -e /data/local/devil/gsm ]; then
 	# GSM mode
 	SD_PART='/dev/block/mmcblk0p1'
@@ -78,7 +73,6 @@ else
 	SD_PART='/dev/block/mmcblk1p1'
 fi
 
-check_mount /storage/sdcard0 $SD_PART vfat
 
 #clean init.d from known files
 if [ -e "/cache/clean_initd" ]; then
@@ -459,7 +453,7 @@ MMC=`$BB ls -d /sys/block/mmc*`
 # set IO scheduler
 if [ -e "/data/local/devil/iosched" ];then
 	iosched=`$BB cat /data/local/devil/iosched`
-	if $BB [ "$iosched" == "noop" ] || $BB [ "$iosched" == "deadline" ] || $BB [ "$iosched" == "cfq" ] || $BB [ "$iosched" == "sio" ] || $BB [ "$iosched" == "vr" ] || $BB [ "$iosched" == "fiops" ]; then
+	if $BB [ "$iosched" == "noop" ] || $BB [ "$iosched" == "deadline" ] || $BB [ "$iosched" == "cfq" ] || $BB [ "$iosched" == "sio" ] || $BB [ "$iosched" == "vr" ] || $BB [ "$iosched" == "bfq" ]  || $BB [ "$iosched" == "fiops" ]; then
     		echo "iosched: found valid io scheduler: <$iosched>";
 	else
     		echo "iosched: did not find valid io scheduler: setting sio";
@@ -732,5 +726,3 @@ swappiness=`$BB cat /proc/sys/vm/swappiness`
 echo $swappiness > /data/local/devil/swappiness
 fi
 cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
-
-busybox mount -o ro,remount,noatime,barrier=0,nobh /system
