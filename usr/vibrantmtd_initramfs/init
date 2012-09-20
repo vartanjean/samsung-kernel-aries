@@ -76,6 +76,8 @@ $BB mount -t ext4 /dev/block/mmcblk0p2 /system
 $BB mount -t yaffs2 /dev/block/mtdblock2 /data
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
+$BB mkdir -p /data/local/devil
+$BB touch /data/local/devil/gsm
 
 KV=`$BB uname -r`
 $BB echo "version: $KV"

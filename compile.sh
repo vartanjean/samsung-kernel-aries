@@ -8,7 +8,7 @@ export USE_CCACHE=1
 	CCACHE_LOGFILE="/home/dominik/android/ccache/ccache-log"
         export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
-number="1.4.1_Jellybean"
+number="1.5.2_Jellybean"
 
 target="$1"
 

@@ -43,30 +43,36 @@ BB="/system/xbin/busybox"
 
 # partitions
 echo; echo "mount"
-#busybox mount -o remount,noatime,barrier=0,nobh /system
-#busybox mount -o remount,noatime,barrier=0,nobh /cache
-#busybox mount -o remount,noatime /data
-#for i in $($BB mount | $BB $BB grep relatime | $BB cut -d " " -f3);do
-#    busybox mount -o remount,noatime $i
-#done
-#mount
+busybox mount -o rw,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /system
+busybox mount -o rw,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /cache
+busybox mount -o remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /data
+for i in $($BB mount | $BB grep relatime | $BB cut -d " " -f3);do
+    busybox mount -o remount,noatime,noauto_da_alloc,nodiratime,barrier=0 $i
+done
+mount
 
-#echo; echo "mount system rw"
-$BB mount -o rw,remount /system
-
-    if $BB [ ! -d /data/local/devil ]; then 
+if $BB [ ! -d /data/local/devil ]; then 
 	$BB echo "creating devil folder at /data/local"
 	$BB mkdir -p /data/local/devil
 	$BB chmod 777 /data/local/devil
-    fi
+fi
 
 vibrant=0
 [ "`$BB grep -i vibrant /system/build.prop`" ] && vibrant=1
 if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
     echo 2 > /proc/sys/kernel/randomize_va_space
 else
-    echo 0 > /proc/sys/kernel/randomize_va_space    	
+    echo 0 > /proc/sys/kernel/randomize_va_space
+fi    	
+
+if $BB [ -e /data/local/devil/gsm ]; then
+	# GSM mode
+	SD_PART='/dev/block/mmcblk0p1'
+else
+	# CDMA mode
+	SD_PART='/dev/block/mmcblk1p1'
 fi
+
 
 #clean init.d from known files
 if [ -e "/cache/clean_initd" ]; then
@@ -447,7 +453,7 @@ MMC=`$BB ls -d /sys/block/mmc*`
 # set IO scheduler
 if [ -e "/data/local/devil/iosched" ];then
 	iosched=`$BB cat /data/local/devil/iosched`
-	if $BB [ "$iosched" == "noop" ] || $BB [ "$iosched" == "deadline" ] || $BB [ "$iosched" == "cfq" ] || $BB [ "$iosched" == "sio" ] || $BB [ "$iosched" == "vr" ] || $BB [ "$iosched" == "fiops" ]; then
+	if $BB [ "$iosched" == "noop" ] || $BB [ "$iosched" == "deadline" ] || $BB [ "$iosched" == "cfq" ] || $BB [ "$iosched" == "sio" ] || $BB [ "$iosched" == "vr" ] || $BB [ "$iosched" == "bfq" ]  || $BB [ "$iosched" == "fiops" ]; then
     		echo "iosched: found valid io scheduler: <$iosched>";
 	else
     		echo "iosched: did not find valid io scheduler: setting sio";
