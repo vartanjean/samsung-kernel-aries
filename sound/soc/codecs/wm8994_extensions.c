@@ -96,7 +96,6 @@ extern unsigned short incall_boost_bt;
 extern unsigned short incall_boost_spk;
 extern unsigned short incall_boost_hp;
 
-
 // mic gain control hack
 extern unsigned short incall_mic_gain_rcv;
 extern unsigned short incall_mic_gain_spk;
