@@ -64,7 +64,6 @@ static int lowmem_minfree_size = 4;
 
 static unsigned long lowmem_deathpending_timeout;
 
-static uint32_t lowmem_check_filepages = 0;
 #ifdef CONFIG_SWAP
 static int fudgeswap = 512;
 #endif
@@ -159,7 +158,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
-		target_offset = abs(target_free - tasksize);
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
