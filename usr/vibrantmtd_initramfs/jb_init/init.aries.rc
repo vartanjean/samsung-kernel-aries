@@ -222,18 +222,18 @@ service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
     keycodes 114 115 116
 
 service orientationd /system/vendor/bin/orientationd
-    class late_start
+    class main
     user compass
     group system input
     disabled
 
 service geomagneticd /system/vendor/bin/geomagneticd
-    class late_start
+    class main
     user compass
     group system input
 
 service tvout /system/bin/tvoutserver
-    class late_start
+    class main
     user system
     group graphics
 
