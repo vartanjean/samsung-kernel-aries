@@ -155,6 +155,10 @@ on post-fs-data
     # setup datadata
     exec /sbin/setupdatadata.sh
 
+	
+    #boot-patch
+    exec /sbin/boot-patch.sh
+
 # create data/gps for GPS demon
     mkdir /data/gps 771 gps system
     chown gps system /data/gps
