@@ -44,5 +44,5 @@ const char linux_banner[] =
 
 const char linux_proc_banner[] =
 	"%s version %s"
- " (Devil3_1.6.0_Jelly_Helly_fascinate_CFS_BLN_VC)"
+ " (Devil3_1.6.1_Jelly_Helly_vibrant_CFS_BLN_VC)"
 	" (" LINUX_COMPILER ") %s\n";
