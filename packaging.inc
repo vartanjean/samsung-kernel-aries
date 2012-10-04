@@ -16,8 +16,8 @@ mkdir  -p release/system/etc/init.d || exit 1
 cd release && {
 if [ "$light" = "BLN" ] 
 then
-        cp lights.aries.so.BLN system/lib/hw/lights.aries.so || exit 1
-	cp power.aries.so system/lib/hw/power.aries.so || exit 1
+#        cp lights.aries.so.BLN system/lib/hw/lights.aries.so || exit 1
+#	cp power.aries.so system/lib/hw/power.aries.so || exit 1
 	cp updater-script.BLN META-INF/com/google/android/updater-script || exit 1
 else
 #	cp lights.aries.so system/lib/hw/|| exit 1
