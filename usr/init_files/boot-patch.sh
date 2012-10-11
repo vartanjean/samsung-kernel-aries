@@ -425,8 +425,8 @@ echo -n "SEC: icmp_echo_ignore_broadcasts :";$BB cat /proc/sys/net/ipv4/icmp_ech
 
 # setprop tweaks
 echo; echo "prop"
-$BB setprop wifi.supplicant_scan_interval 180
-echo -n "wifi.supplicant_scan_interval (is this actually used?): ";$BB getprop wifi.supplicant_scan_interval
+setprop wifi.supplicant_scan_interval 180
+echo -n "wifi.supplicant_scan_interval (is this actually used?): "; getprop wifi.supplicant_scan_interval
 
 # kernel tweaks
 echo; echo "kernel"
