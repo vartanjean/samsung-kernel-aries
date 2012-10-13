@@ -65,7 +65,7 @@ static int lowmem_minfree_size = 4;
 static unsigned long lowmem_deathpending_timeout;
 
 #ifdef CONFIG_SWAP
-static int fudgeswap = 512;
+static int fudgeswap = 0;
 #endif
 extern int compact_nodes();
 
@@ -87,7 +87,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int selected_tasksize = 0;
 	int selected_oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
-	int other_free = global_page_state(NR_FREE_PAGES);
+	int other_free = global_page_state(NR_FREE_PAGES) - totalreserve_pages;
 	int other_file = global_page_state(NR_FILE_PAGES) -
 						global_page_state(NR_SHMEM);
 #ifdef CONFIG_SWAP
