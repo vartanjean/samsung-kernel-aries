@@ -7,7 +7,7 @@
 # ST-Ericsson GNS7560
 service gpsd /system/vendor/bin/gpsd
     class main
-    user gps
+    user root
     group system inet
     oneshot
 
