@@ -4298,7 +4298,7 @@ void s3c_config_gpio_table(void)
 		}
 	}
 #ifdef CONFIG_SAMSUNG_FASCINATE
-	s3c_gpio_set_drvstrength(S5PV210_GPH3(7), S3C_GPIO_DRVSTR_2X); 
+	s3c_gpio_set_drvstrength(S5PV210_GPH3(7), S3C_GPIO_DRVSTR_4X);
 #endif
 }
 

@@ -33,7 +33,8 @@ modules.builtin
 *.patch
 *.gcno
 
-/init/version.backup
+init/version.backup
+init/version.c
 
 #
 # Top-level generic files
@@ -81,4 +82,6 @@ GTAGS
 
 *.orig
 *~
+
+block/bfq-iosched.o
 \#*#

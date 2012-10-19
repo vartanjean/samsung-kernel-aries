@@ -8,7 +8,7 @@ REL=${version}_$(date +%Y%m%d)
 rm -r release/system 2> /dev/null
 mkdir  -p release/system/bin || exit 1
 #mkdir  -p release/system/lib/modules || exit 1
-#mkdir  -p release/system/lib/hw || exit 1
+mkdir  -p release/system/lib/hw || exit 1
 mkdir  -p release/system/etc/init.d || exit 1
 #mkdir  -p release/system/etc/devil || exit 1
 #find . -name "*.ko" -exec cp {} release/system/lib/modules/ \; 2>/dev/null || exit 1
@@ -17,6 +17,7 @@ cd release && {
 if [ "$light" = "BLN" ] 
 then
 #        cp lights.aries.so.BLN system/lib/hw/lights.aries.so || exit 1
+#	cp power.aries.so system/lib/hw/power.aries.so || exit 1
 	cp updater-script.BLN META-INF/com/google/android/updater-script || exit 1
 else
 #	cp lights.aries.so system/lib/hw/|| exit 1

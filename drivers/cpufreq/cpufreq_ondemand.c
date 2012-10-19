@@ -30,27 +30,19 @@
  */
 
 #define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
-#define DEF_FREQUENCY_UP_THRESHOLD		(85)
+#define DEF_FREQUENCY_UP_THRESHOLD		(80)
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(85)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
+#define DEFAULT_FREQ_BOOST_TIME			(500000)
+#define MAX_FREQ_BOOST_TIME			(5000000)
 
-#define UP_THRESHOLD_AT_MIN_FREQ    (60)
-#define FREQ_FOR_RESPONSIVENESS      (400000)
+u64 freq_boosted_time;
 
-#define UP_THRESHOLD_AT_MEDIUM_FREQ    (60)
-#define DEF_MEDIUM_FREQ      (800000)
-
-#define UP_THRESHOLD_AT_SLEEP    (95)
-
-// raise sampling rate to SR*multiplier on blank screen
-static unsigned int sampling_rate_awake;
-static unsigned int up_threshold_awake;
-static unsigned int up_threshold_min_freq_awake;
 #ifdef CONFIG_DEVIL_TWEAKS
 extern unsigned int touch_state_val;
 extern bool smooth_ui();
@@ -60,8 +52,6 @@ extern bool powersave_governors();
 static int status;
 static int status_old;
 #endif
-
-#define SAMPLING_RATE_SLEEP_MULTIPLIER (2)
 
 /*
  * The polling frequency of this governor depends on the capability of
@@ -136,27 +126,18 @@ static struct dbs_tuners {
 	unsigned int sampling_down_factor;
 	unsigned int powersave_bias;
 	unsigned int io_is_busy;
-	unsigned int sleep_multiplier;
-	unsigned int up_threshold_min_freq;
-	unsigned int responsiveness_freq;
-	unsigned int up_threshold_medium_freq;
-	unsigned int medium_freq;
-	int early_suspend;
-
+	unsigned int boosted;
+	unsigned int freq_boost_time;
+	unsigned int boostfreq;
 } dbs_tuners_ins = {
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
 	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
 	.down_differential = DEF_FREQUENCY_DOWN_DIFFERENTIAL,
 	.ignore_nice = 0,
 	.powersave_bias = 0,
-	.sleep_multiplier= SAMPLING_RATE_SLEEP_MULTIPLIER,
-	.up_threshold_min_freq= UP_THRESHOLD_AT_MIN_FREQ,
-	.responsiveness_freq= FREQ_FOR_RESPONSIVENESS, 
-	.up_threshold_medium_freq= (2 * UP_THRESHOLD_AT_MIN_FREQ + 3 * DEF_FREQUENCY_UP_THRESHOLD)/5,
-	.medium_freq = DEF_MEDIUM_FREQ,
-	.early_suspend = -1,
+	.freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
+	.boostfreq = 0,
 };
-
 
 static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
 							cputime64_t *wall)
@@ -294,94 +275,9 @@ show_one(up_threshold, up_threshold);
 show_one(sampling_down_factor, sampling_down_factor);
 show_one(ignore_nice_load, ignore_nice);
 show_one(powersave_bias, powersave_bias);
-show_one(sleep_multiplier, sleep_multiplier);
-show_one(up_threshold_min_freq, up_threshold_min_freq);
-show_one(responsiveness_freq, responsiveness_freq);
-show_one(up_threshold_medium_freq, up_threshold_medium_freq);
-show_one(medium_freq, medium_freq);
-
-
-static ssize_t store_sleep_multiplier(struct kobject *a, struct attribute *b,
-				  const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-	ret = sscanf(buf, "%u", &input);
-
-	if (ret != 1 || input < 1 ||
-			input > 10) {
-		return -EINVAL;
-	}
-	dbs_tuners_ins.sleep_multiplier = input;
-	return count;
-}
-
-static ssize_t store_up_threshold_min_freq(struct kobject *a, struct attribute *b,
-				  const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-	ret = sscanf(buf, "%u", &input);
-
-	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
-			input < MIN_FREQUENCY_UP_THRESHOLD ||
-			(input != 100 && input > dbs_tuners_ins.up_threshold)) {
-		return -EINVAL;
-	}
-	dbs_tuners_ins.up_threshold_min_freq = input;
-	dbs_tuners_ins.up_threshold_medium_freq= DIV_ROUND_CLOSEST(2 * dbs_tuners_ins.up_threshold_min_freq + 3 * dbs_tuners_ins.up_threshold, 5);
-	return count;
-}
-
-static ssize_t store_up_threshold_medium_freq(struct kobject *a, struct attribute *b,
-				  const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-	ret = sscanf(buf, "%u", &input);
-
-	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
-			input < MIN_FREQUENCY_UP_THRESHOLD) {
-		return -EINVAL;
-	}
-	dbs_tuners_ins.up_threshold_medium_freq = input;
-	return count;
-}
-
-
-static ssize_t store_responsiveness_freq(struct kobject *a, struct attribute *b,
-				  const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-	ret = sscanf(buf, "%u", &input);
-
-	if (ret != 1 || input > 1400000 ||
-			input < 100000) {
-		return -EINVAL;
-	}
-	if (input > dbs_tuners_ins.medium_freq)
-	dbs_tuners_ins.medium_freq = input;
-
-	dbs_tuners_ins.responsiveness_freq = input;
-	return count;
-}
-
-static ssize_t store_medium_freq(struct kobject *a, struct attribute *b,
-				  const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-	ret = sscanf(buf, "%u", &input);
-
-	if (ret != 1 || input > 1400000 ||
-			input < 100000 ||
-			input < dbs_tuners_ins.responsiveness_freq) {
-		return -EINVAL;
-	}
-	dbs_tuners_ins.medium_freq = input;
-	return count;
-}
+show_one(boostpulse, boosted);
+show_one(boosttime, freq_boost_time);
+show_one(boostfreq, boostfreq);
 
 static ssize_t store_sampling_rate(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
@@ -420,7 +316,6 @@ static ssize_t store_up_threshold(struct kobject *a, struct attribute *b,
 		return -EINVAL;
 	}
 	dbs_tuners_ins.up_threshold = input;
-	dbs_tuners_ins.up_threshold_medium_freq= DIV_ROUND_CLOSEST(2 * dbs_tuners_ins.up_threshold_min_freq + 3 * dbs_tuners_ins.up_threshold, 5);
 	return count;
 }
 
@@ -495,17 +390,47 @@ static ssize_t store_powersave_bias(struct kobject *a, struct attribute *b,
 	return count;
 }
 
+
+static ssize_t store_boostpulse(struct kobject *kobj, struct attribute *attr,
+				const char *buf, size_t count)
+{
+	int ret;
+	unsigned int input;
+
+	ret = sscanf(buf, "%u", &input);
+	if (ret < 0)
+		return ret;
+
+	if (input > 1 && input <= MAX_FREQ_BOOST_TIME)
+		dbs_tuners_ins.freq_boost_time = input;
+	else
+		dbs_tuners_ins.freq_boost_time = DEFAULT_FREQ_BOOST_TIME;
+
+	dbs_tuners_ins.boosted = 1;
+	freq_boosted_time = ktime_to_us(ktime_get());
+	return count;
+}
+
+static ssize_t store_boostfreq(struct kobject *a, struct attribute *b,
+				   const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+	dbs_tuners_ins.boostfreq = input;
+	return count;
+}
+
 define_one_global_rw(sampling_rate);
 define_one_global_rw(io_is_busy);
 define_one_global_rw(up_threshold);
 define_one_global_rw(sampling_down_factor);
 define_one_global_rw(ignore_nice_load);
 define_one_global_rw(powersave_bias);
-define_one_global_rw(sleep_multiplier);
-define_one_global_rw(up_threshold_min_freq);
-define_one_global_rw(responsiveness_freq);
-define_one_global_rw(up_threshold_medium_freq);
-define_one_global_rw(medium_freq);
+define_one_global_rw(boostpulse);
+define_one_global_rw(boostfreq);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -515,12 +440,8 @@ static struct attribute *dbs_attributes[] = {
 	&ignore_nice_load.attr,
 	&powersave_bias.attr,
 	&io_is_busy.attr,
-	&sleep_multiplier.attr,
-	&up_threshold_min_freq.attr,
-	&responsiveness_freq.attr,
-	&up_threshold_medium_freq.attr,
-	&medium_freq.attr,
-
+	&boostpulse.attr,
+	&boostfreq.attr,
 	NULL
 };
 
@@ -548,43 +469,55 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	struct cpufreq_policy *policy;
 	unsigned int j;
+	unsigned int boostfreq;
 
 	this_dbs_info->freq_lo = 0;
 	policy = this_dbs_info->cur_policy;
+
 
 #ifdef CONFIG_DEVIL_TWEAKS
 /*
 * change governor settings (only once), if governor mode got changed
 */
 if(smooth_governors()){
-	status= 1;
-	if(status != status_old){
+  status= 1;
+  if(status != status_old){
                 dbs_tuners_ins.up_threshold = 70;
                 dbs_tuners_ins.sampling_down_factor = 2;
                 dbs_tuners_ins.down_differential = 15;
-	}
+  }
 }
 else if(powersave_governors()){
-	status= 2;
-	if(status != status_old){
+  status= 2;
+  if(status != status_old){
                 dbs_tuners_ins.up_threshold = 95;
                 dbs_tuners_ins.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
-                dbs_tuners_ins.down_differential =                      MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
-	}
+                dbs_tuners_ins.down_differential =  MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
+  }
 }
 else{
-	status= 0;
-	if(status != status_old){
+  status= 0;
+  if(status != status_old){
                 dbs_tuners_ins.up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
                 dbs_tuners_ins.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
-                dbs_tuners_ins.down_differential =                      MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
-	}
+                dbs_tuners_ins.down_differential = MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
+  }
 }
 status_old = status;
 #endif
 
-	int up_threshold = dbs_tuners_ins.up_threshold;
 
+	/* Only core0 controls the boost */
+	if (dbs_tuners_ins.boosted && policy->cpu == 0) {
+		if (ktime_to_us(ktime_get()) - freq_boosted_time >=
+					dbs_tuners_ins.freq_boost_time) {
+			dbs_tuners_ins.boosted = 0;
+		}
+	}
+	if (dbs_tuners_ins.boostfreq != 0)
+		boostfreq = dbs_tuners_ins.boostfreq;
+	else
+		boostfreq = policy->max;
 	/*
 	 * Every sampling_rate, we check, if current idle time is less
 	 * than 20% (default), then we try to increase frequency
@@ -666,38 +599,26 @@ status_old = status;
 	}
 
 	/* Check for frequency increase */
-	if(dbs_tuners_ins.up_threshold_min_freq != 100){
-  		if (policy->cur < dbs_tuners_ins.responsiveness_freq && dbs_tuners_ins.early_suspend == -1)
-	     	up_threshold = dbs_tuners_ins.up_threshold_min_freq;
-  	}
-	if(dbs_tuners_ins.up_threshold_medium_freq != 100){
-  		if (policy->cur < dbs_tuners_ins.medium_freq && dbs_tuners_ins.early_suspend == -1)
-	     	up_threshold = dbs_tuners_ins.up_threshold_medium_freq;
-  	}
+
 #ifdef CONFIG_DEVIL_TWEAKS
-	if(max_load_freq > dbs_tuners_ins.up_threshold * cpuL3freq() && smooth_ui() && touch_state_val){
-		this_dbs_info->rate_mult = dbs_tuners_ins.sampling_down_factor;
-		dbs_freq_increase(policy, policy->max);
-		return;
-	}
+ if(smooth_ui() && touch_state_val){
+    if(policy->cur < cpuL3freq() && cpuL3freq() <= policy->max)
+    dbs_freq_increase(policy, cpuL3freq());
+    else if(cpuL3freq() > policy->max){
+    this_dbs_info->rate_mult = dbs_tuners_ins.sampling_down_factor;
+    dbs_freq_increase(policy, policy->max);
+    }
+    else
+    dbs_freq_increase(policy, cpuL3freq());
+  return;
+  }
 
-	else if(smooth_ui() && touch_state_val){
-		if(policy->cur < cpuL3freq() && cpuL3freq() <= policy->max)
-		dbs_freq_increase(policy, cpuL3freq());
-		else if(cpuL3freq() > policy->max){
-		this_dbs_info->rate_mult = dbs_tuners_ins.sampling_down_factor;
-		dbs_freq_increase(policy, policy->max);
-		}
-		else
-		dbs_freq_increase(policy, cpuL3freq());
-	return;
-	}
-
-	else if (max_load_freq > up_threshold * policy->cur) {
-#else
-	if (max_load_freq > up_threshold * policy->cur) {
+  else
 #endif
-		/* If switching to max speed, apply sampling_down_factor */
+  if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+
+
+	/* If switching to max speed, apply sampling_down_factor */
 		if (policy->cur < policy->max)
 			this_dbs_info->rate_mult =
 				dbs_tuners_ins.sampling_down_factor;
@@ -705,22 +626,14 @@ status_old = status;
 		return;
 	}
 
-	/* Check for frequency decrease */
-#ifdef CONFIG_DEVIL_TWEAKS
-	/*
-	* if touchscreen still pressed, don't reduce frequency
-	*/
-	if(smooth_ui() && touch_state_val && 
-	max_load_freq < dbs_tuners_ins.up_threshold * policy->cur){
-		unsigned int freq_next;
-		if(cpuL3freq() > policy->max)
-		freq_next = policy->max;
-		else
-		freq_next = cpuL3freq();
-		__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_L);
+	/* check for frequency boost */
+	if (dbs_tuners_ins.boosted && policy->cur < boostfreq) {
+		dbs_freq_increase(policy, boostfreq);
+		dbs_tuners_ins.boostfreq = policy->cur;
 		return;
 	}
-#endif
+
+	/* Check for frequency decrease */
 	/* if we cannot reduce the frequency anymore, break out early */
 	if (policy->cur == policy->min)
 		return;
@@ -734,28 +647,31 @@ status_old = status;
 	    (dbs_tuners_ins.up_threshold - dbs_tuners_ins.down_differential) *
 	     policy->cur) {
 		unsigned int freq_next;
-		unsigned int down_thres;
 		freq_next = max_load_freq /
 				(dbs_tuners_ins.up_threshold -
 				 dbs_tuners_ins.down_differential);
 
+  #ifdef CONFIG_DEVIL_TWEAKS
+  /*
+  * if touchscreen still pressed, don't reduce frequency
+  */
+    if(smooth_ui() && touch_state_val) {
+      if(cpuL3freq() > policy->max)
+      freq_next = policy->max;
+      else
+      freq_next = cpuL3freq();
+    }
+
+    else
+  #endif
+	if (dbs_tuners_ins.boosted && freq_next < boostfreq) {
+      	freq_next = boostfreq;
+		}
 		/* No longer fully busy, reset rate_mult */
 		this_dbs_info->rate_mult = 1;
 
 		if (freq_next < policy->min)
 			freq_next = policy->min;
-
-if(dbs_tuners_ins.up_threshold_min_freq != 100){
-	down_thres = dbs_tuners_ins.up_threshold_min_freq - dbs_tuners_ins.down_differential;
-    	if (freq_next < dbs_tuners_ins.responsiveness_freq && (max_load_freq / freq_next) > down_thres && dbs_tuners_ins.early_suspend == -1)
-      freq_next = dbs_tuners_ins.responsiveness_freq;
-}
-
-if(dbs_tuners_ins.up_threshold_medium_freq != 100){
-	down_thres = dbs_tuners_ins.up_threshold_medium_freq - dbs_tuners_ins.down_differential;
-    	if (freq_next < dbs_tuners_ins.medium_freq && (max_load_freq / freq_next) > down_thres && dbs_tuners_ins.early_suspend == -1)
-      freq_next = dbs_tuners_ins.medium_freq;
-}
 
 		if (!dbs_tuners_ins.powersave_bias) {
 			__cpufreq_driver_target(policy, freq_next,
@@ -849,37 +765,6 @@ static int should_io_be_busy(void)
 	return 0;
 }
 
-static void powersave_early_suspend(struct early_suspend *handler)
-{
-  dbs_tuners_ins.early_suspend = 1;
-  mutex_lock(&dbs_mutex);
-  sampling_rate_awake = dbs_tuners_ins.sampling_rate;
-  dbs_tuners_ins.sampling_rate *= dbs_tuners_ins.sleep_multiplier;
-  up_threshold_awake = dbs_tuners_ins.up_threshold;
-  up_threshold_min_freq_awake = dbs_tuners_ins.up_threshold_min_freq;
-  dbs_tuners_ins.up_threshold_min_freq = 100;
-  dbs_tuners_ins.up_threshold_medium_freq = 100;
-  dbs_tuners_ins.up_threshold = UP_THRESHOLD_AT_SLEEP; 
-  mutex_unlock(&dbs_mutex);
-}
-
-static void powersave_late_resume(struct early_suspend *handler)
-{
-  dbs_tuners_ins.early_suspend = -1;
-  mutex_lock(&dbs_mutex);
-  dbs_tuners_ins.sampling_rate = sampling_rate_awake;
-  dbs_tuners_ins.up_threshold = up_threshold_awake;
-  dbs_tuners_ins.up_threshold_min_freq = up_threshold_min_freq_awake;
-  dbs_tuners_ins.up_threshold_medium_freq= DIV_ROUND_CLOSEST(2 * dbs_tuners_ins.up_threshold_min_freq + 3 * dbs_tuners_ins.up_threshold, 5);
-  mutex_unlock(&dbs_mutex);
-}
-
-static struct early_suspend _powersave_early_suspend = {
-  .suspend = powersave_early_suspend,
-  .resume = powersave_late_resume,
-  .level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
-};
-
 static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 				   unsigned int event)
 {
@@ -937,14 +822,12 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 			dbs_tuners_ins.sampling_rate =
 				max(min_sampling_rate,
 				    latency * LATENCY_MULTIPLIER);
-            sampling_rate_awake = dbs_tuners_ins.sampling_rate;
 			dbs_tuners_ins.io_is_busy = should_io_be_busy();
 		}
 		mutex_unlock(&dbs_mutex);
 
 		mutex_init(&this_dbs_info->timer_mutex);
 		dbs_timer_init(this_dbs_info);
-        register_early_suspend(&_powersave_early_suspend);
 		break;
 
 	case CPUFREQ_GOV_STOP:
@@ -957,7 +840,7 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		if (!dbs_enable)
 			sysfs_remove_group(cpufreq_global_kobject,
 					   &dbs_attr_group);
-        unregister_early_suspend(&_powersave_early_suspend);
+
 		break;
 
 	case CPUFREQ_GOV_LIMITS:
@@ -985,7 +868,6 @@ static int __init cpufreq_gov_dbs_init(void)
 	if (idle_time != -1ULL) {
 		/* Idle micro accounting is supported. Use finer thresholds */
 		dbs_tuners_ins.up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
-	 	up_threshold_awake = dbs_tuners_ins.up_threshold;
 		dbs_tuners_ins.down_differential =
 					MICRO_FREQUENCY_DOWN_DIFFERENTIAL;
 		/*
