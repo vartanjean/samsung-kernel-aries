@@ -94,3 +94,5 @@ struct mtd_partition s3c_partition_info[] = {
 	},
 */
 };
+
+

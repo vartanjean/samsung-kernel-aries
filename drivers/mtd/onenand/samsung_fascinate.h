@@ -65,3 +65,4 @@ struct mtd_partition s3c_partition_info[] = {
 		.size		= (44*SZ_256K), //2047
 	},
 };
+
