@@ -78,6 +78,8 @@ $BB mount -t ext4 /dev/lvpool/system /system
 $BB mount -t ext4 /dev/lvpool/userdata /data
 $BB mount -t ext4 /dev/block/mmcblk0p3 /cache
 
+$BB mv /files/charger /
+
 KV=`$BB uname -r`
 $BB echo "version: $KV"
 
