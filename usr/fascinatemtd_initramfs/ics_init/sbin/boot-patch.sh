@@ -57,29 +57,11 @@ if $BB [ ! -d /data/local/devil ]; then
 	$BB chmod 777 /data/local/devil
 fi
 
-vibrant=0
-[ "`$BB grep -i vibrant /system/build.prop`" ] && vibrant=1
-if [ -e "/system/vendor/bin/samsung-gpsd" ] && [ "$vibrant" -eq 0 ]; then
-    echo 2 > /proc/sys/kernel/randomize_va_space
-else
-    echo 0 > /proc/sys/kernel/randomize_va_space
-fi    	
-
-if $BB [ -e /data/local/devil/gsm ]; then
-	# GSM mode
-	SD_PART='/dev/block/mmcblk0p1'
-else
-	# CDMA mode
-	SD_PART='/dev/block/mmcblk1p1'
-fi
-
-
 #clean init.d from known files
 if [ -e "/cache/clean_initd" ]; then
 echo; echo "cleaning init.d from known files..."
 	./sbin/clean_initd.sh
 fi
-
 
 $BB touch /data/local/devil/bigmem
 $BB touch /data/local/devil/zram_size
@@ -246,8 +228,8 @@ if [ -e "/data/local/devil/lock_sc_min" ];then
 	fi
 else
 	echo "lock_sc_min: did not find valid lock_sc_min mode: setting default"
-	echo 1 > /data/local/devil/lock_sc_min
-	echo 1 > /sys/devices/system/cpu/cpu0/cpufreq/lock_scaling_min
+	echo 0 > /data/local/devil/lock_sc_min
+	echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/lock_scaling_min
 fi
 
 
@@ -267,28 +249,6 @@ else
 	echo 1 > /data/local/devil/fsync
 	echo 1 > /sys/devices/virtual/misc/fsynccontrol/fsync_enabled
 fi
-
-
-# set idle2
-echo; echo "idle2"
-if [ -e "/data/local/devil/idle2" ];then
-	idle2=`$BB cat /data/local/devil/idle2`
-	if [ "$idle2" -eq 0 ] || [ "$idle2" -eq 1 ];then
-    		echo "idle2: found valid idle2 mode: <$idle2>"
-		echo "idle2: 0 = don't disable, 1 = disable"
-    		echo $idle2 > /sys/module/cpuidle/parameters/idle2_disabled
-	else
-		echo "idle2: did not find valid idle2 mode: setting disabled"
-		echo 1 > /sys/module/cpuidle/parameters/idle2_disabled
-	fi
-else
-	echo "idle2: did not find valid idle2 mode: setting disabled"
-	echo 1 > /data/local/devil/idle2
-	echo 1 > /sys/module/cpuidle/parameters/idle2_disabled
-fi
-
-
-
 
 # set deep_idle
 echo; echo "deep_idle"
@@ -326,24 +286,6 @@ if [ "$deep_idle" -eq 1 ]; then
 	echo 0 > /sys/devices/virtual/misc/deepidle/stats_enabled
    fi
 fi
-
-# uksm
-echo; echo "uksm"
-if [ -e "/data/local/devil/uksm" ];then
-	uksm=`$BB cat /data/local/devil/uksm`
-	if [ "$uksm" -eq 1 ]; then
-    		echo "uksm: found valid uksm value: <enabled>";
-      		echo 1 > /sys/kernel/mm/uksm/run;
-	else
-    		echo "uksm: found valid uksm value: <disabled>";
-      		echo 0 > /sys/kernel/mm/uksm/run;
-	fi
-else
-    	echo "uksm not found: doing nothing";
-      	echo 0 > /sys/kernel/mm/uksm/run;
-    	echo 0 > /data/local/devil/uksm;
-fi
-
 
 # set touchwake
 echo; echo "touchwake"
@@ -491,14 +433,6 @@ for i in $MTD $MMC $LOOP $RAM;do
     echo
 done
 
-
-
-# debug output BLN
-echo;echo "bln"
-cat_msg_sysfile "/sys/class/misc/backlightnotification/enabled: " /sys/class/misc/backlightnotification/enabled
-
-
-
 # load bus_limit_settings
 echo; echo "bus_limit"
 	if [ -e "/data/local/devil/bus_limit" ];then
@@ -524,19 +458,19 @@ echo; echo "bus_limit"
 
 # set vibrator value
 echo; echo "vibrator"
-if [ -e "/data/local/devil/vibrator" ];then
-	vibrator=`$BB cat /data/local/devil/vibrator`
-	if [ "$vibrator" -le 43640 ] && [ "$vibrator" -ge 20000 ];then
+if [ -e "/data/local/devil/vibrator_cm" ];then
+	vibrator=`$BB cat /data/local/devil/vibrator_cm`
+	if [ "$vibrator" -le 100 ] && [ "$vibrator" -ge 0 ];then
     		echo "vibrator: found valid vibrator intensity: <$vibrator>"
-    		echo $vibrator > /sys/class/timed_output/vibrator/duty
+    		echo $vibrator > /sys/class/misc/pwm_duty/pwm_duty
 	else
 		echo "vibrator: did not find valid vibrator intensity: setting default"
-		echo 40140 > /sys/class/timed_output/vibrator/duty
+		echo 80 > /sys/class/misc/pwm_duty/pwm_duty
 	fi
 else
 	echo "vibrator: did not find valid vibrator intensity: setting default"
-	echo 40140 > /data/local/devil/vibrator
-	echo 40140 > /sys/class/timed_output/vibrator/duty
+	echo 80 > /data/local/devil/vibrator_cm
+	echo 80 > /sys/class/misc/pwm_duty/pwm_duty
 fi
 
 # set wifi
@@ -726,3 +660,5 @@ swappiness=`$BB cat /proc/sys/vm/swappiness`
 echo $swappiness > /data/local/devil/swappiness
 fi
 cat_msg_sysfile "swappiness: " /proc/sys/vm/swappiness  
+
+busybox mount -o ro,remount,noatime,noauto_da_alloc,nodiratime,barrier=0 /system
