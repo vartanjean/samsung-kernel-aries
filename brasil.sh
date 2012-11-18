@@ -77,6 +77,7 @@ then
 echo ""
 echo "updating kernel for rom"
 echo ""
+mkdir -p ~/android/kernel/i9000b/cmc/
 cp arch/arm/boot/zImage ~/android/kernel/i9000b/cmc/boot.img
 fi
 echo "launching packaging script"
@@ -146,6 +147,7 @@ then
 echo ""
 echo "updating kernel for rom"
 echo ""
+mkdir -p ~/android/kernel/i9000b/vc/
 cp arch/arm/boot/zImage ~/android/kernel/i9000b/vc/boot.img
 fi
 echo "launching packaging script"

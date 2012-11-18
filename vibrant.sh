@@ -73,6 +73,7 @@ cp arch/arm/boot/zImage ./release/boot.img
 if [ "$target" = "all"  ] 
 then
 echo "updating kernel for rom"
+mkdir -p ~/android/kernel/vibrant/cmc/
 cp arch/arm/boot/zImage ~/android/kernel/vibrant/cmc/boot.img
 fi
 echo "launching packaging script"
@@ -140,6 +141,7 @@ cp arch/arm/boot/zImage ./release/boot.img
 if [ "$target" = "all"  ] 
 then
 echo "updating kernel for rom"
+mkdir -p ~/android/kernel/vibrant/vc/
 cp arch/arm/boot/zImage ~/android/kernel/vibrant/vc/boot.img
 fi
 echo "launching packaging script"
