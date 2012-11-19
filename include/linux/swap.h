@@ -351,7 +351,7 @@ extern void disable_swap_token(struct mem_cgroup *memcg);
 
 static inline int has_swap_token(struct mm_struct *mm)
 {
-	return (mm == swap_token_mm);
+	return (mm == swap_token_mm && vm_swap_full());
 }
 
 static inline void put_swap_token(struct mm_struct *mm)
