@@ -3,10 +3,10 @@
 /recovery	mtd		recovery
 /boot		mtd		boot
 
-/system		yaffs2		system
-/cache		yaffs2		cache
-/datadata	yaffs2		datadata
+/system		ext4		/dev/lvpool/system
+/cache		ext4		/dev/block/mmcblk0p3
 
 /sdcard		vfat		/dev/block/mmcblk1p1
-/data		ext4		/dev/block/mmcblk0p1  length=-16384
+/data		ext4		/dev/lvpool/userdata      length=-16384
+/datadata       yaffs2          datadata
 

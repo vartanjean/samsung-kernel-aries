@@ -128,42 +128,58 @@ const unsigned long int_volt_max = 1300000;
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
 		.arm_volt   = DVSARM1,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM1,
+#endif
 		.int_volt   = DVSINT1,
 	},
 	[L1] = {
 		.arm_volt   = DVSARM2,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM2,
+#endif
 		.int_volt   = DVSINT2,
 	},
 	[L2] = {
 		.arm_volt   = DVSARM3,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM3,
+#endif
 		.int_volt   = DVSINT3,
 	},
 	[L3] = { //1000
 		.arm_volt   = DVSARM4,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM4,
+#endif
 		.int_volt   = DVSINT4,
 	},
 	[L4] = { 
 		.arm_volt   = DVSARM5,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM5,
+#endif
 		.int_volt   = DVSINT5,
 	},
 	[L5] = {
 		.arm_volt   = DVSARM6,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM6,
+#endif
 		.int_volt   = DVSINT5,
 	},
 	[L6] = {
 		.arm_volt   = DVSARM7,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM7,
+#endif
 		.int_volt   = DVSINT5,
 	},
 	[L7] = {
 		.arm_volt   = DVSARM8,
+#ifdef CONFIG_CUSTOM_VOLTAGE
 		.arm_screenoff_volt = DVSARM8,
+#endif
 		.int_volt   = DVSINT6,
 	},
 };
@@ -1323,6 +1339,7 @@ static struct early_suspend _powersave_early_suspend = {
 
 void s5pv210_bus_limit_true(void)
 {
+#ifdef CONFIG_CUSTOM_VOLTAGE
  int i; 
 if(proximity_active() && bus_limit_automatic){
 // only save the actual voltages
@@ -1359,10 +1376,12 @@ pr_info("lowered int_volt");
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
 }
+#endif
 }
 
 void s5pv210_bus_limit_false(void)
 {
+#ifdef CONFIG_CUSTOM_VOLTAGE
 int i;
   mutex_lock(&set_freq_lock);
   clkdiv_val[4][2] = 3;
@@ -1383,6 +1402,7 @@ int i;
   }
   bus_speed_old = 0;
   mutex_unlock(&set_freq_lock);
+#endif
 }
 
 

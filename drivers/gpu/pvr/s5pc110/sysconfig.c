@@ -35,7 +35,12 @@
 #include <linux/regulator/consumer.h>
 #include <linux/clk.h>
 #include <linux/err.h>
+
+#ifdef CONFIG_DVFS_LIMIT
+#include <mach/cpu-freq-v210.h>
+#else
 #include <linux/cpufreq.h>
+#endif
 
 #define REAL_HARDWARE 1
 #define SGX540_BASEADDR 0xf3000000
@@ -89,18 +94,12 @@ IMG_UINT32   PVRSRV_BridgeDispatchKM( IMG_UINT32  Ioctl,
  * In arch/arm/mach-s5pv210/cpufreq.c, the bus speed is only lowered when the
  * CPU freq is below 200MHz.
  */
+#define MIN_CPU_KHZ_FREQ 200000
 
 static struct clk *g3d_clock;
 static struct regulator *g3d_pd_regulator;
 
-#define MIN_CPU_KHZ_FREQ 200000
-#define CPU_LOW_SPEED 100000
-
-#ifdef CONFIG_LIVE_OC
-extern unsigned long cpuL6freq(void);
-extern unsigned long cpuL7freq(void);
-#endif
-
+#ifndef CONFIG_DVFS_LIMIT
 static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 					 unsigned long event, void *data)
 {
@@ -111,37 +110,27 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 
 	/* This is our indicator of GPU activity */
 	if (regulator_is_enabled(g3d_pd_regulator))
-#ifdef CONFIG_LIVE_OC
-		cpufreq_verify_within_limits(policy, cpuL6freq(),
-					     policy->cpuinfo.max_freq);
-#else
 		cpufreq_verify_within_limits(policy, MIN_CPU_KHZ_FREQ,
 					     policy->cpuinfo.max_freq);
-#endif
 
-/*else 
-
-#ifdef CONFIG_LIVE_OC
-  		cpufreq_verify_within_limits(policy, cpuL7freq(),
-               					policy->cpuinfo.max_freq);
-#else
-  		cpufreq_verify_within_limits(policy, CPU_LOW_SPEED,
-               					policy->cpuinfo.max_freq);
-#endif
-*/
 	return 0;
 }
 
 static struct notifier_block cpufreq_limit_notifier = {
 	.notifier_call = limit_adjust_cpufreq_notifier,
 };
-
+#endif
 
 static PVRSRV_ERROR EnableSGXClocks(void)
 {
+#ifdef CONFIG_DVFS_LIMIT
+	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_PVR, L3); /* 200 MHz */
+#endif
 	regulator_enable(g3d_pd_regulator);
 	clk_enable(g3d_clock);
+#ifndef CONFIG_DVFS_LIMIT
 	cpufreq_update_policy(current_thread_info()->cpu);
+#endif
 
 	return PVRSRV_OK;
 }
@@ -150,7 +139,11 @@ static PVRSRV_ERROR DisableSGXClocks(void)
 {
 	clk_disable(g3d_clock);
 	regulator_disable(g3d_pd_regulator);
+#ifdef CONFIG_DVFS_LIMIT
+	s5pv210_unlock_dvfs_high_level(DVFS_LOCK_TOKEN_PVR);
+#else
 	cpufreq_update_policy(current_thread_info()->cpu);
+#endif
 
 	return PVRSRV_OK;
 }
@@ -270,7 +263,7 @@ PVRSRV_ERROR SysInitialise(IMG_VOID)
 
 	gpsSysData->pvSysSpecificData = (IMG_PVOID)&gsSysSpecificData;
 	OSMemSet(&gsSGXDeviceMap, 0, sizeof(SGX_DEVICE_MAP));
-
+	
 	/* Set up timing information*/
 	psTimingInfo = &gsSGXDeviceMap.sTimingInfo;
 	psTimingInfo->ui32CoreClockSpeed = SYS_SGX_CLOCK_SPEED;
@@ -373,7 +366,7 @@ PVRSRV_ERROR SysInitialise(IMG_VOID)
 				{
 #if defined(SGX_FEATURE_VARIABLE_MMU_PAGE_SIZE)
 					IMG_CHAR *pStr;
-
+								
 					switch(psDeviceMemoryHeap[i].ui32HeapID)
 					{
 						case HEAP_ID(PVRSRV_DEVICE_TYPE_SGX, SGX_GENERAL_HEAP_ID):
@@ -554,7 +547,7 @@ PVRSRV_ERROR SysFinalise(IMG_VOID)
 
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 	DisableSGXClocks();
-#ifdef CONFIG_PVR_LIMIT_MINFREQ
+#ifndef CONFIG_DVFS_LIMIT
 	cpufreq_register_notifier(&cpufreq_limit_notifier,
 				  CPUFREQ_POLICY_NOTIFIER);
 #endif
@@ -588,9 +581,13 @@ PVRSRV_ERROR SysDeinitialise (SYS_DATA *psSysData)
 
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 	/* TODO: regulator and clk put. */
+#ifdef CONFIG_DVFS_LIMIT
+	s5pv210_unlock_dvfs_high_level(DVFS_LOCK_TOKEN_PVR);
+#else
 	cpufreq_unregister_notifier(&cpufreq_limit_notifier,
 				    CPUFREQ_POLICY_NOTIFIER);
 	cpufreq_update_policy(current_thread_info()->cpu);
+#endif
 #endif
 
 #if defined(SYS_USING_INTERRUPTS)
@@ -697,7 +694,7 @@ IMG_DEV_PHYADDR SysCpuPAddrToDevPAddr (PVRSRV_DEVICE_TYPE eDeviceType,
 
 	/* Note: for no HW UMA system we assume DevP == CpuP */
 	DevPAddr.uiAddr = CpuPAddr.uiAddr;
-
+	
 	return DevPAddr;
 }
 

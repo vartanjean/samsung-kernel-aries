@@ -409,7 +409,6 @@ static int gp2a_setup_irq(struct gp2a_data *gp2a)
 		return rc;
 	}
 
-#ifndef CONFIG_SAMSUNG_FASCINATE
 	rc = gpio_direction_input(pdata->p_out);
 	if (rc < 0) {
 		pr_err("%s: failed to set gpio %d as input (%d)\n",
@@ -418,9 +417,6 @@ static int gp2a_setup_irq(struct gp2a_data *gp2a)
 	}
 
 	irq = gpio_to_irq(pdata->p_out);
-#else
-	irq = pdata->p_irq;
-#endif
 
 	rc = request_threaded_irq(irq, NULL,
 			 gp2a_irq_handler,
@@ -446,9 +442,7 @@ static int gp2a_setup_irq(struct gp2a_data *gp2a)
 	goto done;
 
 err_request_irq:
-#ifndef CONFIG_SAMSUNG_FASCINATE
 err_gpio_direction_input:
-#endif
 	gpio_free(pdata->p_out);
 done:
 	return rc;
