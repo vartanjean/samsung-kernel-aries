@@ -8,7 +8,7 @@ export USE_CCACHE=1
 	CCACHE_LOGFILE="/home/dominik/android/ccache/ccache-log"
         export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
 ###########################################################################################################
-number="1.8.2_Jelly_Helly"
+number="1.9.4_Jelly_42"
 
 target="$1"
 
@@ -32,55 +32,24 @@ if [ "$scheduler" != "BFS"  ] && [ "$scheduler" != "bfs" ]
 	scheduler="BFS"
 fi
 
-rm -rf usr/galaxysmtd_initramfs/files/*
-cp -r  usr/init_files/files/ usr/galaxysmtd_initramfs/
-cp usr/init_files/init_gsm usr/galaxysmtd_initramfs/init
-cp usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/galaxysmtd_initramfs/ics_init/sbin/clean_initd.sh
-
-cp usr/init_files/boot-patch.sh usr/galaxysmtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/galaxysmtd_initramfs/jb_init/sbin/clean_initd.sh
-
-
-rm -rf usr/galaxysbmtd_initramfs/files/*
-cp -r  usr/init_files/files/ usr/galaxysbmtd_initramfs/
-cp usr/init_files/init_gsm usr/galaxysbmtd_initramfs/init
-cp usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/galaxysbmtd_initramfs/ics_init/sbin/clean_initd.sh
-
-cp usr/init_files/boot-patch.sh usr/galaxysbmtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/galaxysbmtd_initramfs/jb_init/sbin/clean_initd.sh
-
-
-rm -rf usr/captivatemtd_initramfs/files/*
-cp -r  usr/init_files/files/ usr/captivatemtd_initramfs/
-cp usr/init_files/init_gsm usr/captivatemtd_initramfs/init
-cp usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/captivatemtd_initramfs/ics_init/sbin/clean_initd.sh
-
-cp usr/init_files/boot-patch.sh usr/captivatemtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/captivatemtd_initramfs/jb_init/sbin/clean_initd.sh
-
-
-rm -rf usr/vibrantmtd_initramfs/files/*
-cp -r  usr/init_files/files/ usr/vibrantmtd_initramfs/
-cp usr/init_files/init_gsm usr/vibrantmtd_initramfs/init
-cp usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/vibrantmtd_initramfs/ics_init/sbin/clean_initd.sh
-
-cp usr/init_files/boot-patch.sh usr/vibrantmtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/vibrantmtd_initramfs/jb_init/sbin/clean_initd.sh
-
-
-rm -rf usr/fascinatemtd_initramfs/files/*
-cp -r  usr/init_files/files/ usr/fascinatemtd_initramfs/
-cp usr/init_files/init_cdma usr/fascinatemtd_initramfs/init
-cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/ics_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/ics_init/sbin/clean_initd.sh
-
-cp usr/init_files/boot-patch.sh usr/fascinatemtd_initramfs/jb_init/sbin/boot-patch.sh
-cp usr/init_files/clean_initd.sh usr/fascinatemtd_initramfs/jb_init/sbin/clean_initd.sh
-
+for folder in usr/*
+do
+if [ "$folder" != "usr/init_files" ] && [ -d "$folder" ] ; then
+echo "$folder"
+	rm -rf usr/$folder/files/*
+	cp -r  usr/init_files/files/ $folder/
+	if [ "$folder" != "fascinatemtd_initramfs" ] ; then
+	cp usr/init_files/init_gsm $folder/init
+	else
+	cp usr/init_files/init_cdma $folder/init
+	fi
+	cp usr/init_files/init.rc $folder/jb_init/init.rc
+	cp usr/init_files/boot-patch.sh $folder/ics_init/sbin/boot-patch.sh
+	cp usr/init_files/clean_initd.sh $folder/ics_init/sbin/clean_initd.sh
+	cp usr/init_files/boot-patch.sh $folder/jb_init/sbin/boot-patch.sh
+	cp usr/init_files/clean_initd.sh $folder/jb_init/sbin/clean_initd.sh
+fi
+done
 
 if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 
 ####################### prepare building for gsm device ###########################################################
