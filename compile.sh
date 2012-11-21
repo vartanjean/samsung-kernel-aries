@@ -35,10 +35,9 @@ fi
 for folder in usr/*
 do
 if [ "$folder" != "usr/init_files" ] && [ -d "$folder" ] ; then
-echo "$folder"
-	rm -rf usr/$folder/files/*
+	rm -rf $folder/files/*
 	cp -r  usr/init_files/files/ $folder/
-	if [ "$folder" != "fascinatemtd_initramfs" ] ; then
+	if [ "$folder" != "usr/fascinatemtd_initramfs" ] ; then
 	cp usr/init_files/init_gsm $folder/init
 	else
 	cp usr/init_files/init_cdma $folder/init
