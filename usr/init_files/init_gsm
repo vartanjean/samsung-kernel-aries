@@ -1,4 +1,4 @@
-#!/ics_rec_init/sbin/busybox sh
+#!/rec_init/sbin/busybox sh
 #
 # PURPOSE 
 # ONE KERNEL IMAGE WITH ONE INITRAMFS FLASHABLE WITH HEIMDALL/ODIN 
@@ -34,13 +34,11 @@
 # 
 
 
-#APP='Semaphore.apk'
-
 export _PATH="$PATH"
 export PATH=/
 
 # set busybox location, save busybox as we will move directories
-/ics_rec_init/sbin/busybox cp /ics_rec_init/sbin/recovery /busybox
+/rec_init/sbin/busybox cp /rec_init/sbin/recovery /busybox
 BB="/busybox"
 
 # initialize working dir and log
@@ -153,12 +151,10 @@ $BB cat /proc/cmdline
 
 $BB echo "starting bootmode detection..."
 if $BB test -e /cache/.startrecovery ||
-	$BB grep -q bootmode=2 /proc/cmdline || 
-	$BB grep -q bootmode=9 /proc/cmdline || 
-	$BB grep -q bootmode=5 /proc/cmdline ||
-	$BB grep -q bootmode=12 /proc/cmdline || 
-	$BB grep -q bootmode=19 /proc/cmdline || 
-	$BB grep -q bootmode=15 /proc/cmdline; then
+	$BB test ! -f /data/rom ||
+	$BB grep -q bootmode=2 /proc/cmdline || # normal mode
+	$BB grep -q bootmode=5 /proc/cmdline || # xl mem
+	$BB grep -q bootmode=9 /proc/cmdline; then # big mem
     # recovery boot
     $BB echo "found recovery command, preparing boot..."
 	$BB rm -fr /cache/.startrecovery
@@ -167,8 +163,28 @@ if $BB test -e /cache/.startrecovery ||
 #    $BB echo "moving twrp to /"
 #    $BB mv /twrp/* /
 #else
-    $BB echo "moving ics_rec_init to /"
-    $BB mv /ics_rec_init/* /
+    $BB echo "moving rec_init to /"
+    $BB mv /rec_init/* /
+
+
+####################################################################
+########## recovery.fstab depending on selection ###################
+####################################################################
+if $BB test -f /data/rom ; then
+	if $BB grep -q secondary /data/rom ; then
+		cp /etc/secondary.fstab /etc/recovery.fstab
+	elif $BB grep -q primary /data/rom ; then
+		cp /etc/primary.fstab /etc/recovery.fstab
+	else 
+		cp /etc/emergency.fstab /etc/recovery.fstab
+	fi
+else
+	cp /etc/emergency.fstab /etc/recovery.fstab
+fi
+
+#####################################################################	
+
+
     $BB chmod 777 /sbin/fix_permissions
     $BB chmod 777 /sbin/killrecovery.sh
     $BB chmod 777 /sbin/nandroid-md5.sh
@@ -186,8 +202,8 @@ elif ! $BB test -e /system/build.prop ; then
     $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
     $BB mkdir /cache/recovery
 
-    $BB echo "moving ics_rec_init to /..."
-    $BB mv /ics_rec_init/* /
+    $BB echo "moving rec_init to /..."
+    $BB mv /rec_init/* /
 	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
         $BB echo "moving jb_init to /"
@@ -220,9 +236,7 @@ bigmem=0
 ##############################################################################################################	
 
 	if $BB grep -q bootmode=3 /proc/cmdline || 
-		$BB grep -q bootmode=5 /proc/cmdline || 
-		$BB grep -q bootmode=13 /proc/cmdline || 
-		$BB grep -q bootmode=15 /proc/cmdline; then
+		$BB grep -q bootmode=5 /proc/cmdline ; then
     		$BB echo "copying XL_mem libs"
     		if $BB [ "$jb" -eq 1 ]; then
     			$BB mv /files/xl_jb/* /system/lib/
@@ -232,9 +246,7 @@ bigmem=0
     		$BB echo 1 > /sys/kernel/bigmem/enable
 
 	elif $BB grep -q bootmode=7 /proc/cmdline || 
-		$BB grep -q bootmode=9 /proc/cmdline || 
-		$BB grep -q bootmode=17 /proc/cmdline || 
-		$BB grep -q bootmode=19 /proc/cmdline; then
+		$BB grep -q bootmode=9 /proc/cmdline ; then
     		$BB echo "copying XL_mem libs"
     		if $BB [ "$jb" -eq 1 ]; then
     			$BB mv /files/xl_jb/* /system/lib/
@@ -287,7 +299,7 @@ $BB rm /erase_image
 # busybox not needed anymore...
 $BB rm -rf /ics_init
 $BB rm -rf /jb_init
-$BB rm -rf /ics_rec_init
+$BB rm -rf /rec_init
 $BB rm -rf /twrp
 
 

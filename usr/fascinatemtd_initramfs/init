@@ -1,4 +1,4 @@
-#!/ics_rec_init/sbin/busybox sh
+#!/rec_init/sbin/busybox sh
 #
 # PURPOSE 
 # ONE KERNEL IMAGE WITH ONE INITRAMFS FLASHABLE WITH HEIMDALL/ODIN 
@@ -33,14 +33,11 @@
 #  -- erase_image (binary)
 # 
 
-
-#APP='Semaphore.apk'
-
 export _PATH="$PATH"
 export PATH=/
 
 # set busybox location, save busybox as we will move directories
-/ics_rec_init/sbin/busybox cp /ics_rec_init/sbin/recovery /busybox
+/rec_init/sbin/busybox cp /rec_init/sbin/recovery /busybox
 BB="/busybox"
 
 # initialize working dir and log
@@ -165,8 +162,8 @@ if $BB test -e /cache/.startrecovery || \
 #    $BB echo "moving twrp to /"
 #    $BB mv /twrp/* /
 #else
-    $BB echo "moving ics_rec_init to /"
-    $BB mv /ics_rec_init/* /
+    $BB echo "moving rec_init to /"
+    $BB mv /rec_init/* /
     $BB chmod 777 /sbin/fix_permissions
     $BB chmod 777 /sbin/killrecovery.sh
     $BB chmod 777 /sbin/nandroid-md5.sh
@@ -183,8 +180,8 @@ elif ! $BB test -e /system/build.prop ; then
   busybox mount -t ext4 /dev/block/mmcblk0p3 /cache
     $BB mkdir /cache/recovery
 
-    $BB echo "moving ics_rec_init to /..."
-    $BB mv /ics_rec_init/* /
+    $BB echo "moving rec_init to /..."
+    $BB mv /rec_init/* /
 	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
 
@@ -286,7 +283,7 @@ $BB rm /make_ext4fs
 # busybox not needed anymore...
 $BB rm -rf /ics_init
 $BB rm -rf /jb_init
-$BB rm -rf /ics_rec_init
+$BB rm -rf /rec_init
 $BB rm -rf /twrp
 
 $BB date >>boot.txt
