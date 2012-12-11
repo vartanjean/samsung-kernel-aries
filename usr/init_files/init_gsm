@@ -71,11 +71,31 @@ $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
+sleep 2
+
 /lvm/sbin/lvm vgscan --mknodes --ignorelockingfailure
 /lvm/sbin/lvm vgchange -aly --ignorelockingfailure
 
-$BB mount -t ext4 /dev/lvpool/system /system
 $BB mount -t ext4 /dev/lvpool/userdata /data
+
+####################################################################
+########## mount system partition depending on selection ###########
+####################################################################
+if $BB test -f /data/rom ; then
+	if $BB grep -q secondary /data/rom ; then
+		$BB mount -t ext4 /dev/lvpool/system /secondary_system
+	elif $BB grep -q primary /data/rom ; then
+		$BB mount -t ext4 /dev/lvpool/system /primary_system
+	else 
+		echo "no rom selected..."
+		echo "booting to recovery"
+	fi
+else
+		echo "no rom selected..."
+		echo "booting to recovery"
+fi
+
+#####################################################################	
 
 $BB mv /files/charger /
 
@@ -206,8 +226,8 @@ elif ! $BB test -e /system/build.prop ; then
     $BB mv /rec_init/* /
 	$BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 else
-        $BB echo "moving jb_init to /"
-    	$BB mv /jb_init/* /
+        $BB echo "moving jb42_init to /"
+    	$BB mv /jb42_init/* /
 
 ################ apply bigmem at first boot ##################################################################
 
@@ -298,7 +318,7 @@ $BB rm /erase_image
 # original initramfs directories not needed anymore,
 # busybox not needed anymore...
 $BB rm -rf /ics_init
-$BB rm -rf /jb_init
+$BB rm -rf /jb42_init
 $BB rm -rf /rec_init
 $BB rm -rf /twrp
 
