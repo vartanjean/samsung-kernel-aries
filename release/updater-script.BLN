@@ -1,22 +1,17 @@
-show_progress(0.500000, 0);
-run_program("/sbin/busybox", "mount", "/system");
-run_program("/sbin/busybox", "mount", "/data");
-#show_progress(0.200000, 0);
+package_extract_file("updater.sh", "/tmp/updater.sh");
+set_perm(0, 0, 0777, "/tmp/updater.sh");
+package_extract_file("make_ext4fs", "/tmp/make_ext4fs");
+set_perm(0, 0, 0777, "/tmp/make_ext4fs");
+package_extract_file("busybox", "/tmp/busybox");
+set_perm(0, 0, 0777, "/tmp/busybox");
+package_extract_file("flash_image", "/tmp/flash_image");
+set_perm(0, 0, 0777, "/tmp/flash_image");
+package_extract_file("erase_image", "/tmp/erase_image");
+set_perm(0, 0, 0777, "/tmp/erase_image");
 package_extract_file("bml_over_mtd", "/tmp/bml_over_mtd");
 set_perm(0, 0, 0777, "/tmp/bml_over_mtd");
 package_extract_file("bml_over_mtd.sh", "/tmp/bml_over_mtd.sh");
 set_perm(0, 0, 0777, "/tmp/bml_over_mtd.sh");
-#show_progress(0.200000, 10);
-package_extract_dir("data/", "/data/");
+package_extract_file("boot.img", "/tmp/boot.img");
+assert(run_program("/tmp/updater.sh") == 0);
 
-package_extract_dir("system/", "/system/");
-delete("/system/lib/hw/lights.goldfish.so"); 
-set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/init.d");
-show_progress(0.200000, 10);
-
-assert(package_extract_file("boot.img", "/tmp/boot.img"),
-       write_raw_image("/tmp/boot.img", "boot"),
-       run_program("/tmp/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/boot.img"),
-       delete("/tmp/boot.img"));
-show_progress(0.100000, 0);
-unmount("/system");

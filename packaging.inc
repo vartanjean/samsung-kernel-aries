@@ -41,7 +41,7 @@ fi
 #	cp vibrator system/etc/devil/ || exit 1
 
 	mkdir -p system/bin
-	zip -q -r "${REL}.zip" system data boot.img META-INF make_ext4fs erase_image flash_image bml_over_mtd bml_over_mtd.sh || exit 1
+	zip -q -r "${REL}.zip" system data boot.img META-INF make_ext4fs erase_image flash_image bml_over_mtd bml_over_mtd.sh busybox updater.sh || exit 1
 	sha256sum ${REL}.zip > ${REL}.sha256sum
 
 #	tar -H ustar -c zImage > "${REL}"_odin.tar
