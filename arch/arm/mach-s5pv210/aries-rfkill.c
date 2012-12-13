@@ -48,16 +48,7 @@ static struct wake_lock rfkill_wake_lock;
 
 static struct rfkill *bt_rfk;
 static const char bt_name[] = "bcm4329";
-
-#ifdef CONFIG_CPU_DIDLE
-static bool bt_running = false;
-
-bool bt_is_running(void)
-{
-	return bt_running;
-}
-EXPORT_SYMBOL(bt_is_running);
-#endif
+static bool current_blocked = true;
 
 static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 {
@@ -128,8 +119,6 @@ static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 	case RFKILL_USER_STATE_SOFT_BLOCKED:
 		pr_debug("[BT] Device Powering OFF\n");
 
-		bt_running = false;
-
 		ret = disable_irq_wake(irq);
 		if (ret < 0)
 			pr_err("[BT] unset wakeup src failed\n");
@@ -171,8 +160,6 @@ irqreturn_t bt_host_wake_irq_handler(int irq, void *dev_id)
 {
 	pr_debug("[BT] bt_host_wake_irq_handler start\n");
 
-	bt_running = true;
-	
 	if (gpio_get_value(GPIO_BT_HOST_WAKE))
 		wake_lock(&rfkill_wake_lock);
 	else
@@ -185,6 +172,13 @@ static int bt_rfkill_set_block(void *data, bool blocked)
 {
 	unsigned int ret = 0;
 
+	if (current_blocked == blocked) {
+		pr_debug("[BT] keeping current blocked state %d\n", blocked);
+		return ret;
+	}
+
+	current_blocked = blocked;
+
 	ret = bluetooth_set_power(data, blocked ?
 			RFKILL_USER_STATE_SOFT_BLOCKED :
 			RFKILL_USER_STATE_UNBLOCKED);
@@ -196,7 +190,7 @@ static const struct rfkill_ops bt_rfkill_ops = {
 	.set_block = bt_rfkill_set_block,
 };
 
-static int aries_rfkill_probe(struct platform_device *pdev)
+static int __init aries_rfkill_probe(struct platform_device *pdev)
 {
 	int irq;
 	int ret;
@@ -250,7 +244,7 @@ static int aries_rfkill_probe(struct platform_device *pdev)
 	}
 
 	rfkill_set_sw_state(bt_rfk, 1);
-	bluetooth_set_power(NULL, RFKILL_USER_STATE_SOFT_BLOCKED);
+	bt_rfkill_set_block(NULL, true);
 
 	return ret;
 

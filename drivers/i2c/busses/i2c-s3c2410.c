@@ -435,11 +435,6 @@ static irqreturn_t s3c24xx_i2c_irq(int irqno, void *dev_id)
 	unsigned long status;
 	unsigned long tmp;
 
-	if (unlikely(i2c == NULL)) {
-		printk(KERN_ERR "%s: i2c == NULL bailing!\n", __func__);
-		return -EINVAL;
-	}
-
 	status = readl(i2c->regs + S3C2410_IICSTAT);
 
 	if (status & S3C2410_IICSTAT_ARBITR) {
@@ -572,22 +567,6 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 		writel(iicstat, i2c->regs + S3C2410_IICSTAT);
 	}
 	spin_unlock_irq(&i2c->lock);
-
-
-	/* first, try busy waiting briefly */
-	do {
-		cpu_relax();
-		iicstat = readl(i2c->regs + S3C2410_IICSTAT);
-	} while ((iicstat & S3C2410_IICSTAT_START) && --spins);
-
-	/* if that timed out sleep */
-	if (!spins) {
-		msleep(1);
-		iicstat = readl(i2c->regs + S3C2410_IICSTAT);
-	}
-
-	if (iicstat & S3C2410_IICSTAT_START)
-		dev_warn(i2c->dev, "timeout waiting for bus idle\n");
 
  out:
 	return ret;
@@ -780,14 +759,7 @@ static inline void s3c24xx_i2c_deregister_cpufreq(struct s3c24xx_i2c *i2c)
 {
 }
 #endif
-static int s3c24xx_i2c_parse_dt_gpio(struct s3c24xx_i2c *i2c)
-{
-	return 0;
-}
 
-static void s3c24xx_i2c_dt_gpio_free(struct s3c24xx_i2c *i2c)
-{
-}
 /* s3c24xx_i2c_init
  *
  * initialise the controller, set the IO lines and frequency
@@ -807,15 +779,12 @@ static int s3c24xx_i2c_init(struct s3c24xx_i2c *i2c)
 
 	if (pdata->cfg_gpio)
 		pdata->cfg_gpio(to_platform_device(i2c->dev));
-	else
-		if (s3c24xx_i2c_parse_dt_gpio(i2c))
-			return -EINVAL;
 
 	/* write slave address */
 
 	writeb(pdata->slave_addr, i2c->regs + S3C2410_IICADD);
 
-	dev_info(i2c->dev, "slave address 0x%02x\n", pdata->slave_addr);
+	dev_dbg(i2c->dev, "slave address 0x%02x\n", pdata->slave_addr);
 
 	writel(iicon, i2c->regs + S3C2410_IICCON);
 
@@ -829,8 +798,10 @@ static int s3c24xx_i2c_init(struct s3c24xx_i2c *i2c)
 
 	/* todo - check that the i2c lines aren't being dragged anywhere */
 
-	dev_info(i2c->dev, "bus frequency set to %d KHz\n", freq);
+	dev_dbg(i2c->dev, "bus frequency set to %d KHz\n", freq);
 	dev_dbg(i2c->dev, "S3C2410_IICCON=0x%02lx\n", iicon);
+
+	dev_dbg(i2c->dev, "S3C2440_IICLC=%08x\n", pdata->sda_delay);
 	writel(pdata->sda_delay, i2c->regs + S3C2440_IICLC);
 
 	return 0;
@@ -844,7 +815,7 @@ static int s3c24xx_i2c_init(struct s3c24xx_i2c *i2c)
 static int s3c24xx_i2c_probe(struct platform_device *pdev)
 {
 	struct s3c24xx_i2c *i2c;
-	struct s3c2410_platform_i2c *pdata = NULL;
+	struct s3c2410_platform_i2c *pdata;
 	struct resource *res;
 	int ret;
 
@@ -1011,7 +982,6 @@ static int s3c24xx_i2c_remove(struct platform_device *pdev)
 	iounmap(i2c->regs);
 
 	release_resource(i2c->ioarea);
-	s3c24xx_i2c_dt_gpio_free(i2c);
 	kfree(i2c->ioarea);
 	kfree(i2c);
 

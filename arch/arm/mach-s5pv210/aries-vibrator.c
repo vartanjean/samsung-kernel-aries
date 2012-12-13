@@ -41,6 +41,7 @@
 #define PWM_PERIOD		(89284 / 2)
 #define PWM_DUTY_MAX		(87280 / 2)
 #endif
+
 #define MAX_TIMEOUT		10000 /* 10s */
 
 #define PWM_DUTY_MIN		22340
@@ -56,24 +57,11 @@ static struct vibrator {
 	struct work_struct work;
 } vibdata;
 
-#ifdef CONFIG_CPU_DIDLE
-static bool vibrator_running = false;
-
-bool vibrator_is_running(void)
-{
-	return vibrator_running;
-}
-EXPORT_SYMBOL(vibrator_is_running);
-#endif
-
 static void aries_vibrator_off(void)
 {
 	pwm_disable(vibdata.pwm_dev);
 	gpio_direction_output(GPIO_VIBTONE_EN1, GPIO_LEVEL_LOW);
 	wake_unlock(&vibdata.wklock);
-#ifdef CONFIG_CPU_DIDLE
-	vibrator_running = false;
-#endif	
 }
 
 static int aries_vibrator_get_time(struct timed_output_dev *dev)
@@ -94,9 +82,6 @@ static void aries_vibrator_enable(struct timed_output_dev *dev, int value)
 	hrtimer_cancel(&vibdata.timer);
 	cancel_work_sync(&vibdata.work);
 	if (value) {
-#ifdef CONFIG_CPU_DIDLE
-		vibrator_running = true;
-#endif	
 		wake_lock(&vibdata.wklock);
 		pwm_config(vibdata.pwm_dev, pwm_duty_value, PWM_PERIOD);
 		pwm_enable(vibdata.pwm_dev);

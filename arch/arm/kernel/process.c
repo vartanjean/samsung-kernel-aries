@@ -280,15 +280,6 @@ __setup("reboot=", reboot_setup);
 void machine_shutdown(void)
 {
 #ifdef CONFIG_SMP
-	/*
-	 * Disable preemption so we're guaranteed to
-	 * run to power off or reboot and prevent
-	 * the possibility of switching to another
-	 * thread that might wind up blocking on
-	 * one of the stopped CPUs.
-	 */
-	preempt_disable();
-
 	smp_send_stop();
 #endif
 }
@@ -594,16 +585,14 @@ EXPORT_SYMBOL(kernel_thread);
 
 unsigned long get_wchan(struct task_struct *p)
 {
-
-/*#ifdef FRAME_POINTER	
-struct stackframe frame;
+	struct stackframe frame;
 	int count = 0;
 	if (!p || p == current || p->state == TASK_RUNNING)
 		return 0;
 
 	frame.fp = thread_saved_fp(p);
 	frame.sp = thread_saved_sp(p);
-	frame.lr = 0;			/* recovered from the stack
+	frame.lr = 0;			/* recovered from the stack */
 	frame.pc = thread_saved_pc(p);
 	do {
 		int ret = unwind_frame(&frame);
@@ -612,8 +601,6 @@ struct stackframe frame;
 		if (!in_sched_functions(frame.pc))
 			return frame.pc;
 	} while (count ++ < 16);
-#endif    
-*/
 	return 0;
 }
 

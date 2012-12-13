@@ -129,30 +129,15 @@ static int ext4_sync_parent(struct inode *inode)
 {
 	struct writeback_control wbc;
 	struct dentry *dentry = NULL;
-	struct inode *next;
 	int ret = 0;
 
-	if (!ext4_test_inode_state(inode, EXT4_STATE_NEWENTRY))
-		return 0;
-	inode = igrab(inode);
-	while (ext4_test_inode_state(inode, EXT4_STATE_NEWENTRY)) {
+	while (inode && ext4_test_inode_state(inode, EXT4_STATE_NEWENTRY)) {
 		ext4_clear_inode_state(inode, EXT4_STATE_NEWENTRY);
-		dentry = NULL;
-		spin_lock(&inode->i_lock);
-		if (!list_empty(&inode->i_dentry)) {
-			dentry = list_first_entry(&inode->i_dentry,
-						  struct dentry, d_alias);
-			dget(dentry);
-		}
-		spin_unlock(&inode->i_lock);
-		if (!dentry)
+		dentry = list_entry(inode->i_dentry.next,
+				    struct dentry, d_alias);
+		if (!dentry || !dentry->d_parent || !dentry->d_parent->d_inode)
 			break;
-		next = igrab(dentry->d_parent->d_inode);
-		dput(dentry);
-		if (!next)
-			break;
-		iput(inode);
-		inode = next;
+		inode = dentry->d_parent->d_inode;
 		ret = sync_mapping_buffers(inode->i_mapping);
 		if (ret)
 			break;
@@ -163,7 +148,6 @@ static int ext4_sync_parent(struct inode *inode)
 		if (ret)
 			break;
 	}
-	iput(inode);
 	return ret;
 }
 

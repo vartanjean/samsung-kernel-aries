@@ -73,7 +73,7 @@ config S5PV210_POWER_DOMAIN
 config S5PV210_CORESIGHT
 	bool "Coresight"
 	select OC_ETM
-	default n
+	default y
 	help
 	  Support embedded trace cell
 
@@ -354,58 +354,13 @@ config DVFS_LIMIT
 	depends on CPU_FREQ
 	default n
 
-config S5PV210_XL
-bool "Enable XL_MEM (more free RAM)"
-default n
-help
-    Aggressively restrict the memory set aside on
-    boot for FIMC, MFC and JPEG.
-
-config S5PV210_XL_BIGMEM
-bool "Enable XL_BIGMEM (breaks 720p recording)"
-default n
-help
-    Aggressively restrict the memory set aside on
-    boot for FIMC, MFC and JPEG.
-
-config S5PV210_XL_HUGHMEM
-bool "Enable XL_HUGHMEM (breaks cam)"
-default n
-help
-    Aggressively restrict the memory set aside on
-    boot for FIMC, MFC and JPEG.
-
-config S5PV210_TESTMEM
-bool "Enable TESTMEM (more free RAM)"
-default n
-help
-    Aggressively restrict the memory set aside on
-    boot for FIMC, MFC and JPEG.
-
-
 config CPU_DIDLE
-        bool "Enable DEEP IDLE support for S5PV210 CPU"
-        depends on CPU_IDLE
-        default y
-        help
-          Enable DEEP IDLE support for S5PV210 CPU.
+	bool "DEEP Idle"
+	depends on CPU_IDLE
+	default n
 
 config WIFI_CONTROL_FUNC
        bool "Enable WiFi control function abstraction"
        help
          Enables Power/Reset/Carddetect function abstraction
-         
-config FORCE_FAST_CHARGE
-       bool "Force AC charge mode at will"
-       default y
-       help
-         A simple sysfs interface to force adapters that
-         are detected as USB to charge as AC.
-
-config HAS_BROKEN_SD
-       bool "this initialises the secondary sd card as first"
-        depends on !SAMSUNG_FASCINATE
-       default n
-       help
-         puts the internal SD as the last MMC to initialize, thus mmc1 => mmc0
 endif

@@ -178,13 +178,4 @@ config HAVE_ARCH_MUTEX_CPU_RELAX
 config HAVE_RCU_TABLE_FREE
 	bool
 
-config HAVE_NO_HZ_FULL
-        bool
-	help
-	 An arch should select this symbols if it provides
-	 the kernel entry/exit hooks necessary to implement
-	 full tickless support. This includes syscall entry/exit,
-	 exceptions entry/exit and do_notify_resume() hooks.
-
-
 source "kernel/gcov/Kconfig"

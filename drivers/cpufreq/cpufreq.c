@@ -28,7 +28,6 @@
 #include <linux/cpu.h>
 #include <linux/completion.h>
 #include <linux/mutex.h>
-#include <linux/sched.h>
 #include <linux/syscore_ops.h>
 #include <linux/earlysuspend.h>
 
@@ -45,7 +44,6 @@ extern int get_oc_value(void);
 extern unsigned long get_oc_low_freq(void);
 extern unsigned long get_oc_high_freq(void);
 extern bool proximity_active();
-extern bool min_max_enable();
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -527,6 +525,7 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	else
 		return count;
 }
+
 
 /**
  * show_scaling_driver - show the cpufreq driver currently loaded
@@ -1515,12 +1514,6 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 		target_freq, relation);
 	if (cpu_online(policy->cpu) && cpufreq_driver->target)
 		retval = cpufreq_driver->target(policy, target_freq, relation);
-	if (likely(retval != -EINVAL)) {
-		if (target_freq == policy->max)
-			cpu_nonscaling(policy->cpu);
-		else
-			cpu_scaling(policy->cpu);
-	}
 
 	return retval;
 }
@@ -1875,8 +1868,6 @@ static void powersave_early_suspend(struct early_suspend *handler)
 {
 	int cpu, user_max, user_min;
 
-if(min_max_enable()){
-
 	for_each_online_cpu(cpu) {
 		struct cpufreq_policy *cpu_policy, new_policy;
 
@@ -1886,15 +1877,8 @@ if(min_max_enable()){
 		if (cpufreq_get_policy(&new_policy, cpu))
 			goto out;
 		orig_user_max = new_policy.max;
-
-		if (lock_sc_min){
-		orig_user_min = cpuL7freq();
-		}
-		else{
 		orig_user_min = new_policy.min;
-		}
-
-	if(!proximity_active()){
+		if(!proximity_active()){
 		user_max = get_user_max();
 		user_min = get_user_min();
 if(user_max % 100000 == 0 && user_max >= get_oc_low_freq() && user_max <= get_oc_high_freq() && get_oc_value() != 100)
@@ -1903,26 +1887,23 @@ if(user_min % 100000 == 0 && user_min >= get_oc_low_freq() && user_min <= get_oc
 			user_min = user_min * get_oc_value() / 100;
 		new_policy.max = user_max;
 		new_policy.min = user_min;
-
-	} else {
-		new_policy.max = orig_user_max;
-		new_policy.min = orig_user_min;
-		}
+  } else {
+    new_policy.max = orig_user_max;
+    new_policy.min = orig_user_min;
+    }
 
 		__cpufreq_set_policy(cpu_policy, &new_policy);
 		cpu_policy->user_policy.max = cpu_policy->max;
 		cpu_policy->user_policy.min = cpu_policy->min;
-
 	out:
 		cpufreq_cpu_put(cpu_policy);
 	}
-}
 }
 
 static void powersave_late_resume(struct early_suspend *handler)
 {
 	int cpu;
-if(min_max_enable()){
+
 	for_each_online_cpu(cpu) {
 		struct cpufreq_policy *cpu_policy, new_policy;
 
@@ -1937,16 +1918,10 @@ if(min_max_enable()){
 
 		__cpufreq_set_policy(cpu_policy, &new_policy);
 		cpu_policy->user_policy.max = cpu_policy->max;
-		if (lock_sc_min){
-		cpu_policy->user_policy.min = cpuL7freq();
-		}
-		else{
 		cpu_policy->user_policy.min = cpu_policy->min;
-		}
 	out:
 		cpufreq_cpu_put(cpu_policy);
 	}
-}
 }
 
 static struct early_suspend _powersave_early_suspend = {

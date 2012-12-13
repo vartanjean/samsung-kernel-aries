@@ -702,7 +702,6 @@ const char * const vmstat_text[] = {
 	"nr_unstable",
 	"nr_bounce",
 	"nr_vmscan_write",
-	"nr_vmscan_immediate_reclaim",
 	"nr_writeback_temp",
 	"nr_isolated_anon",
 	"nr_isolated_file",
@@ -719,9 +718,6 @@ const char * const vmstat_text[] = {
 	"numa_other",
 #endif
 	"nr_anon_transparent_hugepages",
-#ifdef CONFIG_UKSM
-	"nr_uksm_zero_pages",
-#endif
 	"nr_dirty_threshold",
 	"nr_dirty_background_threshold",
 

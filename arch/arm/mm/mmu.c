@@ -551,7 +551,7 @@ static void __init alloc_init_pte(pmd_t *pmd, unsigned long addr,
 
 static void __init alloc_init_section(pud_t *pud, unsigned long addr,
 				      unsigned long end, phys_addr_t phys,
-				      const struct mem_type *type, bool lowmem)
+				      const struct mem_type *type)
 {
 	pmd_t *pmd = pmd_offset(pud, addr);
 
@@ -574,8 +574,6 @@ static void __init alloc_init_section(pud_t *pud, unsigned long addr,
 
 		flush_pmd_entry(p);
 	} else {
-		if (lowmem)
-			memblock_set_current_limit(__pa(addr));
 		/*
 		 * No need to loop; pte's aren't interested in the
 		 * individual L1 entries.
@@ -584,14 +582,15 @@ static void __init alloc_init_section(pud_t *pud, unsigned long addr,
 	}
 }
 
-static void alloc_init_pud(pgd_t *pgd, unsigned long addr, unsigned long end, unsigned long phys, const struct mem_type *type, bool lowmem)
+static void alloc_init_pud(pgd_t *pgd, unsigned long addr, unsigned long end,
+	unsigned long phys, const struct mem_type *type)
 {
 	pud_t *pud = pud_offset(pgd, addr);
 	unsigned long next;
 
 	do {
 		next = pud_addr_end(addr, end);
-        alloc_init_section(pud, addr, next, phys, type, lowmem);
+		alloc_init_section(pud, addr, next, phys, type);
 		phys += next - addr;
 	} while (pud++, addr = next, addr != end);
 }
@@ -656,7 +655,14 @@ static void __init create_36bit_mapping(struct map_desc *md,
 	} while (addr != end);
 }
 
-static inline void __create_mapping(struct map_desc *md, bool lowmem)
+/*
+ * Create the page directory entries and any necessary
+ * page tables for the mapping specified by `md'.  We
+ * are able to cope here with varying sizes and address
+ * offsets, and we take full advantage of sections and
+ * supersections.
+ */
+static void __init create_mapping(struct map_desc *md)
 {
 	unsigned long addr, length, end;
 	phys_addr_t phys;
@@ -703,23 +709,11 @@ static inline void __create_mapping(struct map_desc *md, bool lowmem)
 	do {
 		unsigned long next = pgd_addr_end(addr, end);
 
-		alloc_init_pud(pgd, addr, next, phys, type, lowmem);
+		alloc_init_pud(pgd, addr, next, phys, type);
 
 		phys += next - addr;
 		addr = next;
 	} while (pgd++, addr != end);
-}
-
-/*
- * Create the page directory entries and any necessary
- * page tables for the mapping specified by `md'.  We
- * are able to cope here with varying sizes and address
- * offsets, and we take full advantage of sections and
- * supersections.
- */
-static void __init create_mapping(struct map_desc *md)
-{
-	__create_mapping(md, false);
 }
 
 /*
@@ -1026,7 +1020,7 @@ static void __init map_lowmem(void)
 		map.length = end - start;
 		map.type = MT_MEMORY;
 
-		__create_mapping(&map, true);
+		create_mapping(&map);
 	}
 }
 
@@ -1038,10 +1032,11 @@ void __init paging_init(struct machine_desc *mdesc)
 {
 	void *zero_page;
 
+	memblock_set_current_limit(lowmem_limit);
+
 	build_mem_type_table();
 	prepare_page_table();
 	map_lowmem();
-	memblock_set_current_limit(lowmem_limit);
 	devicemaps_init(mdesc);
 	kmap_init();
 

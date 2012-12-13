@@ -107,9 +107,7 @@ static void modemctl_cfg_gpio(void)
 {
 	int err = 0;
 	
-#if defined(CONFIG_PHONE_ARIES_CDMA)
 	unsigned gpio_phone_on = mdmctl_data.gpio_phone_on;
-#endif
 	unsigned gpio_phone_active = mdmctl_data.gpio_phone_active;
 	unsigned gpio_cp_rst = mdmctl_data.gpio_cp_reset;
 	unsigned gpio_pda_active = mdmctl_data.gpio_pda_active;

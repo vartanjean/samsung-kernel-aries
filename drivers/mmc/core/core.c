@@ -306,7 +306,7 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 			 * The limit is really 250 ms, but that is
 			 * insufficient for some crappy cards.
 			 */
-			limit_us = 800000;
+			limit_us = 300000;
 		else
 			limit_us = 100000;
 
@@ -1851,7 +1851,6 @@ int mmc_suspend_host(struct mmc_host *host)
 			host->pm_flags = 0;
 			err = 0;
 		}
-		flush_delayed_work(&host->disable);
 	}
 	mmc_bus_put(host);
 

@@ -193,33 +193,6 @@ void ext4_evict_inode(struct inode *inode)
 	ext4_ioend_wait(inode);
 
 	if (inode->i_nlink) {
-		/*
-		 * When journalling data dirty buffers are tracked only in the
-		 * journal. So although mm thinks everything is clean and
-		 * ready for reaping the inode might still have some pages to
-		 * write in the running transaction or waiting to be
-		 * checkpointed. Thus calling jbd2_journal_invalidatepage()
-		 * (via truncate_inode_pages()) to discard these buffers can
-		 * cause data loss. Also even if we did not discard these
-		 * buffers, we would have no way to find them after the inode
-		 * is reaped and thus user could see stale data if he tries to
-		 * read them before the transaction is checkpointed. So be
-		 * careful and force everything to disk here... We use
-		 * ei->i_datasync_tid to store the newest transaction
-		 * containing inode's data.
-		 *
-		 * Note that directories do not have this problem because they
-		 * don't use page cache.
-		 */
-		if (ext4_should_journal_data(inode) &&
-		    (S_ISLNK(inode->i_mode) || S_ISREG(inode->i_mode))) {
-			journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
-			tid_t commit_tid = EXT4_I(inode)->i_datasync_tid;
-
-			jbd2_log_start_commit(journal, commit_tid);
-			jbd2_log_wait_commit(journal, commit_tid);
-			filemap_write_and_wait(&inode->i_data);
-		}
 		truncate_inode_pages(&inode->i_data, 0);
 		goto no_delete;
 	}
@@ -1539,7 +1512,7 @@ struct buffer_head *ext4_bread(handle_t *handle, struct inode *inode,
 		return bh;
 	if (buffer_uptodate(bh))
 		return bh;
-	ll_rw_block(READ | REQ_META | REQ_PRIO, 1, &bh);
+	ll_rw_block(READ_META, 1, &bh);
 	wait_on_buffer(bh);
 	if (buffer_uptodate(bh))
 		return bh;
@@ -1904,7 +1877,6 @@ static int ext4_journalled_write_end(struct file *file,
 	if (new_i_size > inode->i_size)
 		i_size_write(inode, pos+copied);
 	ext4_set_inode_state(inode, EXT4_STATE_JDATA);
-	EXT4_I(inode)->i_datasync_tid = handle->h_transaction->t_tid;
 	if (new_i_size > EXT4_I(inode)->i_disksize) {
 		ext4_update_i_disksize(inode, new_i_size);
 		ret2 = ext4_mark_inode_dirty(handle, inode);
@@ -2623,7 +2595,6 @@ static int __ext4_journalled_writepage(struct page *page,
 				write_end_fn);
 	if (ret == 0)
 		ret = err;
-	EXT4_I(inode)->i_datasync_tid = handle->h_transaction->t_tid;
 	err = ext4_journal_stop(handle);
 	if (!ret)
 		ret = err;
@@ -2716,12 +2687,8 @@ static int ext4_writepage(struct page *page,
 		 * We don't want to do block allocation, so redirty
 		 * the page and return.  We may reach here when we do
 		 * a journal commit via journal_submit_inode_data_buffers.
-		 * We can also reach here via shrink_page_list but it
-		 * should never be for direct reclaim so warn if that
-		 * happens
+		 * We can also reach here via shrink_page_list
 		 */
-		WARN_ON_ONCE((current->flags & (PF_MEMALLOC|PF_KSWAPD)) ==
-								PF_MEMALLOC);
 		goto redirty_page;
 	}
 	if (commit_write)
@@ -4849,7 +4816,7 @@ make_io:
 		trace_ext4_load_inode(inode);
 		get_bh(bh);
 		bh->b_end_io = end_buffer_read_sync;
-		submit_bh(READ | REQ_META | REQ_PRIO, bh);
+		submit_bh(READ_META, bh);
 		wait_on_buffer(bh);
 		if (!buffer_uptodate(bh)) {
 			EXT4_ERROR_INODE_BLOCK(inode, block,

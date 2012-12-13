@@ -32,10 +32,6 @@
 #include <linux/skbuff.h>
 #include <linux/console.h>
 
-#ifdef CONFIG_FORCE_FAST_CHARGE
-#include <linux/fastchg.h>
-#endif
-
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/setup.h>
@@ -50,9 +46,10 @@
 #include <mach/param.h>
 #include <mach/system.h>
 #include <mach/sec_switch.h>
-#include <mach/voltages.h>
+#ifdef CONFIG_SAMSUNG_FASCINATE
 #include <mach/regs-gpio.h>
-
+#endif
+#include <mach/voltages.h>
 #include <linux/usb/gadget.h>
 #include <linux/fsa9480.h>
 #include <linux/pn544.h>
@@ -74,8 +71,9 @@
 #include <mach/cpu-freq-v210.h>
 
 #include <media/ce147_platform.h>
+#ifdef CONFIG_VIDEO_S5KA3DFX
 #include <media/s5ka3dfx_platform.h>
-#include <media/s5k4ecgx.h>
+#endif
 
 #include <plat/regs-serial.h>
 #include <plat/s5pv210.h>
@@ -124,9 +122,6 @@ EXPORT_SYMBOL(sec_set_param_value);
 void (*sec_get_param_value)(int idx, void *value);
 EXPORT_SYMBOL(sec_get_param_value);
 
-// local prototype
-static void fsa9480_charger_cb(bool attached);
-
 #define KERNEL_REBOOT_MASK      0xFFFFFFFF
 #define REBOOT_MODE_FAST_BOOT		7
 
@@ -153,66 +148,32 @@ EXPORT_SYMBOL(bigmem);
 bool xlmem;
 EXPORT_SYMBOL(xlmem);
 
-bool refreshrate;
-EXPORT_SYMBOL(refreshrate);
-
 static int aries_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
 {
 	int mode = REBOOT_MODE_NONE;
-	if (bigmem){
-		if(refreshrate)
-			mode = 17;
-		else
-			mode = 7;
-	}
-	else if (xlmem){
-		if(refreshrate)
-			mode = 13;
-		else
-			mode = 3;
-	}
-	else if(refreshrate)
-			mode = 11;
+	if (bigmem)
+		mode = 7;
+	else if (xlmem)
+		mode = 3;
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
-			if (bigmem){
-				if(refreshrate)
-					mode = 19;
-				else
-					mode = 9;
-			}
-			else if (xlmem){
-				if(refreshrate)
-					mode = 15;
-				else					
-					mode = 5;
-			}
+			if (bigmem)
+				mode = 9;
+			else if (xlmem)
+				mode = 5;
 			else
-				if(refreshrate)
-					mode = 12;
-				else
 				mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
 		else {
-			if (bigmem){
-				if(refreshrate)
-					mode = 17;
-				else
-					mode = 7;
-			}
-			else if (xlmem){
-				if(refreshrate)
-					mode = 13;
-				else
-					mode = 3;
-			}
-			else if(refreshrate)
-					mode = 11;
+			if (bigmem)
+				mode = 7;
+			else if (xlmem)
+				mode = 3;
 			else
 				mode = REBOOT_MODE_NONE;
 		}
 	}
-	
+
 	__raw_writel(mode, S5P_INFORM6);
 
 	return NOTIFY_DONE;
@@ -410,11 +371,12 @@ static struct s3cfb_lcd s6e63m0 = {
 						 (CONFIG_FB_S3C_NUM_OVLY_WIN * \
 						  CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
 
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (4092 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (4096 * SZ_1K)
 //#define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM (2048 * SZ_1K)
 //#define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 (3000 * SZ_1K)
 //#define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_ADSP (1500 * SZ_1K)
 //#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_TEXTSTREAM (3000 * SZ_1K)
+
 
 static struct s5p_media_device aries_media_devs[] = {
 	[0] = {
@@ -505,16 +467,13 @@ static struct s5p_media_device aries_media_devs[] = {
 #ifdef CONFIG_CPU_FREQ
 static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 	{
-
 		.freq	= 1400000,
 		.varm	= DVSARM1,
-
 		.vint	= DVSINT1,
 	}, {
 
 		.freq	= 1300000,
 		.varm	= DVSARM2,
-
 		.vint	= DVSINT2,
 	}, {
 
@@ -522,7 +481,6 @@ static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 		.varm	= DVSARM3,
 		.vint	= DVSINT3,
 	}, {
-
 		.freq	= 1000000,
 		.varm	= DVSARM4,
 		.vint	= DVSINT4,
@@ -643,8 +601,8 @@ static struct regulator_init_data aries_ldo3_data = {
 static struct regulator_init_data aries_ldo4_data = {
 	.constraints	= {
 		.name		= "VADC_3.3V",
-		.min_uV		= 3000000,
-		.max_uV		= 3000000,
+		.min_uV		= 3300000,
+		.max_uV		= 3300000,
 		.apply_uV	= 1,
 		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
@@ -805,8 +763,8 @@ static struct regulator_init_data aries_ldo16_data = {
 static struct regulator_init_data aries_ldo17_data = {
 	.constraints	= {
 		.name		= "VCC_3.0V_LCD",
-		.min_uV		= 2800000,
-		.max_uV		= 2800000,
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
 		.always_on	= 0,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
@@ -857,8 +815,8 @@ static struct regulator_init_data aries_buck2_data = {
 static struct regulator_init_data aries_buck3_data = {
 	.constraints	= {
 		.name		= "VCC_1.8V",
-		.min_uV		= 1600000,
-		.max_uV		= 1600000,
+		.min_uV		= 1800000,
+		.max_uV		= 1800000,
 		.apply_uV	= 1,
 		.always_on	= 1,
 	},
@@ -1403,15 +1361,17 @@ static struct platform_device s3c_device_i2c13 = {
   };
 #endif
 
-void touch_key_set_int_flt( unsigned long width )
+#ifdef CONFIG_SAMSUNG_FASCINATE
+void touch_key_set_int_flt(unsigned long width)
 {
-    writel( readl(S5PV210_GPJ4_INT_FLTCON0) |
-            (1 << 15) |     // enable bit
-            (width << 8),   // max width = 0x2f
-            S5PV210_GPJ4_INT_FLTCON0 );
+	writel(readl(S5PV210_GPJ4_INT_FLTCON0) |
+		(1 << 15) |     // enable bit
+		(width << 8),   // max width = 0x2f
+		S5PV210_GPJ4_INT_FLTCON0);
 }
 
 const unsigned long touch_int_flt_width = 0x2f;   // arbitrary value - max is 0x2f
+#endif
 
 static void touch_keypad_gpio_init(void)
 {
@@ -1421,7 +1381,9 @@ static void touch_keypad_gpio_init(void)
 	if (ret)
 		printk(KERN_ERR "Failed to request gpio touch_en.\n");
 
-	touch_key_set_int_flt( touch_int_flt_width );
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	touch_key_set_int_flt(touch_int_flt_width);
+#endif
 }
 
 static void touch_keypad_onoff(int onoff)
@@ -1554,8 +1516,8 @@ EXPORT_SYMBOL(HWREV);
 /* in revisions before 0.9, there is a common mic bias gpio */
 
 static DEFINE_SPINLOCK(mic_bias_lock);
-static bool wm8994_mic_bias = false;
-static bool jack_mic_bias = false;
+static bool wm8994_mic_bias;
+static bool jack_mic_bias;
 static void set_shared_mic_bias(void)
 {
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
@@ -1571,14 +1533,8 @@ static void set_shared_mic_bias(void)
     }
     gpio_set_value(GPIO_EARPATH_SEL, jack_mic_bias);
 #else
-    gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
-
-#ifdef CONFIG_SAMSUNG_FASCINATE
-    gpio_set_value(GPIO_EARPATH_SEL, 0);
-#else
-    gpio_set_value(GPIO_EARPATH_SEL, jack_mic_bias);
-#endif
-
+	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
+    gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
 #endif
 }
 
@@ -2464,7 +2420,9 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 	.default_cam	= CAMERA_PAR_A,
 	.camera		= {
 		&ce147,
+#ifdef CONFIG_VIDEO_S5KA3DFX
 		&s5ka3dfx,
+#endif
 	},
 	.hw_ver		= 0x43,
 };
@@ -2602,29 +2560,18 @@ static struct i2c_board_info i2c_devs8[] __initdata = {
 
 static void fsa9480_usb_cb(bool attached)
 {
-#ifdef CONFIG_FORCE_FAST_CHARGE
-  if ( force_fast_charge != 0 )
-  {
-      fsa9480_charger_cb(attached);
-  }
-  else
-  {
-#endif
-    struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
-    if (gadget) {
-      if (attached)
-        usb_gadget_vbus_connect(gadget);
-      else
-        usb_gadget_vbus_disconnect(gadget);
-    }
+	if (gadget) {
+		if (attached)
+			usb_gadget_vbus_connect(gadget);
+		else
+			usb_gadget_vbus_disconnect(gadget);
+	}
 
-    set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
-    if (charger_callbacks && charger_callbacks->set_cable)
-      charger_callbacks->set_cable(charger_callbacks, set_cable_status);
-#ifdef CONFIG_FORCE_FAST_CHARGE
-  }
-#endif
+	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+	if (charger_callbacks && charger_callbacks->set_cable)
+		charger_callbacks->set_cable(charger_callbacks, set_cable_status);
 }
 
 static void fsa9480_charger_cb(bool attached)
@@ -2640,34 +2587,23 @@ static struct switch_dev switch_dock = {
 
 static void fsa9480_deskdock_cb(bool attached)
 {
-#ifdef CONFIG_FORCE_FAST_CHARGE
-  if ( force_fast_charge != 0 )
-  {
-    fsa9480_charger_cb( attached );
-  }
-  else
-  {
-#endif
-    struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
-    if (attached)
-      switch_set_state(&switch_dock, 1);
-    else
-      switch_set_state(&switch_dock, 0);
+	if (attached)
+		switch_set_state(&switch_dock, 1);
+	else
+		switch_set_state(&switch_dock, 0);
 
-    if (gadget) {
-      if (attached)
-        usb_gadget_vbus_connect(gadget);
-      else
-        usb_gadget_vbus_disconnect(gadget);
-    }
+	if (gadget) {
+		if (attached)
+			usb_gadget_vbus_connect(gadget);
+		else
+			usb_gadget_vbus_disconnect(gadget);
+	}
 
-    set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
-    if (charger_callbacks && charger_callbacks->set_cable)
-      charger_callbacks->set_cable(charger_callbacks, set_cable_status);
-#ifdef CONFIG_FORCE_FAST_CHARGE
-  }
-#endif
+	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+	if (charger_callbacks && charger_callbacks->set_cable)
+		charger_callbacks->set_cable(charger_callbacks, set_cable_status);
 }
 
 static void fsa9480_cardock_cb(bool attached)
@@ -2776,14 +2712,6 @@ static void gp2a_gpio_init(void)
 	int ret = gpio_request(GPIO_PS_ON, "gp2a_power_supply_on");
 	if (ret)
 		printk(KERN_ERR "Failed to request gpio gp2a power supply.\n");
-
-#ifdef CONFIG_SAMSUNG_FASCINATE
-        s3c_gpio_cfgpin(GPIO_PS_VOUT, S3C_GPIO_SFN(GPIO_PS_VOUT_AF));
-        s3c_gpio_setpull(GPIO_PS_VOUT, S3C_GPIO_PULL_NONE);
-        irq_set_irq_type(IRQ_EINT1, IRQ_TYPE_EDGE_BOTH);
-        gp2a_pdata.p_irq = gpio_to_irq(GPIO_PS_VOUT);
-        gp2a_pdata.p_out = GPIO_PS_VOUT;
-#endif
 }
 
 static struct i2c_board_info i2c_devs11[] __initdata = {
@@ -4779,9 +4707,20 @@ void s3c_config_sleep_gpio_table(int array_size, unsigned int (*gpio_table)[3])
 
 void s3c_config_sleep_gpio(void)
 {
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	// Reported to cause battery drain and other things on captivate, so we'll
+	// disable this for now.
+	return;
+#endif
+
 	/* setting the alive mode registers */
+#if defined(CONFIG_SAMSUNG_FASCINATE) || defined(CONFIG_SAMSUNG_CAPTIVATE)
+	s3c_gpio_cfgpin(S5PV210_GPH0(0), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(0), S3C_GPIO_PULL_DOWN);
+#endif
+
 	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
-#if defined(CONFIG_SAMSUNG_FASCINATE)
+#if defined(CONFIG_SAMSUNG_FASCINATE) || defined(CONFIG_SAMSUNG_CAPTIVATE)
 	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_DOWN);
 #else
 	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_NONE);
@@ -4799,27 +4738,41 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH0(5), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH0(5), 0);
 
+#if defined(CONFIG_SAMSUNG_FASCINATE) || defined(CONFIG_SAMSUNG_CAPTIVATE)
+	s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_UP);
+#endif
+
 #if defined(CONFIG_SAMSUNG_FASCINATE)
 	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_DOWN);
+	gpio_set_value(S5PV210_GPH1(0), 0);
+#elif defined(CONFIG_SAMSUNG_CAPTIVATE) && defined (CONFIG_A1026) // Dummy config for Audience chip - which we aren't using at the moment
+	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH1(0), 1);
 #else
 	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_INPUT);
-#endif
 	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_DOWN);
-#if defined(CONFIG_SAMSUNG_FASCINATE)
-	gpio_set_value(S5PV210_GPH1(0), 0);
 #endif
 
-#if defined(CONFIG_SAMSUNG_FASCINATE)
-	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_INPUT);
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) && defined (CONFIG_A1026)
+	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_DOWN);
+	gpio_set_value(S5PV210_GPH1(1), 1);
 #else
 	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_DOWN);
-	gpio_set_value(S5PV210_GPH1(1), 0);
 #endif
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) && defined (CONFIG_A1026)
+	s3c_gpio_cfgpin(S5PV210_GPH1(2), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_DOWN);
+	gpio_set_value(S5PV210_GPH1(2), 1);
+#else
 	s3c_gpio_cfgpin(S5PV210_GPH1(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_DOWN);
+#endif
 
 #if defined(CONFIG_SAMSUNG_FASCINATE)
 	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_OUTPUT);
@@ -4834,48 +4787,83 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(5), S3C_GPIO_PULL_DOWN);
-	gpio_set_value(S5PV210_GPH1(5), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(6), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(6), S3C_GPIO_PULL_DOWN);
 
 #endif
 
+#if !defined(CONFIG_SAMSUNG_CAPTIVATE)
 	s3c_gpio_cfgpin(S5PV210_GPH1(7), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(7), S3C_GPIO_PULL_NONE);
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_DOWN);
 
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	s3c_gpio_cfgpin(S5PV210_GPH2(1), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(1), S3C_GPIO_PULL_DOWN);
+#else
+	s3c_gpio_cfgpin(S5PV210_GPH2(1), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(1), S3C_GPIO_PULL_NONE);
+#endif
+	gpio_set_value(S5PV210_GPH2(1), 0);
+
+#if !defined(CONFIG_SAMSUNG_FASCINATE)
 	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(2), S3C_GPIO_PULL_DOWN);
-#else
-	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(2),S3C_GPIO_PULL_DOWN);
-	gpio_set_value(S5PV210_GPH2(2), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH2(3), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(3), S3C_GPIO_PULL_DOWN);
 #endif
 
-	s3c_gpio_cfgpin(S5PV210_GPH2(3), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(3), S3C_GPIO_PULL_NONE);
 #if defined(CONFIG_SAMSUNG_FASCINATE)
-	gpio_set_value(S5PV210_GPH2(3), 1);
-#else
-	gpio_set_value(S5PV210_GPH2(3), 0);
+	s3c_gpio_cfgpin(S5PV210_GPH2(6), S3C_GPIO_EINT);
+	s3c_gpio_setpull(S5PV210_GPH2(6), S3C_GPIO_PULL_UP);
 #endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(0), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(0), S3C_GPIO_PULL_UP);
-
-	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
 #if defined(CONFIG_SAMSUNG_FASCINATE)
 	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_UP);
 #else
+	s3c_gpio_setpull(S5PV210_GPH3(0), S3C_GPIO_PULL_DOWN);
+#endif
+
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_UP);
+#elif !defined(CONFIG_SAMSUNG_CAPTIVATE)
+	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_DOWN);
 #endif
 
-	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_DOWN);
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_EINT);
+	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_UP);
+#endif
+
+#if defined(CONFIG_SAMSUNG_FASCINATE) || defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
+	s3c_gpio_cfgpin(S5PV210_GPH3(5), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(5), S3C_GPIO_PULL_DOWN);
+#endif
+
+	s3c_gpio_cfgpin(S5PV210_GPH3(7), S3C_GPIO_OUTPUT);
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	s3c_gpio_setpull(S5PV210_GPH3(7), S3C_GPIO_PULL_UP);
+#else
+	s3c_gpio_setpull(S5PV210_GPH3(7), S3C_GPIO_PULL_NONE);
+#endif
+	gpio_set_value(S5PV210_GPH2(3), 1);
+
+#if !defined(CONFIG_SAMSUNG_FASCINATE)
+	if (gpio_get_value(GPIO_PS_ON)) {
+		s3c_gpio_slp_setpull_updown(GPIO_ALS_SDA_28V, S3C_GPIO_PULL_NONE);
+		s3c_gpio_slp_setpull_updown(GPIO_ALS_SCL_28V, S3C_GPIO_PULL_NONE);
+	} else {
+		s3c_gpio_setpull(GPIO_PS_VOUT, S3C_GPIO_PULL_DOWN);
+	}
+#endif
 }
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
@@ -5204,12 +5192,6 @@ static struct platform_device *aries_devices[] __initdata = {
 #if defined (CONFIG_SAMSUNG_CAPTIVATE)
 	&s3c_device_i2c13,
 #endif
-#if defined CONFIG_USB_S3C_OTG_HOST
-	&s3c_device_usb_otghcd,
-#endif
-#if defined CONFIG_USB_DWC_OTG
-	&s3c_device_usb_dwcotg,
-#endif
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -5227,10 +5209,8 @@ static struct platform_device *aries_devices[] __initdata = {
 	&sec_device_dpram,
 #endif
 
-#ifndef CONFIG_HAS_BROKEN_SD
 #ifdef CONFIG_S3C_DEV_HSMMC
 	&s3c_device_hsmmc0,
-#endif
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC1
 	&s3c_device_hsmmc1,
@@ -5240,12 +5220,6 @@ static struct platform_device *aries_devices[] __initdata = {
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC3
 	&s3c_device_hsmmc3,
-#endif
-
-#ifdef CONFIG_HAS_BROKEN_SD
-#ifdef CONFIG_S3C_DEV_HSMMC
-	&s3c_device_hsmmc0,
-#endif
 #endif
 #ifdef CONFIG_VIDEO_TV20
         &s5p_device_tvout,
@@ -5286,30 +5260,16 @@ static struct platform_device *aries_devices[] __initdata = {
 	&samsung_asoc_dma,
 };
 
-static void check_refreshrate(void) {/*
-  int bootmode = __raw_readl(S5P_INFORM6);
-  if ((bootmode == 17) || (bootmode == 19) || (bootmode == 13) || (bootmode == 15) || (bootmode == 11)) {
-    	refreshrate = true;
-	s6e63m0.freq= 60;
-  }
-  else {
-    	refreshrate = false;
-	s6e63m0.freq= 56;
-  }*/
-}
-
-
 static void check_bigmem(void) {
-
 	int bootmode = __raw_readl(S5P_INFORM6);
-	if ((bootmode == 7) || (bootmode == 9) || (bootmode == 17) || (bootmode == 19)) {
+	if ((bootmode == 7) || (bootmode == 9)) {
 		bigmem = true;
 		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM;
 		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0_BM;
 		aries_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0_XL; 
 		aries_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1_XL;
 	}
-	else if ((bootmode == 3) || (bootmode == 5) || (bootmode == 13) || (bootmode == 15)) {
+	else if ((bootmode == 3) || (bootmode == 5)) {
 		xlmem = true;
 		aries_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
 		aries_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
@@ -5335,7 +5295,6 @@ static void __init aries_map_io(void)
 	#ifndef CONFIG_S5P_HIGH_RES_TIMERS
 		s5p_set_timer_source(S5P_PWM3, S5P_PWM4);
 	#endif
-	check_refreshrate();
 	check_bigmem();
 	s5p_reserve_bootmem(aries_media_devs,
 		ARRAY_SIZE(aries_media_devs), S5P_RANGE_MFC);
@@ -5522,7 +5481,7 @@ static void __init aries_inject_cmdline(void) {
 
 	// Only write bootmode when less than 10 to prevent confusion with watchdog
 	// reboot (0xee = 238)
-	if (bootmode < 20) {
+	if (bootmode < 10) {
 		size += sprintf(new_command_line + size, " bootmode=%d", bootmode);
 	}
 
@@ -5769,48 +5728,6 @@ void usb_host_phy_off(void)
 			S5P_USB_PHY_CONTROL);
 }
 EXPORT_SYMBOL(usb_host_phy_off);
-
-#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
-
-/* Initializes OTG Phy */
-void otg_host_phy_init(void) 
-{
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL)
-		|(0x1<<0), S5P_USB_PHY_CONTROL); /*USB PHY0 Enable */
-// from galaxy tab otg host:
-	__raw_writel((__raw_readl(S3C_USBOTG_PHYPWR)
-		&~(0x3<<3)&~(0x1<<0))|(0x1<<5), S3C_USBOTG_PHYPWR);
-// from galaxy s2 otg host:
-//	__raw_writel((__raw_readl(S3C_USBOTG_PHYPWR)
-//        	&~(0x7<<3)&~(0x1<<0)), S3C_USBOTG_PHYPWR);
-
-	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK)
-		&~(0x1<<4))|(0x7<<0), S3C_USBOTG_PHYCLK);
-
-	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON)
-		&~(0x3<<1))|(0x1<<0), S3C_USBOTG_RSTCON);
-	mdelay(1);
-	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON)
-		&~(0x7<<0)), S3C_USBOTG_RSTCON);
-	mdelay(1);
-
-	__raw_writel((__raw_readl(S3C_UDC_OTG_GUSBCFG)
-		|(0x3<<8)), S3C_UDC_OTG_GUSBCFG);
-
-//	smb136_set_otg_mode(1);
-
-	printk("otg_host_phy_int : USBPHYCTL=0x%x,PHYPWR=0x%x,PHYCLK=0x%x,USBCFG=0x%x\n", 
-		readl(S5P_USB_PHY_CONTROL), 
-		readl(S3C_USBOTG_PHYPWR),
-		readl(S3C_USBOTG_PHYCLK), 
-		readl(S3C_UDC_OTG_GUSBCFG)
-		);
-}
-EXPORT_SYMBOL(otg_host_phy_init);
-
-
-#endif
-
 #endif
 
 MACHINE_START(ARIES, "aries")
@@ -5820,7 +5737,7 @@ MACHINE_START(ARIES, "aries")
 	.map_io		= aries_map_io,
 	.init_machine	= aries_machine_init,
 #if	defined(CONFIG_S5P_HIGH_RES_TIMERS)
-	.timer		= &s5p_systimer_timer,
+	.timer		= &s5p_systimer,
 #else
 	.timer		= &s3c24xx_timer,
 #endif

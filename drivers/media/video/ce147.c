@@ -2701,7 +2701,6 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned int ce147_len_set_flash = 2;
 	unsigned char ce147_buf_set_flash_manual[2] = { 0x00, 0x00 };
 	unsigned int ce147_len_set_flash_manual = 2;
-	static int torch_state = 0;
 
 #ifdef CONFIG_SAMSUNG_FASCINATE
 	unsigned char ce147_buf_set_flash_power_control[4] = {0x03,0x01,0x1D,0x0c};
@@ -2712,6 +2711,9 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 #endif
 
 	switch (ctrl->value) {
+	case FLASH_MODE_OFF:
+		ce147_buf_set_flash[1] = 0x00;
+		break;
 
 	case FLASH_MODE_AUTO:
 		ce147_buf_set_flash[1] = 0x02;

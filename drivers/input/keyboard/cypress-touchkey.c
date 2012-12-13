@@ -32,9 +32,11 @@
 #include <linux/miscdevice.h>
 #include <linux/input/cypress-touchkey.h>
 
+#ifdef CONFIG_SAMSUNG_FASCINATE
 #include <mach/gpio.h>
 #include <mach/gpio-aries.h>
 #include <mach/regs-gpio.h>
+#endif
 
 #ifdef CONFIG_GENERIC_BLN
 #include <linux/bln.h>
@@ -52,12 +54,14 @@
 
 #define DEVICE_NAME "cypress-touchkey"
 
+#ifdef CONFIG_SAMSUNG_FASCINATE
 extern const unsigned long touch_int_flt_width;
-void touch_key_set_int_flt( unsigned long width );
+void touch_key_set_int_flt(unsigned long width);
+#endif
 
 int bl_on = 0;
 static DEFINE_SEMAPHORE(enable_sem);
-//static DEFINE_SEMAPHORE(i2c_sem);
+static DEFINE_SEMAPHORE(i2c_sem);
 
 struct cypress_touchkey_devdata *bl_devdata;
 
@@ -89,7 +93,7 @@ static int i2c_touchkey_read_byte(struct cypress_touchkey_devdata *devdata,
 	int ret;
 	int retry = 2;
 
-//	down(&i2c_sem);
+	down(&i2c_sem);
 
 	while (true) {
 		ret = i2c_smbus_read_byte(devdata->client);
@@ -106,7 +110,7 @@ static int i2c_touchkey_read_byte(struct cypress_touchkey_devdata *devdata,
 		msleep(10);
 	}
 
-//	up(&i2c_sem);
+	up(&i2c_sem);
 
 	return ret;
 }
@@ -117,7 +121,7 @@ static int i2c_touchkey_write_byte(struct cypress_touchkey_devdata *devdata,
 	int ret;
 	int retry = 2;
 
-//	down(&i2c_sem);
+	down(&i2c_sem);
 
 	while (true) {
 		ret = i2c_smbus_write_byte(devdata->client, val);
@@ -133,7 +137,7 @@ static int i2c_touchkey_write_byte(struct cypress_touchkey_devdata *devdata,
 		msleep(10);
 	}
 
-//	up(&i2c_sem);
+	up(&i2c_sem);
 
 	return ret;
 }
@@ -194,11 +198,12 @@ static int recovery_routine(struct cypress_touchkey_devdata *devdata)
 		devdata->pdata->touchkey_onoff(TOUCHKEY_ON);
 		ret = i2c_touchkey_read_byte(devdata, &data);
 		if (!ret) {
-			if (!devdata->is_sleeping)
-		      	{
-         		enable_irq(irq_eint);
-        		touch_key_set_int_flt( touch_int_flt_width );
-      			}
+			if (!devdata->is_sleeping) {
+				enable_irq(irq_eint);
+#ifdef CONFIG_SAMSUNG_FASCINATE
+				touch_key_set_int_flt(touch_int_flt_width);
+#endif
+			}
 			goto out;
 		}
 		dev_err(&devdata->client->dev, "%s: i2c transfer error retry = "
@@ -218,7 +223,7 @@ extern unsigned int touch_state_val;
 
 static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 {
-	u8 data = 0xff;
+	u8 data;
 	int i;
 	int ret;
 	int scancode;
@@ -280,10 +285,14 @@ static irqreturn_t touchkey_interrupt_handler(int irq, void *touchkey_devdata)
 {
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
 
+#ifdef CONFIG_SAMSUNG_FASCINATE
 	int i = gpio_get_value(_3_GPIO_TOUCH_INT);
 
-  	if ( (i & 1) || devdata->is_powering_on) {
-    	dev_dbg(&devdata->client->dev, "%s: ignoring spurious "
+	if ((i & 1) || devdata->is_powering_on) {
+#else
+	if (devdata->is_powering_on) {
+#endif
+		dev_dbg(&devdata->client->dev, "%s: ignoring spurious boot "
 					"interrupt\n", __func__);
 		return IRQ_HANDLED;
 	}
@@ -388,7 +397,9 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 	}
 	devdata->is_dead = false;
 	enable_irq(devdata->client->irq);
-	touch_key_set_int_flt( touch_int_flt_width );
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	touch_key_set_int_flt(touch_int_flt_width);
+#endif
 	devdata->is_powering_on = false;
 	devdata->is_sleeping = false;
 
@@ -616,7 +627,9 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 		goto err_req_irq;
 	}
 
-	touch_key_set_int_flt( touch_int_flt_width );
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	touch_key_set_int_flt(touch_int_flt_width);
+#endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	devdata->early_suspend.suspend = cypress_touchkey_early_suspend;

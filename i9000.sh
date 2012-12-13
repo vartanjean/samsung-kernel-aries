@@ -41,7 +41,7 @@ echo "building kernel"
 	then
 	make sense_i9000_defconfig
 	else
-	make aries_galaxysmtd_defconfig
+	make cyanogenmod_galaxysmtd_defconfig
 	fi
 
 if [ "$scheduler" = "BFS"  ]
@@ -115,7 +115,7 @@ echo "building kernel"
 	then
 	make sense_i9000_defconfig
 	else
-	make aries_galaxysmtd_defconfig
+	make cyanogenmod_galaxysmtd_defconfig
 	fi
 
 if [ "$scheduler" = "BFS"  ]

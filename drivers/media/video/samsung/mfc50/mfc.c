@@ -468,9 +468,9 @@ static int mfc_mmap(struct file *filp, struct vm_area_struct *vma)
 	/* if memory size required from appl. mmap() is bigger than max data memory
 	 * size allocated in the driver */
 	if (vir_size > phy_size) {
-		mfc_err("virtual requested mem(%ld) is bigger than physical mem(%ld) but trying to continue anyway\n",
+		mfc_err("virtual requested mem(%ld) is bigger than physical mem(%ld)\n",
 				vir_size, phy_size);
-		vir_size = phy_size;
+		return -EINVAL;
 	}
 
 	mfc_ctx->port0_mmap_size = mfc_port0_memsize - firmware_size;

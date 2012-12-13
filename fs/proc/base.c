@@ -365,7 +365,7 @@ static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
 static int proc_pid_schedstat(struct task_struct *task, char *buffer)
 {
 	return sprintf(buffer, "%llu %llu %lu\n",
-			(unsigned long long)tsk_seruntime(task),
+			(unsigned long long)task->se.sum_exec_runtime,
 			(unsigned long long)task->sched_info.run_delay,
 			task->sched_info.pcount);
 }
@@ -799,10 +799,10 @@ static int mem_open(struct inode* inode, struct file* file)
 static ssize_t mem_rw(struct file *file, char __user *buf,
 			size_t count, loff_t *ppos, int write)
 {
-	int copied;
-	char *page;
-	unsigned long dst = *ppos;
 	struct mm_struct *mm = file->private_data;
+	unsigned long addr = *ppos;
+	ssize_t copied;
+	char *page;
 
 	if (!mm)
 		return 0;
@@ -812,27 +812,38 @@ static ssize_t mem_rw(struct file *file, char __user *buf,
 		return -ENOMEM;
 
 	copied = 0;
-	while (count > 0) {
-		int this_len, retval;
+	if (!atomic_inc_not_zero(&mm->mm_users))
+		goto free;
 
-		this_len = (count > PAGE_SIZE) ? PAGE_SIZE : count;
-		if (copy_from_user(page, buf, this_len)) {
+	while (count > 0) {
+		int this_len = min_t(int, count, PAGE_SIZE);
+
+		if (write && copy_from_user(page, buf, this_len)) {
 			copied = -EFAULT;
 			break;
 		}
-		retval = access_remote_vm(mm, dst, page, this_len, 1);
-		if (!retval) {
+
+		this_len = access_remote_vm(mm, addr, page, this_len, write);
+		if (!this_len) {
 			if (!copied)
 				copied = -EIO;
 			break;
 		}
-		copied += retval;
-		buf += retval;
-		dst += retval;
-		count -= retval;			
-	}
-	*ppos = dst;
 
+		if (!write && copy_to_user(buf, page, this_len)) {
+			copied = -EFAULT;
+			break;
+		}
+
+		buf += this_len;
+		addr += this_len;
+		copied += this_len;
+		count -= this_len;
+	}
+	*ppos = addr;
+
+	mmput(mm);
+free:
 	free_page((unsigned long) page);
 	return copied;
 }

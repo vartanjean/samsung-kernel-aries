@@ -1363,10 +1363,10 @@ static int fmeter_getrate(struct fmeter *fmp)
 }
 
 /* Called by cgroups to determine if a cpuset is usable; cgroup_mutex held */
-static int cpuset_can_attach(struct cgroup_subsys *ss, struct cgroup *cgrp,
-			     struct cgroup_taskset *tset)
+static int cpuset_can_attach(struct cgroup_subsys *ss, struct cgroup *cont,
+			     struct task_struct *tsk)
 {
-	struct cpuset *cs = cgroup_cs(cgrp);
+	struct cpuset *cs = cgroup_cs(cont);
 
 	if (cpumask_empty(cs->cpus_allowed) || nodes_empty(cs->mems_allowed))
 		return -ENOSPC;
@@ -1379,7 +1379,7 @@ static int cpuset_can_attach(struct cgroup_subsys *ss, struct cgroup *cgrp,
 	 * set_cpus_allowed_ptr() on all attached tasks before cpus_allowed may
 	 * be changed.
 	 */
-	if (cgroup_taskset_first(tset)->flags & PF_THREAD_BOUND)
+	if (tsk->flags & PF_THREAD_BOUND)
 		return -EINVAL;
 
 	return 0;
@@ -1429,14 +1429,12 @@ static void cpuset_attach_task(struct cgroup *cont, struct task_struct *tsk)
 	cpuset_update_task_spread_flag(cs, tsk);
 }
 
-static void cpuset_attach(struct cgroup_subsys *ss, struct cgroup *cgrp,
-			  struct cgroup_taskset *tset)
+static void cpuset_attach(struct cgroup_subsys *ss, struct cgroup *cont,
+			  struct cgroup *oldcont, struct task_struct *tsk)
 {
 	struct mm_struct *mm;
-	struct task_struct *tsk = cgroup_taskset_first(tset);
-	struct cgroup *oldcgrp = cgroup_taskset_cur_cgroup(tset);
-	struct cpuset *cs = cgroup_cs(cgrp);
-	struct cpuset *oldcs = cgroup_cs(oldcgrp);
+	struct cpuset *cs = cgroup_cs(cont);
+	struct cpuset *oldcs = cgroup_cs(oldcont);
 
 	/*
 	 * Change mm, possibly for multiple threads in a threadgroup. This is

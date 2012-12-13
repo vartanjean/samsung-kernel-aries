@@ -50,35 +50,6 @@ if [ "$folder" != "usr/init_files" ] && [ -d "$folder" ] ; then
 fi
 done
 
-if [ "$target" != "fassy"  ] && [ "$target" != "all"  ] 
-####################### prepare building for gsm device ###########################################################
-then
-	if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
-	then
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm drivers/misc/samsung_modemctl/built-in.o
-	echo "Built-in.o modem files for GSM copied"
-	else
-	echo "***** built-in.o.gcc4.4.3_gsm files are missing *****"
-	echo "******** Please build old GSM *********"
-	exit 1
-	fi
-fi
-
-if [ "$target" = "fassy"  ]
-####################### prepare building for cdma device ###########################################################
-then
-	if [ -f drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_gsm ]
-	then
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3
-	cp drivers/misc/samsung_modemctl/built-in.o.gcc4.4.3_cdma drivers/misc/samsung_modemctl/built-in.o
-	echo "Built-in.o modem files for CDMA copied"
-	else
-	echo "***** built-in.o.gcc4.4.3_cdma files are missing *****"
-	echo "******** Please build old CDMA *********"
-	exit 1
-	fi
-fi
 
 if [ "$target" = "i9000"  ] 
 then

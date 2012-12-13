@@ -172,7 +172,7 @@ else
 
     $BB echo "removing old modules..."
 
-   # $BB rm /system/lib/modules/*
+    $BB rm /system/lib/modules/*
     $BB echo "updating modules..."
     $BB cp /files/modules/* /system/lib/modules/
 
