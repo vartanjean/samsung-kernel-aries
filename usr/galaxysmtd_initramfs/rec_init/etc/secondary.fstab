@@ -1,14 +1,5 @@
-# mount point	fstype		device				options (length for cryptfs encryption footer)
-
-/recovery	mtd		recovery
-/boot		mtd		boot
-/radio		mtd		radio
-
-/data		ext4		/dev/lvpool/userdata    length=-16384
-/cache		yaffs2		cache
-/datadata	yaffs2		datadata
-
-/sdcard		vfat		/dev/block/mmcblk0p1
-/system		ext4		/dev/lvpool/secondary_system
-
-/external_sd		vfat		/dev/block/mmcblk1p1
+/dev/block/mtdblock3 /cache yaffs2 rw
+/dev/lvpool/userdata /data ext4 rw
+/dev/lvpool/secondary_system /system ext4 rw
+/dev/block/mtdblock2 /datadata yaffs2 rw
+/dev/block/mmcblk0p1 /sdcard vfat rw

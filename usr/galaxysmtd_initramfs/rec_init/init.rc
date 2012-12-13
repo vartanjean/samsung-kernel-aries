@@ -98,6 +98,7 @@ loglevel 9
     write /dev/cpuctl/bg_non_interactive/cpu.shares 52
 
 on fs
+
 # mount mtd partitions
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
     #mount yaffs2 mtd@system /system

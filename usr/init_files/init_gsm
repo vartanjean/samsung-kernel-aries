@@ -71,7 +71,27 @@ $BB mount -t proc proc /proc
 $BB mount -t sysfs sysfs /sys
 $BB mount -t yaffs2 /dev/block/mtdblock3 /cache
 
-sleep 2
+timer=0
+while ! busybox test -d /sys/devices/platform/s3c-sdhci.0/mmc_host/mmc0/mmc0:0001 ; do
+	echo "Waiting for internal mmc..."
+	if busybox [ "$timer" -eq 4 ] ; then
+		timer=5
+	elif busybox [ "$timer" -eq 3 ] ; then
+		timer=4 
+	elif busybox [ "$timer" -eq 2 ] ; then
+		timer=3
+	elif busybox [ "$timer" -eq 1 ] ; then
+		timer=2
+	elif busybox [ "$timer" -eq 0 ] ; then
+		timer=1
+	fi
+	echo "timer: $timer"
+	if busybox [ "$timer" -le 5 ] ; then
+		busybox sleep 1
+	else
+		break
+	fi
+done
 
 /lvm/sbin/lvm vgscan --mknodes --ignorelockingfailure
 /lvm/sbin/lvm vgchange -aly --ignorelockingfailure
@@ -81,16 +101,19 @@ $BB mount -t ext4 /dev/lvpool/userdata /data
 ####################################################################
 ########## mount system partition depending on selection ###########
 ####################################################################
-if $BB test -f /data/rom ; then
-	if $BB grep -q secondary /data/rom ; then
-		$BB mount -t ext4 /dev/lvpool/system /secondary_system
-	elif $BB grep -q primary /data/rom ; then
-		$BB mount -t ext4 /dev/lvpool/system /primary_system
+if $BB test -f /data/dualboot/rom ; then
+	if $BB grep -q secondary /data/dualboot/rom ; then
+		$BB mount -t ext4 /dev/lvpool/secondary_system /system
+	elif $BB grep -q primary /data/dualboot/rom ; then
+		$BB mount -t ext4 /dev/lvpool/system /system
 	else 
 		echo "no rom selected..."
 		echo "booting to recovery"
 	fi
 else
+		$BB mkdir -p /data/dualboot
+		$BB touch /data/dualboot/rom
+		$BB echo "emergency" > /data/dualboot/rom
 		echo "no rom selected..."
 		echo "booting to recovery"
 fi
@@ -171,7 +194,7 @@ $BB cat /proc/cmdline
 
 $BB echo "starting bootmode detection..."
 if $BB test -e /cache/.startrecovery ||
-	$BB test ! -f /data/rom ||
+	$BB grep -q emergency /data/dualboot/rom ||
 	$BB grep -q bootmode=2 /proc/cmdline || # normal mode
 	$BB grep -q bootmode=5 /proc/cmdline || # xl mem
 	$BB grep -q bootmode=9 /proc/cmdline; then # big mem
@@ -186,31 +209,13 @@ if $BB test -e /cache/.startrecovery ||
     $BB echo "moving rec_init to /"
     $BB mv /rec_init/* /
 
-
-####################################################################
-########## recovery.fstab depending on selection ###################
-####################################################################
-if $BB test -f /data/rom ; then
-	if $BB grep -q secondary /data/rom ; then
-		cp /etc/secondary.fstab /etc/recovery.fstab
-	elif $BB grep -q primary /data/rom ; then
-		cp /etc/primary.fstab /etc/recovery.fstab
-	else 
-		cp /etc/emergency.fstab /etc/recovery.fstab
-	fi
-else
-	cp /etc/emergency.fstab /etc/recovery.fstab
-fi
-
-#####################################################################	
-
-
     $BB chmod 777 /sbin/fix_permissions
     $BB chmod 777 /sbin/killrecovery.sh
     $BB chmod 777 /sbin/nandroid-md5.sh
     $BB chmod 777 /sbin/setupdatadata.sh
     $BB chmod 777 /sbin/fix_permissions
     $BB chmod 777 /sbin/sdparted
+    $BB chmod 777 /sbin/rom_check.sh
 
 #fi
     $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
@@ -229,12 +234,15 @@ else
         $BB echo "moving jb42_init to /"
     	$BB mv /jb42_init/* /
 
+	if $BB grep -q secondary /data/dualboot/rom ; then
+		$BB mv fstab.aries.secondary fstab.aries
+	else 
+		$BB mv fstab.aries.primary fstab.aries
+	fi 
+
 ################ apply bigmem at first boot ##################################################################
 
-xl=0
 bigmem=0
-
-[ "`$BB grep -i Slim /system/build.prop`" ] && xl=1
 
 	if $BB [ -e /data/local/devil/bigmem ] ; then
 	bigmem=`$BB cat /data/local/devil/bigmem`
@@ -245,12 +253,6 @@ bigmem=0
 				/system/bin/toolbox reboot
 			fi
 		fi
-	elif $BB [ "$xl" -eq 1 ]; then
-		$BB echo 1 > /sys/kernel/bigmem/enable
-		$BB mkdir -p /data/local/devil
-		$BB echo 1 > /data/local/devil/bigmem
-    		$BB umount /data
-		/system/bin/toolbox reboot
 	fi
 
 ##############################################################################################################	
@@ -258,29 +260,17 @@ bigmem=0
 	if $BB grep -q bootmode=3 /proc/cmdline || 
 		$BB grep -q bootmode=5 /proc/cmdline ; then
     		$BB echo "copying XL_mem libs"
-    		if $BB [ "$jb" -eq 1 ]; then
     			$BB mv /files/xl_jb/* /system/lib/
-		else
-    			$BB mv /files/xl/* /system/lib/
-		fi
     		$BB echo 1 > /sys/kernel/bigmem/enable
 
 	elif $BB grep -q bootmode=7 /proc/cmdline || 
 		$BB grep -q bootmode=9 /proc/cmdline ; then
     		$BB echo "copying XL_mem libs"
-    		if $BB [ "$jb" -eq 1 ]; then
     			$BB mv /files/xl_jb/* /system/lib/
-		else
-    			$BB mv /files/xl/* /system/lib/
-		fi
     		$BB echo 2 > /sys/kernel/bigmem/enable
 	else
     		$BB echo "copying cm default libs"
-    		if $BB [ "$jb" -eq 1 ]; then
     			$BB mv /files/cm_jb/* /system/lib/
-		else
-    			$BB mv /files/cm/* /system/lib/
-		fi
 	fi
 fi
 

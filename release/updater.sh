@@ -58,7 +58,7 @@ fi
 
 if /tmp/busybox test `/tmp/busybox cat /sys/class/mtd/mtd2/size` != "$MTD_SIZE" || \
     /tmp/busybox test `/tmp/busybox cat /sys/class/mtd/mtd2/name` != "datadata" || \
-    /tmp/busybox test ! -e /dev/lvpool/primary_system ; then
+    /tmp/busybox test ! -e /dev/lvpool/secondary_system ; then
     # we're running on a mtd (old) device
 
     # make sure sdcard is mounted
@@ -144,19 +144,18 @@ elif /tmp/busybox test -e /dev/block/mtdblock0 ; then
     # setup lvm volumes
     /lvm/sbin/lvm pvcreate $MMC_PART
     /lvm/sbin/lvm vgcreate lvpool $MMC_PART
-    /lvm/sbin/lvm lvcreate -L 400M -n primary_system lvpool
+    /lvm/sbin/lvm lvcreate -L 400M -n system lvpool
     /lvm/sbin/lvm lvcreate -L 400M -n secondary_system lvpool
     /lvm/sbin/lvm lvcreate -l 100%FREE -n userdata lvpool
 
-    # format data (/system will be formatted by updater-script)
+    # format data and secondary_system
     /tmp/make_ext4fs -b 4096 -g 32768 -i 8192 -I 256 -l -16384 -a /data /dev/lvpool/userdata
+    /tmp/make_ext4fs -b 4096 -g 32768 -i 8192 -I 256 -l -16384 -a /data /dev/lvpool/secondary_system
 
     # unmount and format datadata
     /tmp/busybox umount -l /datadata
     /tmp/erase_image datadata
 
-    # restart into recovery so the user can install further packages before booting
-    /tmp/busybox touch /cache/.startrecovery
 
     if /tmp/busybox test -e /sdcard/cyanogenmod.mtdupd ; then
         # this is an upgrade with changed MTD mapping for /data, /cache, /system
