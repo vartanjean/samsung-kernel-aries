@@ -230,6 +230,27 @@ config MACH_HERRING
 	help
 	  Machine support for Herring
 
+config MACH_WAVE
+	bool "Wave"
+	select CPU_S5PV210
+	select S3C_DEV_WDT
+	select S3C_DEV_I2C1
+	select S3C_DEV_I2C2
+	select S5P_DEV_ONENAND
+	select HAVE_PWM
+	select SAMSUNG_DEV_PWM
+	select SAMSUNG_DEV_KEYPAD
+	select S5PV210_SETUP_KEYPAD
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1 if !S5PV210_SD_CH0_8BIT
+	select S3C_DEV_HSMMC2
+	select S5PV210_SETUP_SDHCI
+	select S5PV210_POWER_DOMAIN
+	select S5P_DEV_CSIS0
+	select S5P_SETUP_MIPIPHY
+	help
+	  Machine support for Wave I (GT-S8500) and Wave II (GT-S8530)
+
 config MACH_ARIES
 	bool "Aries"
 	select CPU_S5PV210
@@ -353,6 +374,35 @@ config DVFS_LIMIT
 	bool "DVFS limit"
 	depends on CPU_FREQ
 	default n
+
+config S5PV210_XL
+bool "Enable XL_MEM (more free RAM)"
+default y
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_XL_BIGMEM
+bool "Enable XL_BIGMEM (breaks 720p recording)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_XL_HUGHMEM
+bool "Enable XL_HUGHMEM (breaks cam)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
+config S5PV210_TESTMEM
+bool "Enable TESTMEM (more free RAM)"
+default n
+help
+    Aggressively restrict the memory set aside on
+    boot for FIMC, MFC and JPEG.
+
 
 config CPU_DIDLE
 	bool "DEEP Idle"

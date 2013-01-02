@@ -33,6 +33,7 @@
 #include <plat/clock.h>
 #include <plat/cpu-freq.h>
 #include <plat/media.h>
+#include <linux/delay.h>
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
 #include <linux/earlysuspend.h>
@@ -40,14 +41,14 @@
 #endif
 #include "s3cfb.h"
 
-#ifdef CONFIG_MACH_ARIES
+#if defined(CONFIG_MACH_ARIES)
 #include "logo_rgb24_wvga_portrait.h"
-#include <mach/regs-clock.h>
 #endif
 
+#include <mach/regs-clock.h>
+#include <asm/mach-types.h>
 #ifdef CONFIG_FB_S3C_MDNIE
 #include "s3cfb_mdnie.h"
-#include <linux/delay.h>
 #endif
 
 #if (CONFIG_FB_S3C_NUM_OVLY_WIN >= CONFIG_FB_S3C_DEFAULT_WINDOW)
@@ -66,7 +67,7 @@ module_param_named(bootloaderfb, bootloaderfb, uint, 0444);
 MODULE_PARM_DESC(bootloaderfb, "Address of booting logo image in Bootloader");
 
 #ifndef CONFIG_FRAMEBUFFER_CONSOLE
-static int s3cfb_draw_logo(struct fb_info *fb)
+static int __init s3cfb_draw_logo(struct fb_info *fb)
 {
 #ifdef CONFIG_FB_S3C_SPLASH_SCREEN
 	struct fb_fix_screeninfo *fix = &fb->fix;
@@ -106,7 +107,7 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 		}
 	}
 #endif
-#ifndef CONFIG_MACH_ARIES
+#if !defined(CONFIG_MACH_ARIES) && !defined(CONFIG_MACH_WAVE)
 	if (bootloaderfb) {
 		u8 *logo_virt_buf;
 		logo_virt_buf = ioremap_nocache(bootloaderfb,
@@ -116,7 +117,7 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 				fb->var.yres * fb->fix.line_length);
 		iounmap(logo_virt_buf);
 	}
-#else /*CONFIG_SAMSUNG_GALAXYS*/
+#elif defined(CONFIG_MACH_ARIES)
 	if (readl(S5P_INFORM5)) //LPM_CHARGING mode
 		memcpy(fb->screen_base, charging, fb->var.yres * fb->fix.line_length);
 	else
@@ -624,8 +625,7 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 	case FBIO_WAITFORVSYNC:
 		s3cfb_wait_for_vsync(fbdev);
 		break;
-
-	// Custom IOCTL added to return the VSYNC timestamp
+		// Custom IOCTL added to return the VSYNC timestamp
 	case S3CFB_WAIT_FOR_VSYNC:
 		ret = s3cfb_wait_for_vsync(fbdev);
 		if(ret > 0) {
@@ -863,7 +863,7 @@ err_alloc:
 	return ret;
 }
 
-static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
+static int __init s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 {
 	struct s3c_platform_fb *pdata = to_fb_plat(ctrl->dev);
 	int ret, i, j;
@@ -941,10 +941,35 @@ static int s3cfb_sysfs_store_win_power(struct device *dev,
 	return len;
 }
 
+static int s3cfb_wait_for_vsync_thread(void *data)
+{
+	struct s3cfb_global *fbdev = data;
+
+	while (!kthread_should_stop()) {
+		ktime_t prev_timestamp = fbdev->vsync_timestamp;
+		int ret = wait_event_interruptible_timeout(fbdev->vsync_wait,
+				s3cfb_vsync_timestamp_changed(fbdev,
+						prev_timestamp),
+				msecs_to_jiffies(100));
+		if (ret > 0) {
+			char *envp[2];
+			char buf[64];
+			snprintf(buf, sizeof(buf), "VSYNC=%llu",
+					ktime_to_ns(fbdev->vsync_timestamp));
+			envp[0] = buf;
+			envp[1] = NULL;
+			kobject_uevent_env(&fbdev->dev->kobj, KOBJ_CHANGE,
+					envp);
+		}
+	}
+
+	return 0;
+}
+
 static DEVICE_ATTR(win_power, S_IRUGO | S_IWUSR,
 		   s3cfb_sysfs_show_win_power, s3cfb_sysfs_store_win_power);
 
-static int __devinit s3cfb_probe(struct platform_device *pdev)
+static int __init s3cfb_probe(struct platform_device *pdev)
 {
 	struct s3c_platform_fb *pdata;
 	struct s3cfb_global *fbdev;
@@ -1059,6 +1084,11 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 #ifdef CONFIG_FB_S3C_MDNIE
 	mDNIe_Mode_Set();
 #endif
+/* turn off every window - cleans up possibly enabled fbuffers left by bootloaders */
+	for (i = 0; i < pdata->nr_wins; i++) {
+		s3cfb_set_window(fbdev, i, 0);
+	}
+	
 	s3cfb_set_window(fbdev, pdata->default_win, 1);
 
 	s3cfb_set_alpha_value_width(fbdev, pdata->default_win);
@@ -1074,14 +1104,11 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	}
 
 #ifdef CONFIG_FB_S3C_LCD_INIT
-#if defined(CONFIG_FB_S3C_TL2796)
+	if (!bootloaderfb && pdata->reset_lcd)
+		pdata->reset_lcd(pdev);	
+		
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
-#endif
-#ifndef CONFIG_MACH_ARIES
-	if (!bootloaderfb && pdata->reset_lcd)
-		pdata->reset_lcd(pdev);
-#endif
 #endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
@@ -1090,6 +1117,19 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	fbdev->early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
 	register_early_suspend(&fbdev->early_suspend);
 #endif
+
+	if(machine_is_wave()) {
+	/* FIXME: ugly hack around for configuring AMOLED */
+		s3cfb_early_suspend(&fbdev->early_suspend);
+		msleep(200);
+		s3cfb_late_resume(&fbdev->early_suspend);
+	}
+	fbdev->vsync_thread = kthread_run(s3cfb_wait_for_vsync_thread,
+			fbdev, "s3cfb-vsync");
+	if (fbdev->vsync_thread == ERR_PTR(-ENOMEM)) {
+		dev_err(fbdev->dev, "failed to run vsync thread\n");
+		fbdev->vsync_thread = NULL;
+	}
 
 	ret = device_create_file(&(pdev->dev), &dev_attr_win_power);
 	if (ret < 0)
@@ -1183,6 +1223,9 @@ static int __devexit s3cfb_remove(struct platform_device *pdev)
 
 	regulator_disable(fbdev->regulator);
 
+	if (fbdev->vsync_thread)
+		kthread_stop(fbdev->vsync_thread);
+
 	kfree(fbdev->fb);
 	kfree(fbdev);
 
@@ -1207,7 +1250,7 @@ void s3cfb_early_suspend(struct early_suspend *h)
 	s3c_mdnie_off();
 #endif
 	clk_disable(fbdev->clock);
-#if defined(CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796) || defined (CONFIG_FB_S3C_LG4573)
 	lcd_cfg_gpio_early_suspend();
 #endif
 	regulator_disable(fbdev->vlcd);
@@ -1241,7 +1284,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	if (ret < 0)
 		dev_err(fbdev->dev, "failed to enable vlcd\n");
 
-#if defined(CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796) || defined (CONFIG_FB_S3C_LG4573)
 	lcd_cfg_gpio_late_resume();
 #endif
 	dev_dbg(fbdev->dev, "wake up from suspend\n");

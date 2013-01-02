@@ -1,0 +1,35 @@
+Fichier binaire arch/arm/boot/Image concordant
+arch/arm/configs/cyanogenmod_galaxysmtd_defconfig:CONFIG_DEVIL_TWEAKS=y
+drivers/cpufreq/cpufreq_conservative.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_conservative.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_conservative.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_conservative.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lulzactive.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lulzactive.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lulzactive.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lazy.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lazy.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lazy.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_ondemand.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_ondemand.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_ondemand.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_ondemand.c:  #ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lagfree.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lagfree.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lagfree.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_lagfree.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_smartass2.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_smartass2.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_smartass2.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/cpufreq/cpufreq_smartass2.c:#ifdef CONFIG_DEVIL_TWEAKS
+drivers/misc/Kconfig:config DEVIL_TWEAKS
+drivers/misc/Makefile:obj-$(CONFIG_DEVIL_TWEAKS)	+= devil.o
+drivers/misc/devil.c:#define DEVIL_TWEAKS_VERSION 1
+drivers/misc/devil.c:    return sprintf(buf, "%u\n", DEVIL_TWEAKS_VERSION);
+include/generated/autoconf.h:#define CONFIG_DEVIL_TWEAKS 1
+include/config/auto.conf:CONFIG_DEVIL_TWEAKS=y
+Fichier binaire usr/initramfs_data.cpio concordant
+Fichier binaire usr/initramfs_data.o concordant
+Fichier binaire usr/built-in.o concordant
+Fichier binaire vmlinux concordant
+Fichier binaire vmlinux.o concordant

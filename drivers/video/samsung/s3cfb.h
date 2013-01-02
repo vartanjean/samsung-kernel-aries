@@ -235,6 +235,9 @@ struct s3cfb_global {
 	wait_queue_head_t	vsync_wait;
 	ktime_t			vsync_timestamp;
 
+	int			vsync_state;
+	struct task_struct	*vsync_thread;
+
 	/* fimd */
 	int			enabled;
 	int			dsi;
@@ -362,7 +365,7 @@ extern void s3cfb_late_resume(struct early_suspend *h);
 #endif
 #endif
 
-#if defined(CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796) || defined(CONFIG_FB_S3C_LG4573)
 extern void tl2796_ldi_init(void);
 extern void tl2796_ldi_enable(void);
 extern void tl2796_ldi_disable(void);
